@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AR постер — Играть и Записаться</title>
+  <!-- Библиотеки -->
+  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    .hint {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      padding: 10px; background: rgba(0,0,0,0.5); color: #fff;
+      font-family: sans-serif; text-align: center; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hint">Наведите камеру на постер. Нажимайте на зоны “Играть” и “Записаться”.</div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./target.mind; autoStart: true"
+    embedded
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <!-- Клик мышью/тапом -->
+    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+
+    <!-- Камера -->
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Контент, привязанный к постеру (targetIndex: 0 — первый/единственный) -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <!-- ДВЕ ПРОЗРАЧНЫЕ КНОПКИ.
+           Позиции и размеры примерные — потом подгоните.
+           Центр постера — (x=0, y=0). x влево отриц., вправо положит.
+           y вверх положит., вниз отриц. Ширина постера ≈ 1.0 единица. -->
+      <!-- Кнопка "Играть" -->
+      <a-plane id="playBtn" class="clickable"
+        position="0 0.15 0"
+        width="0.5" height="0.14"
+        material="color: #00ff00; opacity: 0.25; transparent: true">
+      </a-plane>
+
+      <!-- Кнопка "Записаться" -->
+      <a-plane id="signupBtn" class="clickable"
+        position="0 -0.05 0"
+        width="0.5" height="0.14"
+        material="color: #ff0000; opacity: 0.25; transparent: true">
+      </a-plane>
+
+      <!-- Подсказки-тексты (можно убрать, когда всё совпадёт) -->
+      <a-text value="Играть" align="center" position="0 0.15 0.01" color="#00ff00" width="1.2"></a-text>
+      <a-text value="Записаться" align="center" position="0 -0.05 0.01" color="#ff0000" width="1.2"></a-text>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    // Открытие ссылок по нажатию
+    const openInNew = (url) => {
+      // Открываем в этой же вкладке — стабильнее на мобилках.
+      window.location.href = url;
+      // Если хотите в новой вкладке, попробуйте:
+      // window.open(url, '_blank');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const play = document.querySelector('#playBtn');
+      const sign = document.querySelector('#signupBtn');
+
+      play.addEventListener('click', () => openInNew('https://lichess.org/ru/learn.org'));
+      sign.addEventListener('click', () => openInNew('https://t.me/m/s_Zqu21RY2Yy'));
+    });
+  </script>
+</body>
+</html>
