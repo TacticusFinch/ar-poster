@@ -3,78 +3,117 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AR постер — Играть и Записаться</title>
-  <!-- Библиотеки -->
-  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <title>Постер — интерактивные кнопки</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    .hint {
-      position: fixed; left: 0; right: 0; bottom: 0;
-      padding: 10px; background: rgba(0,0,0,0.5); color: #fff;
-      font-family: sans-serif; text-align: center; font-size: 14px;
+    /* Общий контейнер с постером */
+    .poster-wrap {
+      position: relative;
+      display: inline-block; /* высота контейнера равна высоте изображения */
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .poster-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Кликабельные зоны (поверх картинки) */
+    .hotspot {
+      position: absolute;
+      display: block;
+      /* Сделаем зону слегка видимой для отладки.
+         Когда всё совпадёт, можно сделать background: transparent. */
+      background: rgba(0, 123, 255, 0.15);
+      border-radius: 8px;
+      /* Размеры и позиция в процентах (от размеров картинки) */
+      /* ЗАМЕНИТЕ ЗНАЧЕНИЯ НИЖЕ ПОД ВАШ МАКЕТ */
+    }
+
+    /* Пример: «Играть» — координаты и размеры (проценты) */
+    .hotspot.play {
+      left: 29%;   /* от левого края постера */
+      top: 50%;    /* от верхнего края постера */
+      width: 37%;  /* ширина зоны */
+      height: 8%;  /* высота зоны */
+    }
+
+    /* Пример: «Записаться» */
+    .hotspot.signup {
+      left: 27%;
+      top: 62%;
+      width: 40%;
+      height: 8%;
+    }
+
+    /* Делаем зоны невидимыми, но оставляем фидбек при фокусе/нажатии */
+    .hotspot {
+      color: transparent;          /* текста не видно, т.к. он на картинке */
+      text-decoration: none;
+      outline: none;
+      background: rgba(0,0,0,0);   /* уберите/добавьте прозрачность по желанию */
+    }
+
+    .hotspot:focus-visible {
+      outline: 3px solid #0b5fff;
+      outline-offset: 2px;
+    }
+
+    /* Фолбэк-кнопки на случай, если наложение не сработает */
+    .fallback {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .fallback a {
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: #0b5fff;
+      color: #fff;
+      text-decoration: none;
+      font: 500 16px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
   </style>
 </head>
 <body>
-  <div class="hint">Наведите камеру на постер. Нажимайте на зоны “Играть” и “Записаться”.</div>
+  <main>
+    <div class="poster-wrap" aria-label="Интерактивный постер">
+      <img
+        src="https://tacticusfinch.github.io/ar-poster/target_image.jpg"
+        alt="Постер со ссылками «Играть» и «Записаться»"
+        id="poster"
+      />
 
-  <a-scene
-    mindar-image="imageTargetSrc: ./target.mind; autoStart: true"
-    embedded
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-  >
-    <!-- Клик мышью/тапом -->
-    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
+      <!-- Хотспот «Играть» -->
+      <a
+        class="hotspot play"
+        href="https://lichess.org/ru/learn"
+        aria-label="Играть"
+        rel="noopener noreferrer"
+      ></a>
 
-    <!-- Камера -->
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <!-- Хотспот «Записаться» -->
+      <a
+        class="hotspot signup"
+        href="https://t.me/m/s_Zqu21RY2Yy"
+        aria-label="Записаться"
+        rel="noopener noreferrer"
+      ></a>
+    </div>
 
-    <!-- Контент, привязанный к постеру (targetIndex: 0 — первый/единственный) -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      <!-- ДВЕ ПРОЗРАЧНЫЕ КНОПКИ.
-           Позиции и размеры примерные — потом подгоните.
-           Центр постера — (x=0, y=0). x влево отриц., вправо положит.
-           y вверх положит., вниз отриц. Ширина постера ≈ 1.0 единица. -->
-      <!-- Кнопка "Играть" -->
-      <a-plane id="playBtn" class="clickable"
-        position="0 0.15 0"
-        width="0.5" height="0.14"
-        material="color: #00ff00; opacity: 0.25; transparent: true">
-      </a-plane>
-
-      <!-- Кнопка "Записаться" -->
-      <a-plane id="signupBtn" class="clickable"
-        position="0 -0.05 0"
-        width="0.5" height="0.14"
-        material="color: #ff0000; opacity: 0.25; transparent: true">
-      </a-plane>
-
-      <!-- Подсказки-тексты (можно убрать, когда всё совпадёт) -->
-      <a-text value="Играть" align="center" position="0 0.15 0.01" color="#00ff00" width="1.2"></a-text>
-      <a-text value="Записаться" align="center" position="0 -0.05 0.01" color="#ff0000" width="1.2"></a-text>
-    </a-entity>
-  </a-scene>
+    <!-- Фолбэк-кнопки (на случай, если CSS отключен или что-то пошло не так) -->
+    <div class="fallback" aria-hidden="false">
+      <a href="https://lichess.org/ru/learn" rel="noopener noreferrer">Играть</a>
+      <a href="https://t.me/m/s_Zqu21RY2Yy" rel="noopener noreferrer">Записаться</a>
+    </div>
+  </main>
 
   <script>
-    // Открытие ссылок по нажатию
-    const openInNew = (url) => {
-      // Открываем в этой же вкладке — стабильнее на мобилках.
-      window.location.href = url;
-      // Если хотите в новой вкладке, попробуйте:
-      // window.open(url, '_blank');
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const play = document.querySelector('#playBtn');
-      const sign = document.querySelector('#signupBtn');
-
-      play.addEventListener('click', () => openInNew('https://lichess.org/ru/learn.org'));
-      sign.addEventListener('click', () => openInNew('https://t.me/m/s_Zqu21RY2Yy'));
-    });
+    // Необязательно: Если изображение у вас SVG с viewBox или PNG/JPG — код выше уже адаптивен.
+    // Если потребуется тонкая подгонка в рантайме — можно добавить скрипт,
+    // который меняет проценты под разные форматы/обрезки. Оставлено пустым.
   </script>
 </body>
 </html>
