@@ -1,79 +1,174 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>AR Постер с кнопками</title>
-  <script src="https://unpkg.com/aframe@1.5.0/dist/aframe.min.js"></script>
-  <script src="https://unpkg.com/mind-ar/dist/mindar-image-aframe.prod.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Оживлённый постер — Видео + Кнопки</title>
+
+  <!-- A-Frame и MindAR (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
   <style>
-    body { margin:0; overflow:hidden; }
-    .loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; background:#000; }
+    html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    /* Оверлей с кнопками */
+    .ui {
+      position: fixed; left: 0; right: 0; bottom: 16px;
+      display: flex; gap: 12px; justify-content: center; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity .4s ease;
+      padding: 0 16px;
+    }
+    .ui.show { opacity: 1; pointer-events: all; }
+    .btn {
+      appearance: none; border: none; border-radius: 12px; padding: 14px 18px;
+      color: #fff; font-weight: 700; font-size: 16px; letter-spacing: .2px;
+      cursor: pointer; min-width: 140px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.1);
+      transform: translateZ(0);
+      position: relative;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn.play { background: linear-gradient(135deg, #2dd4bf, #10b981); }
+    .btn.signup { background: linear-gradient(135deg, #7c3aed, #9333ea); }
+    /* Подсветка/пульсация */
+    .glow {
+      animation: glow 1.2s ease-in-out infinite alternate;
+      box-shadow: 0 0 0 rgba(255,255,255,0);
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 0 rgba(255,255,255,0), 0 0 0 rgba(255,255,255,0); }
+      to   { box-shadow: 0 0 20px rgba(255,255,255,.25), 0 0 40px rgba(255,255,255,.15); }
+    }
+    /* Кнопка звука (по желанию) */
+    .sound {
+      position: fixed; top: 14px; right: 14px; z-index: 10;
+      background: rgba(0,0,0,.45); color: #fff; border: 1px solid rgba(255,255,255,.2);
+      border-radius: 10px; padding: 10px 12px; font-size: 14px; cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
   </style>
 </head>
 <body>
-  <div id="loading" class="loading">Загрузка AR...</div>
+  <!-- Кнопка включения звука -->
+  <button id="soundBtn" class="sound">Включить звук</button>
 
+  <!-- UI с кнопками действий -->
+  <div id="ui" class="ui">
+    <button id="playBtn" class="btn play glow">Играть</button>
+    <button id="signupBtn" class="btn signup glow">Записаться</button>
+  </div>
+
+  <!-- AR‑сцена -->
   <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.01;"
-    embedded
+    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; filterMinCF:0.0001; filterBeta: 0.001;"
     color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true, logarithmicDepthBuffer: true"
+    renderer="colorManagement: true, physicallyCorrectLights: true, precision: mediump, antialias: true"
     vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
+    device-orientation-permission-ui="enabled: true"
+    embedded
   >
-    <a-assets>
-      <img id="posterTex" src="./target_image.jpg" crossorigin="anonymous" />
+    <a-assets timeout="15000">
+      <!-- Ваше видео -->
+      <video id="promo-video"
+             src="./video.mp4"
+             preload="auto"
+             loop
+             playsinline
+             webkit-playsinline
+             crossorigin="anonymous"
+             muted
+             ></video>
     </a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false" cursor="rayOrigin: mouse"></a-camera>
+    <!-- Камера MindAR -->
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Якорь на 0-м таргете (если у вас один постер) -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      <!-- Плоскость с изображением постера (для визуальной сверки, размер 1 = 1 условная единица) -->
-      <a-plane position="0 0 0" width="1" height="1.4" rotation="0 0 0" material="src: #posterTex; opacity: 0.25"></a-plane>
-
-      <!-- Кнопка "Играть" -->
-      <a-entity id="playBtn"
-                geometry="primitive: plane; width: 0.5; height: 0.18"
-                position="0 -0.2 0.01"
-                material="color: #22c55e; opacity: 0.9"
-                class="clickable">
-        <a-text value="Играть" align="center" color="#fff" width="1.8" position="0 0 0.01"></a-text>
-      </a-entity>
-
-      <!-- Кнопка "Записаться" -->
-      <a-entity id="joinBtn"
-                geometry="primitive: plane; width: 0.6; height: 0.18"
-                position="0.0 -0.45 0.01"
-                material="color: #3b82f6; opacity: 0.9"
-                class="clickable">
-        <a-text value="Записаться" align="center" color="#fff" width="2" position="0 0 0.01"></a-text>
-      </a-entity>
+    <!-- Таргет и плоскость с видео -->
+    <a-entity id="posterAnchor" mindar-image-target="targetIndex: 0">
+      <!-- a-video рисует HTMLVideoElement на плоскость 16:9 размером ~1.6x0.9 метра (масштаб подгоните под свою картинку) -->
+      <a-video id="videoPlane"
+               src="#promo-video"
+               position="0 0 0"
+               rotation="0 0 0"
+               width="1.6"
+               height="0.9"
+               material="transparent: false; shader: standard;"
+               ></a-video>
     </a-entity>
   </a-scene>
 
   <script>
-    const loading = document.getElementById('loading');
-    document.querySelector('a-scene').addEventListener('loaded', () => loading.style.display='none');
+    // Настройки ссылок
+    const lichessLink = 'https://lichess.org/learn';
+    const telegramLink = 'https://t.me/your_username'; // ← Замените на ваш чат/бот
 
-    // Обработчики кликов
+    const ui = document.getElementById('ui');
     const playBtn = document.getElementById('playBtn');
-    const joinBtn = document.getElementById('joinBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const soundBtn = document.getElementById('soundBtn');
+    const videoEl = document.getElementById('promo-video');
+    const anchor = document.getElementById('posterAnchor');
 
+    // Хелперы
+    const showUI = () => ui.classList.add('show');
+    const hideUI = () => ui.classList.remove('show');
+
+    // Попытка автозапуска видео (без звука) — часто работает после тапа “разрешить камеру”
+    const tryPlayMuted = async () => {
+      try {
+        videoEl.muted = true;
+        await videoEl.play();
+      } catch (e) {
+        // Если не получилось, подождём взаимодействия
+        // console.log('Autoplay blocked, will wait for user interaction');
+      }
+    };
+
+    // Включение звука по клику
+    const enableSound = async () => {
+      try {
+        videoEl.muted = false;
+        await videoEl.play();
+        soundBtn.textContent = 'Звук включён';
+        soundBtn.disabled = true;
+        soundBtn.style.opacity = 0.6;
+      } catch (e) {
+        alert('Нажмите ещё раз, чтобы включить звук');
+      }
+    };
+
+    // События трекинга
+    anchor.addEventListener('targetFound', async () => {
+      await tryPlayMuted();
+      // Покажем UI через небольшую паузу, когда видео появилось
+      setTimeout(showUI, 600);
+    });
+
+    anchor.addEventListener('targetLost', () => {
+      hideUI();
+    });
+
+    // Клики по кнопкам
     playBtn.addEventListener('click', () => {
-      alert('Старт игры!');
-      // например: window.location.href = '/play';
+      window.open(lichessLink, '_blank', 'noopener,noreferrer');
     });
 
-    joinBtn.addEventListener('click', () => {
-      window.open('https://example.com/signup', '_blank');
+    signupBtn.addEventListener('click', () => {
+      window.open(telegramLink, '_blank', 'noopener,noreferrer');
     });
 
-    // Показ/скрытие UI при обнаружении постера
-    const target = document.querySelector('[mindar-image-target]');
-    target.addEventListener('targetFound', () => console.log('Постер найден'));
-    target.addEventListener('targetLost', () => console.log('Постер потерян'));
+    // Включение звука
+    soundBtn.addEventListener('click', enableSound);
+
+    // На всякий случай: первый пользовательский тап где угодно — попробуем включить звуковое воспроизведение
+    document.addEventListener('touchend', async () => {
+      if (videoEl.paused) {
+        try { await videoEl.play(); } catch (_) {}
+      }
+    }, { once: true });
+
+    // Опционально: подгоняем размер видео под пропорции постера
+    // Если ваш постер не 16:9, можно скорректировать width/height у #videoPlane
   </script>
 </body>
 </html>
