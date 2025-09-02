@@ -2,360 +2,314 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>AR-кнопки: Играть / Записаться</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Сканер постера с подсветкой</title>
   <style>
-    :root{
-      /* Подстройте под ваши прежние цвета/подсветки */
-      --bg: #0b0f14;
-      --txt: #e9f1ff;
-      --primary: #00e7ff;   /* неоновый голубой */
-      --accent: #ff2bd6;    /* неоновый розовый */
-      --glow: 0 0 10px rgba(0,231,255,.8), 0 0 25px rgba(0,231,255,.6), 0 0 45px rgba(0,231,255,.35);
-      --glow-accent: 0 0 10px rgba(255,43,214,.8), 0 0 25px rgba(255,43,214,.6), 0 0 45px rgba(255,43,214,.35);
-      --btnRadius: 14px;
-    }
     html, body {
-      height: 100%;
       margin: 0;
-      background: radial-gradient(1200px 800px at 70% 10%, rgba(255,43,214,.08), transparent 60%),
-                  radial-gradient(1000px 700px at 20% 90%, rgba(0,231,255,.08), transparent 60%),
-                  var(--bg);
-      color: var(--txt);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      height: 100%;
+      background: #0b0f14;
+      color: #e5f0ff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow: hidden;
     }
-    .app {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      min-height: 100%;
-      gap: 12px;
-      padding: 14px;
-    }
-    .topbar {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .title {
-      font-weight: 700;
-      letter-spacing: .2px;
-      text-shadow: 0 1px 0 rgba(255,255,255,.05);
-    }
-    .controls {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    button, .ghost {
-      appearance: none;
-      border: none;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-weight: 600;
-      color: #001018;
-      background: linear-gradient(135deg, var(--primary), #9af6ff);
-      box-shadow: var(--glow);
-      cursor: pointer;
-      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
-    }
-    button:active { transform: translateY(1px) scale(.99); }
-    .ghost {
-      color: var(--txt);
-      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      box-shadow: none;
-      border: 1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(6px);
-    }
-    .view {
+    .wrap {
       position: relative;
+      width: 100vw;
+      height: 100vh;
       display: grid;
       place-items: center;
-      overflow: hidden;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.03);
-      min-height: 60vh;
+      background: radial-gradient(1200px 800px at 50% 50%, rgba(40,60,90,.25), transparent 60%);
     }
     video {
-      width: 100%;
-      height: auto;
-      display: block;
-      object-fit: contain;
-      border-radius: 18px;
-      background: #000;
-      transform: translateZ(0);
-    }
-    .overlay {
-      pointer-events: none;
       position: absolute;
       inset: 0;
-      overflow: visible;
-      border-radius: 18px;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Зеркалим, как фронтальную; уберите, если нужно обычное */
+      filter: contrast(1.05) saturate(1.1);
     }
-    .ar-btn {
-      pointer-events: auto;
+    canvas#overlay {
       position: absolute;
-      transform: translate(-50%, -50%); /* центр к центру bbox */
-      will-change: transform, width, height, opacity;
-      padding: 10px 16px;
-      border-radius: var(--btnRadius);
-      font-weight: 800;
-      letter-spacing: 0.4px;
-      text-transform: none;
-      color: #001018;
-      white-space: nowrap;
-      user-select: none;
-      background: linear-gradient(135deg, var(--primary), #9af6ff);
-      box-shadow: var(--glow);
-      border: 1px solid rgba(255, 255, 255, .28);
-      text-shadow: 0 1px 0 rgba(255,255,255,.35);
-      transition: transform .15s ease, opacity .2s ease, box-shadow .2s ease, filter .2s ease;
-      backdrop-filter: blur(2px);
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
     }
-    .ar-btn.alt {
-      background: linear-gradient(135deg, var(--accent), #ff9df0);
-      box-shadow: var(--glow-accent);
+    .hud {
+      position: absolute;
+      left: 50%;
+      bottom: env(safe-area-inset-bottom, 16px);
+      transform: translateX(-50%);
+      background: rgba(9,13,20,.5);
+      border: 1px solid rgba(120,170,255,.25);
+      border-radius: 14px;
+      padding: 10px 14px;
+      backdrop-filter: blur(6px) saturate(1.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06);
+      font-size: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
-    .ar-btn:hover { filter: brightness(1.05); }
-    .legend {
-      opacity: .75;
-      font-size: 12px;
-      text-align: center;
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #ff4d6d;
+      box-shadow: 0 0 12px 4px rgba(255,77,109,.6), 0 0 30px 10px rgba(255,77,109,.2);
+      animation: pulse 1.4s ease-in-out infinite;
     }
-    canvas#grab {
-      display: none;
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.9); filter: drop-shadow(0 0 10px #ff4d6d); }
+      50% { transform: scale(1.15); filter: drop-shadow(0 0 20px #ffb3c1); }
+    }
+    .note {
+      opacity: .8;
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="topbar">
-      <div class="title">AR-кнопки на постере</div>
-      <div class="controls">
-        <button id="startBtn">Включить камеру</button>
-        <div class="ghost" id="status">Ожидание…</div>
-      </div>
-    </div>
-
-    <div class="view" id="view">
-      <video id="video" playsinline autoplay muted></video>
-      <div class="overlay" id="overlay"></div>
-    </div>
-
-    <div class="legend">
-      Наведите камеру на постер. Когда появятся слова «Играть» или «Записаться», поверх них появятся светящиеся кнопки.
+  <div class="wrap">
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="hud">
+      <div class="dot" id="statusDot"></div>
+      <div id="statusText">Инициализация OCR…</div>
     </div>
   </div>
 
-  <canvas id="grab"></canvas>
-
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+  <!-- Tesseract.js CDN -->
+  <script src="https://unpkg.com/tesseract.js@5.0.5/dist/tesseract.min.js"></script>
   <script>
-    const startBtn = document.getElementById('startBtn');
-    const statusEl = document.getElementById('status');
+    // Целевые слова (без регистра)
+    const TARGETS = ["играть", "записаться"];
+
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
-    const grab = document.getElementById('grab');
-    const ctx = grab.getContext('2d', { willReadFrequently: true });
+    const ctx = overlay.getContext('2d');
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
 
-    let stream = null;
+    // Служебный канвас для OCR (умеренное разрешение для скорости)
+    const ocrCanvas = document.createElement('canvas');
+    const ocrCtx = ocrCanvas.getContext('2d', { willReadFrequently: true });
+
+    let worker;
     let running = false;
-    let worker = null;
-    let lastScan = 0;
-    const SCAN_INTERVAL = 900; // мс между распознаваниями
-    const TARGET_WIDTH = 960;  // ширина кадра для OCR (скорость/точность)
+    let lastDetections = [];
+    let pulseT = 0;
 
-    // найдём/создадим overlay-кнопки
-    function ensureButton(id, text, isAlt) {
-      let btn = document.getElementById(id);
-      if (!btn) {
-        btn = document.createElement('button');
-        btn.id = id;
-        btn.className = 'ar-btn' + (isAlt ? ' alt' : '');
-        btn.textContent = text;
-        btn.style.opacity = '0';
-        overlay.appendChild(btn);
-        if (text.toLowerCase().includes('играть')) {
-          btn.addEventListener('click', () => {
-            alert('Действие: Играть');
-            // TODO: Вставьте вашу логику запуска игры
-          });
-        } else {
-          btn.addEventListener('click', () => {
-            alert('Действие: Записаться');
-            // TODO: Вставьте вашу логику записи/формы
-          });
-        }
+    // Анимация подсветки
+    function drawOverlay() {
+      const w = overlay.width;
+      const h = overlay.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Фоновые мягкие лучи
+      const g = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.05, w/2, h/2, Math.max(w,h)*0.8);
+      g.addColorStop(0, 'rgba(80,120,255,0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+
+      // Анимированный неон
+      const t = (performance.now() / 1000);
+      pulseT = (Math.sin(t*2.4) + 1) / 2; // 0..1
+      const hueA = (t * 40) % 360;
+      const hueB = (hueA + 180) % 360;
+
+      for (const d of lastDetections) {
+        const { x, y, w: bw, h: bh, text } = d;
+
+        // Слегка расширим рамку для эффекта
+        const pad = Math.max(6, Math.min(bw, bh) * 0.15);
+        const rx = x - pad;
+        const ry = y - pad;
+        const rw = bw + pad*2;
+        const rh = bh + pad*2;
+        const radius = Math.min(18, Math.max(8, Math.min(rw, rh)*0.2));
+
+        // 1) Внешний "туман" свечения
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.shadowColor = `hsla(${hueA}, 90%, 65%, ${0.22 + pulseT*0.18})`;
+        ctx.shadowBlur = 40 + pulseT * 30;
+        roundedRect(ctx, rx, ry, rw, rh, radius);
+        ctx.strokeStyle = `hsla(${hueB}, 90%, 70%, 0.18)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
+        // 2) Неоновая рамка с градиентом
+        ctx.save();
+        ctx.lineWidth = 3.5;
+        const lg = ctx.createLinearGradient(rx, ry, rx+rw, ry+rh);
+        lg.addColorStop(0, `hsla(${hueA}, 100%, ${65 + pulseT*10}%, 0.95)`);
+        lg.addColorStop(1, `hsla(${hueB}, 100%, ${65 + (1-pulseT)*10}%, 0.95)`);
+        ctx.strokeStyle = lg;
+        roundedRect(ctx, rx, ry, rw, rh, radius);
+        ctx.stroke();
+        ctx.restore();
+
+        // 3) Полупрозрачная подложка
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = `hsla(${hueA}, 90%, 55%, ${0.08 + pulseT*0.06})`;
+        roundedRect(ctx, rx, ry, rw, rh, radius);
+        ctx.fill();
+        ctx.restore();
+
+        // 4) Подсветка текста
+        ctx.save();
+        ctx.font = `${Math.max(14, bh*0.55)}px ui-sans-serif, system-ui, Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.shadowColor = `hsla(${hueA}, 100%, 70%, 0.6)`;
+        ctx.shadowBlur = 10 + pulseT*10;
+        ctx.fillText(text, x + bw/2, y + bh/2);
+        ctx.restore();
       }
-      return btn;
+
+      requestAnimationFrame(drawOverlay);
     }
 
-    function setStatus(msg) {
-      statusEl.textContent = msg;
+    function roundedRect(ctx, x, y, w, h, r) {
+      const r2 = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x + r2, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r2);
+      ctx.arcTo(x + w, y + h, x, y + h, r2);
+      ctx.arcTo(x, y + h, x, y, r2);
+      ctx.arcTo(x, y, x + w, y, r2);
+      ctx.closePath();
+    }
+
+    async function initCamera() {
+      // Пробуем основную (заднюю) камеру
+      const constraints = {
+        audio: false,
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
     }
 
     async function initOCR() {
-      if (worker) return;
-      setStatus('Загрузка OCR…');
+      statusText.textContent = 'Загрузка языковых данных…';
       worker = await Tesseract.createWorker({
-        logger: m => { / console.log(m); / }
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            statusText.textContent = `Распознавание… ${Math.round((m.progress || 0)*100)}%`;
+          }
+        },
+        // Подгружаем русские данные
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
       });
-      // Загружаем русский; при желании можно добавить 'eng'
       await worker.loadLanguage('rus');
       await worker.initialize('rus');
       await worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK, // текстовый блок на постере
+        tessedit_char_whitelist: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюяABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-–—+',
         preserve_interword_spaces: '1'
       });
-      setStatus('OCR готов');
+      statusText.textContent = 'Готово. Наведите камеру на постер.';
+      statusDot.style.background = '#4dff9a';
+      statusDot.style.boxShadow = '0 0 14px 6px rgba(77,255,154,.6), 0 0 30px 10px rgba(77,255,154,.25)';
     }
 
-    async function startCamera() {
-      try {
-        setStatus('Запрос камеры…');
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          },
-          audio: false
-        });
-        video.srcObject = stream;
-        await video.play();
-        await initOCR();
-        running = true;
-        setStatus('Поиск слов на постере…');
-        requestAnimationFrame(tick);
-      } catch (e) {
-        console.error(e);
-        setStatus('Ошибка доступа к камере');
-      }
-    }
-
-    function fitGrabCanvas() {
-      const vw = video.videoWidth || 1280;
-      const vh = video.videoHeight || 720;
-      if (!vw || !vh) return false;
-
-      const scale = TARGET_WIDTH / vw;
-      const w = Math.round(vw * scale);
-      const h = Math.round(vh * scale);
-      grab.width = w;
-      grab.height = h;
-      return { vw, vh, w, h,scale };
-    }
-
-    function updateOverlaySize() {
-      // удерживаем overlay поверх видео
+    function resizeCanvases() {
       const rect = video.getBoundingClientRect();
-      overlay.style.width = rect.width + 'px';
-      overlay.style.height = rect.height + 'px';
-      overlay.style.left = video.offsetLeft + 'px';
-      overlay.style.top = video.offsetTop + 'px';
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      overlay.width = Math.floor(rect.width * dpr);
+      overlay.height = Math.floor(rect.height * dpr);
+      // OCR канвас — понижаем для скорости (регулируйте под устройство)
+      const base = 1024; // ширина для OCR
+      const aspect = video.videoHeight ? video.videoWidth / video.videoHeight : (rect.width / rect.height);
+      ocrCanvas.width = base;
+      ocrCanvas.height = Math.max(512, Math.round(base / (aspect || 1.777)));
     }
 
-    window.addEventListener('resize', updateOverlaySize);
+    // Сопоставление координат из OCR-канваса в overlay
+    function mapBox(bbox) {
+      // bbox: { x0, y0, x1, y1 } в координатах ocrCanvas
+      const sx = overlay.width / ocrCanvas.width;
+      const sy = overlay.height / ocrCanvas.height;
 
-    async function scanFrame() {
-      const dims = fitGrabCanvas();
-      if (!dims) return null;
+      // Видеопоток может быть зеркален по X (мы зеркалим video через CSS).
+      // Для соответствия подсветки — отражаем по X.
+      const x0 = ocrCanvas.width - bbox.x1; // зеркалим
+      const x1 = ocrCanvas.width - bbox.x0;
 
-      // рисуем текущий кадр
-      ctx.drawImage(video, 0, 0, dims.w, dims.h);
-
-      const { data } = await worker.recognize(grab);
-      return { ocr: data, dims };
+      return {
+        x: x0 * sx,
+        y: bbox.y0 * sy,
+        w: (x1 - x0) * sx,
+        h: (bbox.y1 - bbox.y0) * sy
+      };
     }
 
-    function normalize(text) {
-      return (text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '').trim();
-    }
-
-    function placeButton(btn, bbox, dims) {
-      // bbox от Tesseract в пикселях канваса (dims.w/dims.h)
-      const rect = video.getBoundingClientRect();
-
-      // коэффициенты перевода из OCR-канваса в отображаемый видео-элемент
-      const scaleX = rect.width / dims.w;
-      const scaleY = rect.height / dims.h;
-
-      const cx = (bbox.x0 + bbox.x1) / 2;
-      const cy = (bbox.y0 + bbox.y1) / 2;
-      const bw = (bbox.x1 - bbox.x0);
-      const bh = (bbox.y1 - bbox.y0);
-
-      const x = cx * scaleX;
-      const y = cy * scaleY;
-
-      // ширина кнопки близка к ширине слова, но с ограничениями
-      const btnW = Math.max(120, Math.min(280, bw * scaleX * 1.15));
-      const btnH = Math.max(40, Math.min(68, bh * scaleY * 1.35));
-
-      btn.style.width = btnW + 'px';
-      btn.style.height = btnH + 'px';
-      btn.style.lineHeight = btnH + 'px'; // визуальный центр текста
-      btn.style.left = x + 'px';
-      btn.style.top = y + 'px';
-      btn.style.opacity = '1';
-    }
-
-    function hideMissing(found) {
-      const ids = ['btn-play', 'btn-sign'];
-      for (const id of ids) {
-        if (!found.has(id)) {
-          const el = document.getElementById(id);
-          if (el) el.style.opacity = '0';
-        }
-      }
-    }
-
-    async function tick(now) {
+    async function scanLoop() {
       if (!running) return;
 
-      // Обновляем размер overlay под текущее видео
-      updateOverlaySize();
+      // 1) Рисуем текущий кадр в OCR-канвас
+      ocrCtx.save();
+      // Отразим по X, чтобы OCR видел немзеркальное изображение
+      ocrCtx.scale(-1, 1);
+      ocrCtx.drawImage(video, -ocrCanvas.width, 0, ocrCanvas.width, ocrCanvas.height);
+      ocrCtx.restore();
 
-      if (!lastScan || now - lastScan > SCAN_INTERVAL) {
-        lastScan = now;
-        try {
-          const res = await scanFrame();
-          if (res) {
-            const { ocr, dims } = res;
-            const found = new Set();
-
-            // Перебираем слова из OCR
-            for (const w of ocr.words || []) {
-              const txt = normalize(w.text);
-              if (!txt) continue;
-
-              if (txt === 'играть') {
-                const btn = ensureButton('btn-play', 'Играть', false);
-                placeButton(btn, w.bbox, dims);
-                found.add('btn-play');
-              }
-              if (txt === 'записаться') {
-                const btn = ensureButton('btn-sign', 'Записаться', true);
-                placeButton(btn, w.bbox, dims);
-                found.add('btn-sign');
-              }
+      try {
+        const { data } = await worker.recognize(ocrCanvas);
+        // Собираем подходящие слова
+        const found = [];
+        const words = data.words || [];
+        for (const w of words) {
+          const text = (w.text || '').trim();
+          if (!text) continue;
+          const lower = text.toLowerCase();
+          if (TARGETS.includes(lower)) {
+            const box = mapBox(w.bbox);
+            // Фильтруем очень маленькие боксы (шум)
+            if (box.w > 20 && box.h > 12) {
+              found.push({ ...box, text });
             }
-            hideMissing(found);
-            setStatus(found.size ? 'Найдено: ' + [...found].map(id => id === 'btn-play' ? 'Играть' : 'Записаться').join(', ') : 'Ищем слова…');
           }
-        } catch (e) {
-          console.warn('OCR error:', e);
-          setStatus('OCR: ошибка, повтор…');
         }
+        lastDetections = found;
+        statusText.textContent = found.length
+          ? `Найдено: ${found.map(f => f.text).join(', ')}`
+          : 'Сканирование…';
+      } catch (err) {
+        console.error(err);
+        statusText.textContent = 'Ошибка OCR. Повтор…';
       }
-      requestAnimationFrame(tick);
+
+      // Частота OCR: ~2 Гц для мобильных (регулируйте)
+      setTimeout(scanLoop, 450);
     }
 
-    startBtn.addEventListener('click', startCamera);
+    async function main() {
+      try {
+        await initCamera();
+        resizeCanvases();
+        window.addEventListener('resize', resizeCanvases);
+        requestAnimationFrame(drawOverlay);
+        await initOCR();
+        running = true;
+        scanLoop();
+      } catch (e) {
+        console.error(e);
+        statusText.textContent = 'Нет доступа к камере или ошибка инициализации.';
+        statusDot.style.background = '#ff4d6d';
+      }
+    }
 
-    // Автоинициализация на Android после пользовательского взаимодействия с экраном:
-    document.addEventListener('touchstart', () => {}, { passive: true });
+    document.addEventListener('DOMContentLoaded', main);
   </script>
 </body>
 </html>
