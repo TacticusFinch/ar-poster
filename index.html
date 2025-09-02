@@ -1,231 +1,145 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Волшебный Постер</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Живой постер | Шахматный клуб</title>
+
+    <!-- Подключаем библиотеки A-Frame и MindAR -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
     <style>
-        /* Убираем отступы и скрываем прокрутку */
-        body, html {
+        /* Стили для кнопок и оверлея */
+        body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: Arial, sans-serif;
         }
 
-        /* Контейнер для видео и оверлея */
-        #container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Элемент видео с камеры */
-        #video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Заполняет весь экран, обрезая лишнее */
-        }
-
-        /* Контейнер для интерактивных элементов */
-        #overlay {
+        /* Контейнер для наших кнопок. Он будет появляться и исчезать. */
+        #ui-container {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Позволяет кликать "сквозь" оверлей, если на нем нет кнопок */
+            z-index: 10;
+            display: flex;
+            justify-content: space-evenly; /* Равномерно распределяет кнопки по горизонтали */
+            align-items: center; /* Центрирует кнопки по вертикали */
+            pointer-events: none; /* По умолчанию контейнер не перехватывает клики */
+            visibility: hidden; /* Изначально скрыт */
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        #ui-container.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .button-wrapper {
+            pointer-events: auto; /* Включаем клики только для оберток кнопок */
         }
         
-        /* Стиль для подсвеченной кнопки */
-        .interactive-button {
-            position: absolute;
-            border: 3px solid rgba(255, 223, 0, 0.7);
-            border-radius: 12px;
-            background-color: rgba(255, 223, 0, 0.2);
-            box-shadow: 0 0 20px 8px rgba(255, 223, 0, 0.8);
+        .ar-button {
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(145deg, #5a4b9a, #8a6cff);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
             cursor: pointer;
-            pointer-events: all; /* Делаем кнопки кликабельными */
-            transition: all 0.2s ease-in-out;
-            animation: pulse-glow 2.5s infinite ease-in-out;
+            box-shadow: 0 8px 25px rgba(138, 108, 255, 0.6);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            animation: pulse-glow 2s infinite ease-in-out;
         }
 
-        .interactive-button:hover {
-             transform: scale(1.05);
-             box-shadow: 0 0 30px 12px rgba(255, 200, 0, 1);
+        .ar-button:hover, .ar-button:active {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(138, 108, 255, 0.8);
         }
 
-        /* Анимация пульсации */
+        /* Анимация пульсации и свечения */
         @keyframes pulse-glow {
             0% {
-                box-shadow: 0 0 20px 8px rgba(255, 223, 0, 0.7);
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(138, 108, 255,0.6);
             }
             50% {
-                box-shadow: 0 0 25px 12px rgba(255, 223, 0, 0.9);
+                transform: scale(1.03);
+                box-shadow: 0 10px 30px rgba(200, 180, 255, 0.8);
             }
             100% {
-                box-shadow: 0 0 20px 8px rgba(255, 223, 0, 0.7);
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(138, 108, 255, 0.6);
             }
-        }
-
-        /* Статус-бар для пользователя */
-        #status {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 16px;
-            z-index: 10;
-            text-align: center;
         }
     </style>
 </head>
 <body>
-
-    <div id="container">
-        <video id="video" autoplay playsinline muted></video>
-        <div id="overlay"></div>
+    <!-- Контейнер для кнопок, который будет показан поверх видео -->
+    <div id="ui-container">
+        <div class="button-wrapper">
+            <button id="play-button" class="ar-button">Играть</button>
+        </div>
+        <div class="button-wrapper">
+            <button id="signup-button" class="ar-button">Записаться</button>
+        </div>
     </div>
 
-    <div id="status">Включаю волшебную камеру...</div>
+    <!-- AR-сцена MindAR -->
+    <!-- imageTargetSrc: путь к вашему файлу с маркерами -->
+    <!-- autoStart: true; uiScanning: "yes"; — запускает камеру и показывает анимацию сканирования -->
+    <a-scene
+        mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: yes; filterMinCF:0.0001; filterBeta: 0.001;"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+        color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights"
+    >
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Подключаем библиотеку Tesseract.js с CDN -->
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+        <!-- Сущность, привязанная к вашему постеру. targetIndex="0" означает первый маркер в файле targets.mind -->
+        <!-- Она нам нужна, чтобы отслеживать события, но сами кнопки мы рендерим в HTML -->
+        <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+    </a-scene>
 
     <script>
-        const video = document.getElementById('video');
-        const overlay = document.getElementById('overlay');
-        const statusDiv = document.getElementById('status');
-        
-        // Целевые слова и ссылки, куда они ведут
-        const TARGETS = {
-            'Играть': 'https://lichess.org/ru/learn',
-            'Записаться': 'https://t.me/m/s_Zqu21RY2Yy'
-        };
-        const TARGET_WORDS = Object.keys(TARGETS);
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('a-scene');
+            const uiContainer = document.getElementById('ui-container');
+            const playButton = document.getElementById('play-button');
+            const signupButton = document.getElementById('signup-button');
 
-        let worker; // Переменная для Tesseract worker
-        let isRecognizing = false; // Флаг, чтобы избежать параллельных запусков
+            // URL для редиректов
+            const playUrl = 'https://lichess.org/ru/learn';
+            const signupUrl = 'https://t.me/m/s_Zqu21RY2Yy';
 
-        // Функция для обновления статуса
-        function updateStatus(text) {
-            console.log(text);
-            statusDiv.textContent = text;
-        }
+            // Событие, когда маркер (постер) найден
+            sceneEl.addEventListener('targetFound', event => {
+                console.log("Постер найден!");
+                uiContainer.classList.add('visible');
+            });
 
-        // Основная функция распознавания
-        async function recognizeText() {
-            if (isRecognizing) return;
-            isRecognizing = true;
-            
-            updateStatus('Сканирую постер...');
-            overlay.innerHTML = ''; // Очищаем старые кнопки
+            // Событие, когда маркер (постер) потерян
+            sceneEl.addEventListener('targetLost', event => {
+                console.log("Постер потерян!");
+                uiContainer.classList.remove('visible');
+            });
 
-            try {
-                // Распознаем текст на текущем кадре видео
-                const { data } = await worker.recognize(video);
-                updateStatus('Постер просканирован. Ищу кнопки...');
+            // Обработчики нажатий на кнопки
+            playButton.addEventListener('click', () => {
+                window.location.href = playUrl;
+            });
 
-                let found = false;
-                // Проходим по всем найденным словам
-                for (const word of data.words) {
-                    const cleanText = word.text.trim();
-                    // Проверяем, есть ли слово в нашем списке целей
-                    if (TARGET_WORDS.includes(cleanText)) {
-                        found = true;
-                        createInteractiveButton(word, cleanText);
-                    }
-                }
-                
-                if (found) {
-                    updateStatus('Кнопки найдены! Нажмите на них.');
-                } else {
-                     updateStatus('Наведите камеру на постер. Повторный скан через 5 сек...');
-                }
-
-            } catch (error) {
-                console.error('Ошибка распознавания:', error);
-                updateStatus('Ошибка. Попробуйте перезагрузить страницу.');
-            } finally {
-                isRecognizing = false;
-            }
-        }
-
-        // Функция создания интерактивной кнопки поверх видео
-        function createInteractiveButton(wordData, text) {
-            const button = document.createElement('div');
-            button.className = 'interactive-button';
-
-            // Координаты от Tesseract даются относительно размера кадра.
-            // Нам нужно их масштабировать под размер видео на экране.
-            const videoWidth = video.videoWidth;
-            const videoHeight = video.videoHeight;
-            const clientWidth = video.clientWidth;
-            const clientHeight = video.clientHeight;
-
-            const scaleX = clientWidth / videoWidth;
-            const scaleY = clientHeight / videoHeight;
-
-            const bbox = wordData.bbox;
-            button.style.left = `${bbox.x0 * scaleX}px`;
-            button.style.top = `${bbox.y0 * scaleY}px`;
-            button.style.width = `${(bbox.x1 - bbox.x0) * scaleX}px`;
-            button.style.height = `${(bbox.y1 - bbox.y0) * scaleY}px`;
-            
-            // Добавляем действие по клику
-            button.onclick = () => {
-                updateStatus(`Переход по ссылке для "${text}"...`);
-                window.location.href = TARGETS[text];
-            };
-
-            overlay.appendChild(button);
-            console.log(`Создана кнопка для "${text}"`);
-        }
-        
-        // Главная функция запуска
-        async function main() {
-            try {
-                // 1. Получаем доступ к камере
-                const constraints = {
-                    video: {
-                        facingMode: 'environment' // 'environment' - задняя камера
-                    },
-                    audio: false
-                };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                video.onloadedmetadata = async () => {
-                    updateStatus('Камера активна. Готовлю распознавание...');
-
-                    // 2. Инициализируем Tesseract.js Worker для русского языка
-                    worker = await Tesseract.createWorker('rus', 1, {
-                        logger: m => console.log(m) // Для отладки в консоли
-                    });
-                    
-                    updateStatus('Наведите камеру на постер.');
-                    
-                    // 3. Запускаем цикл распознавания каждые 5 секунд
-                    // Чаще не стоит, т.к. OCR - ресурсоемкий процесс
-                    setInterval(recognizeText, 5000);
-                    recognizeText(); // Первый запуск сразу
-                };
-
-            } catch (err) {
-                console.error("Ошибка доступа к камере:", err);
-                updateStatus('Не удалось получить доступ к камере. Проверьте разрешения.');
-            }
-        }
-
-        // Запускаем все при загрузке страницы
-        window.onload = main;
+            signupButton.addEventListener('click', () => {
+                window.location.href = signupUrl;
+            });
+        });
     </script>
 </body>
 </html>
