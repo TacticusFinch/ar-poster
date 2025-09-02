@@ -5,114 +5,136 @@
     <meta charset="utf-8">
     <title>Волшебный постер</title>
     
-    <!-- Подключаем A-Frame — фреймворк для 3D/VR/AR -->
+    <!-- 1. Подключаем A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     
-    <!-- Подключаем MindAR для распознавания изображений -->
+    <!-- 2. Подключаем MindAR для распознавания изображений -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
+    <!-- 3. НОВЫЙ СКРИПТ: Подключаем A-Frame HTML Shader для рендера HTML на текстуру -->
+    <script src="https://unpkg.com/aframe-html-shader@0.2.0/dist/aframe-html-shader.min.js"></script>
+
     <style>
-      /* Стиль для скрытия стандартных кнопок UI, если они не нужны */
-      .ar-button {
-        display: none;
+      /* Скрываем стандартные UI элементы */
+      .ar-button { display: none; }
+
+      /* --- СТИЛИ ДЛЯ НАШИХ КНОПОК (взяты из вашего второго примера) --- */
+      :root {
+        --accent: #6ee7ff;
+        --accent-2: #8bffb1;
+        --btn-bg: #12162e;
+        --text: #e9ecff;
+      }
+      
+      /* Контейнер для скрытых HTML-элементов, которые мы будем рендерить на 3D-плоскости */
+      #html-assets {
+        position: fixed;
+        top: 0; left: 0;
+        width: 1px; height: 1px;
+        overflow: hidden;
+        z-index: -1; /* Прячем от глаз пользователя */
+        opacity: 0;
+      }
+
+      .btn {
+        --glow: var(--accent);
+        position: relative;
+        border: 1px solid rgba(255,255,255,.12);
+        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)) , var(--btn-bg);
+        color: var(--text);
+        border-radius: 14px;
+        padding: 14px 28px; /* Немного увеличим паддинг для лучшей читаемости */
+        font-weight: 700;
+        font-size: 24px; /* Используем фиксированный размер для предсказуемого рендера */
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
+        letter-spacing: .2px;
+        cursor: pointer;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,.06),
+          0 6px 16px rgba(0,0,0,.35);
+        /* Анимация свечения включена постоянно */
+        animation: glow 2.2s ease-in-out infinite;
+      }
+
+      .btn.play { --glow: var(--accent); --glow-rgb: 110,231,255; }
+      .btn.signup { --glow: var(--accent-2); --glow-rgb: 139,255,177; }
+      
+      /* Анимация "дыхания" светом */
+      @keyframes glow {
+        0%, 100% {
+          box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,.08),
+            0 6px 16px rgba(0,0,0,.35),
+            0 0 0px rgba(var(--glow-rgb, 110,231,255), 0),
+            0 0 0px rgba(var(--glow-rgb, 110,231,255), 0);
+        }
+        50% {
+          box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,.12),
+            0 12px 28px rgba(0,0,0,.42),
+            0 0 18px rgba(var(--glow-rgb, 110,231,255), .55),
+            0 0 36px rgba(var(--glow-rgb, 110,231,255), .35);
+        }
       }
     </style>
 
   </head>
   <body>
-    <!-- 
-      Основная AR-сцена.
-      mindar-image: активирует режим распознавания изображений.
-      imageTargetSrc: путь к вашему файлу с целями. Убедитесь, что он в той же папке.
-      uiScanning, uiLoading: показывает стандартный интерфейс "Поиск цели" и "Загрузка".
-      vr-mode-ui, device-orientation-permission-ui: отключаем лишние UI для чистого AR-опыта.
+
+    <!--
+      СКРЫТЫЕ HTML-ЭЛЕМЕНТЫ
+      Это "исходники" для наших 3D-кнопок. aframe-html-shader будет их использовать.
     -->
+    <div id="html-assets">
+      <div id="html-play-button" class="btn play">Играть</div>
+      <div id="html-signup-button" class="btn signup">Записаться</div>
+    </div>
+
+
+    <!-- ОСНОВНАЯ AR-СЦЕНА -->
     <a-scene 
       mindar-image="imageTargetSrc: ./targets.mind; uiScanning: yes; uiLoading: yes;" 
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false"
       renderer="colorManagement: true"
     >
-      <!-- Добавляем "курсор", чтобы можно было кликать на объекты в AR -->
-      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" ></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
 
-      <!-- 
-        Контейнер для контента, который появится при распознавании постера.
-        targetIndex: 0 — означает, что контент привязан к первому изображению в вашем targets.mind.
-      -->
       <a-entity mindar-image-target="targetIndex: 0">
         
-        <!-- КНОПКА "ИГРАТЬ" -->
-        <!-- a-plane — это плоский прямоугольник, который мы используем как кнопку -->
+        <!-- 
+          ИЗМЕНЕННАЯ КНОПКА "ИГРАТЬ"
+          Теперь это плоскость с материалом, который рендерит наш HTML.
+          - shader: html — используем HTML-шейдер.
+          - target: #html-play-button — указываем, какой HTML-элемент рисовать.
+          - transparent: true — чтобы скругленные углы были прозрачными.
+          - fps: 30 — частота обновления текстуры для плавной анимации.
+        -->
         <a-plane 
           id="play-button" 
           class="clickable"
-          color="#249c49"
-          height="0.18" 
-          width="0.6"
-          position="0 -0.1 0" 
-          material="transparent: true; opacity: 0.9"
-          text="value: Играть; color: black; align: center; width: 2.5; wrapCount: 10;"
-        >
-          <!-- Анимация пульсации: меняем размер от 1 до 1.1 и обратно -->
-          <a-animation 
-            attribute="scale" 
-            dur="1500" 
-            from="1 1 1" 
-            to="1.1 1.1 1.1" 
-            direction="alternate" 
-            repeat="indefinite"
-            easing="ease-in-out-sine"
-          ></a-animation>
-          <!-- Анимация свечения (через прозрачность материала) -->
-           <a-animation 
-            attribute="material.opacity" 
-            dur="1500" 
-            from="0.8" 
-            to="1" 
-            direction="alternate" 
-            repeat="indefinite"
-            easing="ease-in-out-sine"
-          ></a-animation>
-        </a-plane>
+          position="0 0.05 0"
+          height="0.15" 
+          width="0.55"
+          material="shader: html; target: #html-play-button; transparent: true; fps: 30;"
+        ></a-plane>
 
-        <!-- КНОПКА "ЗАПИСАТЬСЯ" -->
+        <!-- ИЗМЕНЕННАЯ КНОПКА "ЗАПИСАТЬСЯ" -->
         <a-plane 
           id="signup-button" 
           class="clickable"
-          color="#0088cc"
-          height="0.18" 
-          width="0.6"
-          position="0 -0.2 0"
-          material="transparent: true; opacity: 0.9"
-          text="value: Записаться; color: black; align: center; width: 2.5; wrapCount: 12;"
-        >
-           <!-- Анимация пульсации -->
-          <a-animation 
-            attribute="scale" 
-            dur="1500" 
-            from="1 1 1" to="1.1 1.1 1.1" 
-            direction="alternate" 
-            repeat="indefinite"
-            easing="ease-in-out-sine"
-          ></a-animation>
-          <!-- Анимация свечения -->
-           <a-animation 
-            attribute="material.opacity" 
-            dur="1500" 
-            from="0.8" 
-            to="1" 
-            direction="alternate" 
-            repeat="indefinite"
-            easing="ease-in-out-sine"
-          ></a-animation>
-        </a-plane>
+          position="0 -0.15 0"
+          height="0.15" 
+          width="0.55"
+          material="shader: html; target: #html-signup-button; transparent: true; fps: 30;"
+        ></a-plane>
 
       </a-entity>
     </a-scene>
-
+    
     <script>
-      // Этот скрипт делает кнопки кликабельными
+      // Этот скрипт остается почти без изменений!
+      // Он по-прежнему слушает клики на 3D-объектах (a-plane).
       document.addEventListener('DOMContentLoaded', () => {
         const playButton = document.querySelector("#play-button");
         const signupButton = document.querySelector("#signup-button");
@@ -120,12 +142,14 @@
         // Обработчик для кнопки "Играть"
         playButton.addEventListener("click", event => {
           console.log("Play button clicked");
+          // Перенаправление на страницу игры
           window.location.href = "https://lichess.org/ru/learn";
         });
 
         // Обработчик для кнопки "Записаться"
         signupButton.addEventListener("click", event => {
           console.log("Signup button clicked");
+          // Перенаправление на Telegram
           window.location.href = "https://t.me/m/s_Zqu21RY2Yy";
         });
       });
