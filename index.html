@@ -2,200 +2,360 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Постер — Играть / Записаться</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AR-кнопки: Играть / Записаться</title>
   <style>
-    :root {
-      --bg1: #0f1226;
-      --bg2: #1b1f3b;
-      --accent: #6ee7ff;
-      --accent-2: #8bffb1;
-      --btn: #12162e;
-      --text: #e9ecff;
+    :root{
+      /* Подстройте под ваши прежние цвета/подсветки */
+      --bg: #0b0f14;
+      --txt: #e9f1ff;
+      --primary: #00e7ff;   /* неоновый голубой */
+      --accent: #ff2bd6;    /* неоновый розовый */
+      --glow: 0 0 10px rgba(0,231,255,.8), 0 0 25px rgba(0,231,255,.6), 0 0 45px rgba(0,231,255,.35);
+      --glow-accent: 0 0 10px rgba(255,43,214,.8), 0 0 25px rgba(255,43,214,.6), 0 0 45px rgba(255,43,214,.35);
+      --btnRadius: 14px;
     }
-
-    * { box-sizing: border-box; }
-
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
-      min-height: 100vh;
+      background: radial-gradient(1200px 800px at 70% 10%, rgba(255,43,214,.08), transparent 60%),
+                  radial-gradient(1000px 700px at 20% 90%, rgba(0,231,255,.08), transparent 60%),
+                  var(--bg);
+      color: var(--txt);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    }
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100%;
+      gap: 12px;
+      padding: 14px;
+    }
+    .topbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .title {
+      font-weight: 700;
+      letter-spacing: .2px;
+      text-shadow: 0 1px 0 rgba(255,255,255,.05);
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button, .ghost {
+      appearance: none;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      color: #001018;
+      background: linear-gradient(135deg, var(--primary), #9af6ff);
+      box-shadow: var(--glow);
+      cursor: pointer;
+      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+    }
+    button:active { transform: translateY(1px) scale(.99); }
+    .ghost {
+      color: var(--txt);
+      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      box-shadow: none;
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(6px);
+    }
+    .view {
+      position: relative;
       display: grid;
       place-items: center;
-      background: radial-gradient(1200px 800px at 70% 30%, var(--bg2), var(--bg1));
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    }
-
-    .poster {
-      width: min(92vw, 980px);
-      aspect-ratio: 16 / 9;
-      border-radius: 20px;
-      position: relative;
       overflow: hidden;
-      background:
-        radial-gradient(160px 160px at 15% 20%, rgba(110,231,255,.25), transparent 70%),
-        radial-gradient(220px 220px at 85% 30%, rgba(139,255,177,.22), transparent 70%),
-        linear-gradient(135deg, #171a35 0%, #0f1226 70%);
-      box-shadow:
-        0 30px 80px rgba(0,0,0,.35),
-        inset 0 0 0 1px rgba(255,255,255,.05);
-      display: grid;
-      grid-template-rows: 1fr auto;
-      padding: clamp(16px, 3vw, 28px);
-      isolation: isolate;
-    }
-
-    .title {
-      align-self: end;
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: 0.2px;
-      font-size: clamp(26px, 4vw + 8px, 52px);
-      text-shadow: 0 4px 20px rgba(0,0,0,.35);
-    }
-
-    .subtitle {
-      margin-top: 8px;
-      font-size: clamp(14px, 1.4vw + 6px, 18px);
-      color: #c9d2ff;
-      opacity: .9;
-    }
-
-    .actions {
-      display: flex;
-      gap: clamp(10px, 2vw, 18px);
-      align-items: center;
-      margin-top: clamp(14px, 2.2vw, 24px);
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      --glow: var(--accent);
-      position: relative;
-      appearance: none;
+      border-radius: 18px;
       border: 1px solid rgba(255,255,255,.12);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)) , var(--btn);
-      color: var(--text);
-      border-radius: 14px;
-      padding: 14px 22px;
-      font-weight: 700;
-      font-size: clamp(14px, 1.2vw + 6px, 18px);
-      letter-spacing: .2px;
-      cursor: pointer;
-      transition: transform .15s ease, border-color .2s ease, background .3s ease, color .2s ease;
-      box-shadow:
-        inset 0 0 0 1px rgba(255,255,255,.06),
-        0 6px 16px rgba(0,0,0,.35);
-      will-change: transform, box-shadow, filter;
-      /* По умолчанию анимация подготовлена, но остановлена (ожидание "оживления") */
-      animation: glow 2.2s ease-in-out infinite;
-      animation-play-state: paused;
+      background: rgba(255,255,255,.03);
+      min-height: 60vh;
     }
-
-    .btn.play { --glow: var(--accent); }
-    .btn.signup { --glow: var(--accent-2); }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255,255,255,.2);
-      filter: saturate(1.05);
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      border-radius: 18px;
+      background: #000;
+      transform: translateZ(0);
     }
-    .btn:active {
-      transform: translateY(0);
-      transition-duration: .05s;
-    }
-
-    /* Светящееся "дыхание" */
-    @keyframes glow {
-      0%, 100% {
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,.08),
-          0 6px 16px rgba(0,0,0,.35),
-          0 0 0px rgba(var(--glow-rgb, 110,231,255), 0),
-          0 0 0px rgba(var(--glow-rgb, 110,231,255), 0);
-      }
-      50% {
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,.12),
-          0 12px 28px rgba(0,0,0,.42),
-          0 0 18px rgba(var(--glow-rgb, 110,231,255), .55),
-          0 0 36px rgba(var(--glow-rgb, 110,231,255), .35);
-      }
-    }
-
-    /* Для зеленого свечения зададим RGB отдельно, чтобы анимация была насыщеннее */
-    .btn.signup { --glow-rgb: 139,255,177; }
-    .btn.play { --glow-rgb: 110,231,255; }
-
-    /* Активируем анимацию, когда постер «оживает» */
-    .poster.active .btn {
-      animation-play-state: running;
-    }
-     /* Легкое «дрейфующее» зерно/блик на фоне для живости */
-    .grain {
-      position: absolute;
-      inset: -20%;
+    .overlay {
       pointer-events: none;
-      mix-blend-mode: soft-light;
-      opacity: .12;
-      background-image:
-        radial-gradient(circle at 20% 30%, rgba(255,255,255,.4) 0 2px, transparent 3px),
-        radial-gradient(circle at 70% 60%, rgba(255,255,255,.25) 0 2px, transparent 3px),
-        radial-gradient(circle at 40% 80%, rgba(255,255,255,.25) 0 2px, transparent 3px);
-      animation: float 18s ease-in-out infinite alternate;
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+      border-radius: 18px;
     }
-    @keyframes float {
-      from { transform: translate3d(-2%, -1%, 0) rotate(-1deg) scale(1.02); }
-      to   { transform: translate3d(2%, 1%, 0) rotate(1deg) scale(1.03); }
+    .ar-btn {
+      pointer-events: auto;
+      position: absolute;
+      transform: translate(-50%, -50%); /* центр к центру bbox */
+      will-change: transform, width, height, opacity;
+      padding: 10px 16px;
+      border-radius: var(--btnRadius);
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      text-transform: none;
+      color: #001018;
+      white-space: nowrap;
+      user-select: none;
+      background: linear-gradient(135deg, var(--primary), #9af6ff);
+      box-shadow: var(--glow);
+      border: 1px solid rgba(255, 255, 255, .28);
+      text-shadow: 0 1px 0 rgba(255,255,255,.35);
+      transition: transform .15s ease, opacity .2s ease, box-shadow .2s ease, filter .2s ease;
+      backdrop-filter: blur(2px);
     }
-
-    /* Уважение системной настройки "уменьшить анимацию" */
-    @media (prefers-reduced-motion: reduce) {
-      .btn { animation: none !important; }
-      .grain { animation: none !important; }
+    .ar-btn.alt {
+      background: linear-gradient(135deg, var(--accent), #ff9df0);
+      box-shadow: var(--glow-accent);
+    }
+    .ar-btn:hover { filter: brightness(1.05); }
+    .legend {
+      opacity: .75;
+      font-size: 12px;
+      text-align: center;
+    }
+    canvas#grab {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <main class="poster" id="poster">
-    <div class="grain" aria-hidden="true"></div>
-
-    <header class="title">
-      Тактикус Финч
-      <div class="subtitle">Присоединяйся к шахматной школе!</div>
-    </header>
-
-    <div class="actions" role="group" aria-label="Действия постера">
-      <button class="btn play" type="button" id="playBtn" aria-label="Играть (начать игру)">Играть</button>
-      <button class="btn signup" type="button" id="signupBtn" aria-label="Записаться на турнир">Записаться</button>
+  <div class="app">
+    <div class="topbar">
+      <div class="title">AR-кнопки на постере</div>
+      <div class="controls">
+        <button id="startBtn">Включить камеру</button>
+        <div class="ghost" id="status">Ожидание…</div>
+      </div>
     </div>
-  </main>
 
+    <div class="view" id="view">
+      <video id="video" playsinline autoplay muted></video>
+      <div class="overlay" id="overlay"></div>
+    </div>
+
+    <div class="legend">
+      Наведите камеру на постер. Когда появятся слова «Играть» или «Записаться», поверх них появятся светящиеся кнопки.
+    </div>
+  </div>
+
+  <canvas id="grab"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
   <script>
-    // «Оживляем» постер: включаем свечение с лёгкой задержкой
-    window.addEventListener('DOMContentLoaded', () => {
-      const poster = document.getElementById('poster');
+    const startBtn = document.getElementById('startBtn');
+    const statusEl = document.getElementById('status');
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const grab = document.getElementById('grab');
+    const ctx = grab.getContext('2d', { willReadFrequently: true });
 
-      // Небольшая задержка для драматургии
-      setTimeout(() => {
-        poster.classList.add('active');
-      }, 350);
+    let stream = null;
+    let running = false;
+    let worker = null;
+    let lastScan = 0;
+    const SCAN_INTERVAL = 900; // мс между распознаваниями
+    const TARGET_WIDTH = 960;  // ширина кадра для OCR (скорость/точность)
 
-      // Усиливаем свечение при наведении — добавим краткий «пик»
-      const boost = (btn) => {
-        btn.addEventListener('mouseenter', () => {
-          btn.style.transition = 'filter .15s ease, transform .15s ease, box-shadow .15s ease';
-          btn.style.boxShadow =
-            'inset 0 0 0 1px rgba(255,255,255,.15), 0 14px 34px rgba(0,0,0,.5), 0 0 24px rgba(255,255,255,.15)';
+    // найдём/создадим overlay-кнопки
+    function ensureButton(id, text, isAlt) {
+      let btn = document.getElementById(id);
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = id;
+        btn.className = 'ar-btn' + (isAlt ? ' alt' : '');
+        btn.textContent = text;
+        btn.style.opacity = '0';
+        overlay.appendChild(btn);
+        if (text.toLowerCase().includes('играть')) {
+          btn.addEventListener('click', () => {
+            alert('Действие: Играть');
+            // TODO: Вставьте вашу логику запуска игры
+          });
+        } else {
+          btn.addEventListener('click', () => {
+            alert('Действие: Записаться');
+            // TODO: Вставьте вашу логику записи/формы
+          });
+        }
+      }
+      return btn;
+    }
+
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+    }
+
+    async function initOCR() {
+      if (worker) return;
+      setStatus('Загрузка OCR…');
+      worker = await Tesseract.createWorker({
+        logger: m => { / console.log(m); / }
+      });
+      // Загружаем русский; при желании можно добавить 'eng'
+      await worker.loadLanguage('rus');
+      await worker.initialize('rus');
+      await worker.setParameters({
+        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK, // текстовый блок на постере
+        preserve_interword_spaces: '1'
+      });
+      setStatus('OCR готов');
+    }
+
+    async function startCamera() {
+      try {
+        setStatus('Запрос камеры…');
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          },
+          audio: false
         });
-        btn.addEventListener('mouseleave', () => {
-          btn.style.boxShadow = '';
-        });
-      };
+        video.srcObject = stream;
+        await video.play();
+        await initOCR();
+        running = true;
+        setStatus('Поиск слов на постере…');
+        requestAnimationFrame(tick);
+      } catch (e) {
+        console.error(e);
+        setStatus('Ошибка доступа к камере');
+      }
+    }
 
-      boost(document.getElementById('playBtn'));
-      boost(document.getElementById('signupBtn'));
-    });
+    function fitGrabCanvas() {
+      const vw = video.videoWidth || 1280;
+      const vh = video.videoHeight || 720;
+      if (!vw || !vh) return false;
+
+      const scale = TARGET_WIDTH / vw;
+      const w = Math.round(vw * scale);
+      const h = Math.round(vh * scale);
+      grab.width = w;
+      grab.height = h;
+      return { vw, vh, w, h,scale };
+    }
+
+    function updateOverlaySize() {
+      // удерживаем overlay поверх видео
+      const rect = video.getBoundingClientRect();
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+      overlay.style.left = video.offsetLeft + 'px';
+      overlay.style.top = video.offsetTop + 'px';
+    }
+
+    window.addEventListener('resize', updateOverlaySize);
+
+    async function scanFrame() {
+      const dims = fitGrabCanvas();
+      if (!dims) return null;
+
+      // рисуем текущий кадр
+      ctx.drawImage(video, 0, 0, dims.w, dims.h);
+
+      const { data } = await worker.recognize(grab);
+      return { ocr: data, dims };
+    }
+
+    function normalize(text) {
+      return (text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '').trim();
+    }
+
+    function placeButton(btn, bbox, dims) {
+      // bbox от Tesseract в пикселях канваса (dims.w/dims.h)
+      const rect = video.getBoundingClientRect();
+
+      // коэффициенты перевода из OCR-канваса в отображаемый видео-элемент
+      const scaleX = rect.width / dims.w;
+      const scaleY = rect.height / dims.h;
+
+      const cx = (bbox.x0 + bbox.x1) / 2;
+      const cy = (bbox.y0 + bbox.y1) / 2;
+      const bw = (bbox.x1 - bbox.x0);
+      const bh = (bbox.y1 - bbox.y0);
+
+      const x = cx * scaleX;
+      const y = cy * scaleY;
+
+      // ширина кнопки близка к ширине слова, но с ограничениями
+      const btnW = Math.max(120, Math.min(280, bw * scaleX * 1.15));
+      const btnH = Math.max(40, Math.min(68, bh * scaleY * 1.35));
+
+      btn.style.width = btnW + 'px';
+      btn.style.height = btnH + 'px';
+      btn.style.lineHeight = btnH + 'px'; // визуальный центр текста
+      btn.style.left = x + 'px';
+      btn.style.top = y + 'px';
+      btn.style.opacity = '1';
+    }
+
+    function hideMissing(found) {
+      const ids = ['btn-play', 'btn-sign'];
+      for (const id of ids) {
+        if (!found.has(id)) {
+          const el = document.getElementById(id);
+          if (el) el.style.opacity = '0';
+        }
+      }
+    }
+
+    async function tick(now) {
+      if (!running) return;
+
+      // Обновляем размер overlay под текущее видео
+      updateOverlaySize();
+
+      if (!lastScan || now - lastScan > SCAN_INTERVAL) {
+        lastScan = now;
+        try {
+          const res = await scanFrame();
+          if (res) {
+            const { ocr, dims } = res;
+            const found = new Set();
+
+            // Перебираем слова из OCR
+            for (const w of ocr.words || []) {
+              const txt = normalize(w.text);
+              if (!txt) continue;
+
+              if (txt === 'играть') {
+                const btn = ensureButton('btn-play', 'Играть', false);
+                placeButton(btn, w.bbox, dims);
+                found.add('btn-play');
+              }
+              if (txt === 'записаться') {
+                const btn = ensureButton('btn-sign', 'Записаться', true);
+                placeButton(btn, w.bbox, dims);
+                found.add('btn-sign');
+              }
+            }
+            hideMissing(found);
+            setStatus(found.size ? 'Найдено: ' + [...found].map(id => id === 'btn-play' ? 'Играть' : 'Записаться').join(', ') : 'Ищем слова…');
+          }
+        } catch (e) {
+          console.warn('OCR error:', e);
+          setStatus('OCR: ошибка, повтор…');
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    startBtn.addEventListener('click', startCamera);
+
+    // Автоинициализация на Android после пользовательского взаимодействия с экраном:
+    document.addEventListener('touchstart', () => {}, { passive: true });
   </script>
 </body>
 </html>
