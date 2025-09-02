@@ -15,11 +15,12 @@
     <script src="https://unpkg.com/aframe-html-shader@0.2.0/dist/aframe-html-shader.min.js"></script>
 
     <style>
-      /* Скрываем стандартные UI элементы */
+      /* Скрываем стандартные UI элементы MindAR */
       .ar-button { display: none; }
 
       /* --- СТИЛИ ДЛЯ НАШИХ КНОПОК (взяты из вашего второго примера) --- */
       :root {
+        /* Определяем переменные цвета для кнопок */
         --accent: #6ee7ff;
         --accent-2: #8bffb1;
         --btn-bg: #12162e;
@@ -32,10 +33,11 @@
         top: 0; left: 0;
         width: 1px; height: 1px;
         overflow: hidden;
-        z-index: -1; /* Прячем от глаз пользователя */
+        z-index: -1; /* Прячем от глаз пользователя, но оставляем в DOM */
         opacity: 0;
       }
 
+      /* Основной стиль кнопки из вашего примера */
       .btn {
         --glow: var(--accent);
         position: relative;
@@ -43,7 +45,8 @@
         background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)) , var(--btn-bg);
         color: var(--text);
         border-radius: 14px;
-        padding: 14px 28px; /* Немного увеличим паддинг для лучшей читаемости */
+        /* Увеличим паддинг и размер шрифта для лучшей читаемости в AR */
+        padding: 14px 28px; 
         font-weight: 700;
         font-size: 24px; /* Используем фиксированный размер для предсказуемого рендера */
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
@@ -52,14 +55,15 @@
         box-shadow:
           inset 0 0 0 1px rgba(255,255,255,.06),
           0 6px 16px rgba(0,0,0,.35);
-        /* Анимация свечения включена постоянно */
+        /* Анимация свечения включена постоянно для "живого" эффекта в AR */
         animation: glow 2.2s ease-in-out infinite;
       }
 
+      /* Определяем цвета свечения для каждой кнопки */
       .btn.play { --glow: var(--accent); --glow-rgb: 110,231,255; }
       .btn.signup { --glow: var(--accent-2); --glow-rgb: 139,255,177; }
       
-      /* Анимация "дыхания" светом */
+      /* Анимация "дыхания" светом, адаптированная для постоянной работы */
       @keyframes glow {
         0%, 100% {
           box-shadow:
@@ -69,8 +73,7 @@
             0 0 0px rgba(var(--glow-rgb, 110,231,255), 0);
         }
         50% {
-          box-shadow:
-            inset 0 0 0 1px rgba(255,255,255,.12),
+          box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),
             0 12px 28px rgba(0,0,0,.42),
             0 0 18px rgba(var(--glow-rgb, 110,231,255), .55),
             0 0 36px rgba(var(--glow-rgb, 110,231,255), .35);
@@ -98,6 +101,7 @@
       device-orientation-permission-ui="enabled: false"
       renderer="colorManagement: true"
     >
+      <!-- Добавляем курсор, чтобы клики с мыши/экрана работали -->
       <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
@@ -107,8 +111,8 @@
           Теперь это плоскость с материалом, который рендерит наш HTML.
           - shader: html — используем HTML-шейдер.
           - target: #html-play-button — указываем, какой HTML-элемент рисовать.
-          - transparent: true — чтобы скругленные углы были прозрачными.
-          - fps: 30 — частота обновления текстуры для плавной анимации.
+          - transparent: true — чтобы скругленные углы кнопки были прозрачными.
+          - fps: 30 — частота обновления текстуры для плавной анимации свечения.
         -->
         <a-plane 
           id="play-button" 
@@ -134,7 +138,8 @@
     
     <script>
       // Этот скрипт остается почти без изменений!
-      // Он по-прежнему слушает клики на 3D-объектах (a-plane).
+      // Он по-прежнему слушает клики на 3D-объектах (a-plane),
+      // так как мы дали им те же ID.
       document.addEventListener('DOMContentLoaded', () => {
         const playButton = document.querySelector("#play-button");
         const signupButton = document.querySelector("#signup-button");
