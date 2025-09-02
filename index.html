@@ -1,163 +1,135 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Живой постер | Шахматный клуб</title>
-
-    <!-- Подключаем библиотеки A-Frame и MindAR -->
+    <title>Волшебный постер</title>
+    
+    <!-- Подключаем A-Frame — фреймворк для 3D/VR/AR -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    
+    <!-- Подключаем MindAR для распознавания изображений -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        /* Стили для кнопок и оверлея */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        /* Контейнер для наших кнопок. Он будет появляться и исчезать. */
-        #ui-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            display: flex;
-            justify-content: space-evenly; /* Равномерно распределяет кнопки по горизонтали */
-            align-items: center; /* Центрирует кнопки по вертикали */
-            pointer-events: none; /* По умолчанию контейнер не перехватывает клики */
-            visibility: hidden; /* Изначально скрыт */
-            opacity: 0;
-            transition: opacity 0.5s, visibility 0.5s;
-        }
-
-        #ui-container.visible {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .button-wrapper {
-             /* Включаем Flexbox */
-  display: flex;
-
-  /* Располагаем элементы в колонку (вертикально) */
-  flex-direction: column;
-
-  /* (Опционально) Центрируем кнопки по горизонтали */
-  align-items: center;
-
-  /* (Опционально) Добавляем расстояние между кнопками */
-  gap: 15px; /* Современный способ, лучше чем margin */
-}
-
-/* (Опционально) Можно добавить общие стили для кнопок для красоты */
-.button-wrapper .btn {
-  padding: 10px 20px;
-  font-size: 16px;
-  min-width: 150px; /* Чтобы кнопки были одинаковой ширины */
-  cursor: pointer;
-        }
-        
-        .ar-button {
-            padding: 20px 40px;
-            font-size: 24px;
-            font-weight: bold;
-            color: white;
-            background: linear-gradient(145deg, #5a4b9a, #8a6cff);
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 8px 25px rgba(138, 108, 255, 0.6);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            animation: pulse-glow 2s infinite ease-in-out;
-        }
-
-        .ar-button:hover, .ar-button:active {
-            transform: scale(1.05);
-            box-shadow: 0 12px 35px rgba(138, 108, 255, 0.8);
-        }
-
-        /* Анимация пульсации и свечения */
-        @keyframes pulse-glow {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 8px 25px rgba(138, 108, 255,0.6);
-            }
-            50% {
-                transform: scale(1.03);
-                box-shadow: 0 10px 30px rgba(200, 180, 255, 0.8);
-            }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 8px 25px rgba(138, 108, 255, 0.6);
-            }
-        }
+      /* Стиль для скрытия стандартных кнопок UI, если они не нужны */
+      .ar-button {
+        display: none;
+      }
     </style>
-</head>
-<body>
-    <!-- Контейнер для кнопок, который будет показан поверх видео -->
-    <div id="ui-container">
-        <div class="button-wrapper">
-            <button id="play-button" class="ar-button">Играть</button>
-        </div>
-        <div class="button-wrapper">
-            <button id="signup-button" class="ar-button">Записаться</button>
-        </div>
-    </div>
 
-    <!-- AR-сцена MindAR -->
-    <!-- imageTargetSrc: путь к вашему файлу с маркерами -->
-    <!-- autoStart: true; uiScanning: "yes"; — запускает камеру и показывает анимацию сканирования -->
-    <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: yes; filterMinCF:0.0001; filterBeta: 0.001;"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        color-space="sRGB"
-        renderer="colorManagement: true, physicallyCorrectLights"
+  </head>
+  <body>
+    <!-- 
+      Основная AR-сцена.
+      mindar-image: активирует режим распознавания изображений.
+      imageTargetSrc: путь к вашему файлу с целями. Убедитесь, что он в той же папке.
+      uiScanning, uiLoading: показывает стандартный интерфейс "Поиск цели" и "Загрузка".
+      vr-mode-ui, device-orientation-permission-ui: отключаем лишние UI для чистого AR-опыта.
+    -->
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets.mind; uiScanning: yes; uiLoading: yes;" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false"
+      renderer="colorManagement: true"
     >
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <!-- Добавляем "курсор", чтобы можно было кликать на объекты в AR -->
+      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" ></a-camera>
 
-        <!-- Сущность, привязанная к вашему постеру. targetIndex="0" означает первый маркер в файле targets.mind -->
-        <!-- Она нам нужна, чтобы отслеживать события, но сами кнопки мы рендерим в HTML -->
-        <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+      <!-- 
+        Контейнер для контента, который появится при распознавании постера.
+        targetIndex: 0 — означает, что контент привязан к первому изображению в вашем targets.mind.
+      -->
+      <a-entity mindar-image-target="targetIndex: 0">
+        
+        <!-- КНОПКА "ИГРАТЬ" -->
+        <!-- a-plane — это плоский прямоугольник, который мы используем как кнопку -->
+        <a-plane 
+          id="play-button" 
+          class="clickable"
+          color="#249c49"
+          height="0.18" 
+          width="0.6"
+          position="0 0.2 0" 
+          material="transparent: true; opacity: 0.9"
+          text="value: Играть; color: white; align: center; width: 2.5; wrapCount: 10;"
+        >
+          <!-- Анимация пульсации: меняем размер от 1 до 1.1 и обратно -->
+          <a-animation 
+            attribute="scale" 
+            dur="1500" 
+            from="1 1 1" 
+            to="1.1 1.1 1.1" 
+            direction="alternate" 
+            repeat="indefinite"
+            easing="ease-in-out-sine"
+          ></a-animation>
+          <!-- Анимация свечения (через прозрачность материала) -->
+           <a-animation 
+            attribute="material.opacity" 
+            dur="1500" 
+            from="0.8" 
+            to="1" 
+            direction="alternate" 
+            repeat="indefinite"
+            easing="ease-in-out-sine"
+          ></a-animation>
+        </a-plane>
+
+        <!-- КНОПКА "ЗАПИСАТЬСЯ" -->
+        <a-plane 
+          id="signup-button" 
+          class="clickable"
+          color="#0088cc"
+          height="0.18" 
+          width="0.6"
+          position="0 -0.1 0"
+          material="transparent: true; opacity: 0.9"
+          text="value: Записаться; color: white; align: center; width: 2.5; wrapCount: 12;"
+        >
+           <!-- Анимация пульсации -->
+          <a-animation 
+            attribute="scale" 
+            dur="1500" 
+            from="1 1 1" to="1.1 1.1 1.1" 
+            direction="alternate" 
+            repeat="indefinite"
+            easing="ease-in-out-sine"
+          ></a-animation>
+          <!-- Анимация свечения -->
+           <a-animation 
+            attribute="material.opacity" 
+            dur="1500" 
+            from="0.8" 
+            to="1" 
+            direction="alternate" 
+            repeat="indefinite"
+            easing="ease-in-out-sine"
+          ></a-animation>
+        </a-plane>
+
+      </a-entity>
     </a-scene>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
-            const uiContainer = document.getElementById('ui-container');
-            const playButton = document.getElementById('play-button');
-            const signupButton = document.getElementById('signup-button');
+      // Этот скрипт делает кнопки кликабельными
+      document.addEventListener('DOMContentLoaded', () => {
+        const playButton = document.querySelector("#play-button");
+        const signupButton = document.querySelector("#signup-button");
 
-            // URL для редиректов
-            const playUrl = 'https://lichess.org/ru/learn';
-            const signupUrl = 'https://t.me/m/s_Zqu21RY2Yy';
-
-            // Событие, когда маркер (постер) найден
-            sceneEl.addEventListener('targetFound', event => {
-                console.log("Постер найден!");
-                uiContainer.classList.add('visible');
-            });
-
-            // Событие, когда маркер (постер) потерян
-            sceneEl.addEventListener('targetLost', event => {
-                console.log("Постер потерян!");
-                uiContainer.classList.remove('visible');
-            });
-
-            // Обработчики нажатий на кнопки
-            playButton.addEventListener('click', () => {
-                window.location.href = playUrl;
-            });
-
-            signupButton.addEventListener('click', () => {
-                window.location.href = signupUrl;
-            });
+        // Обработчик для кнопки "Играть"
+        playButton.addEventListener("click", event => {
+          console.log("Play button clicked");
+          window.location.href = "https://lichess.org/ru/learn";
         });
+
+        // Обработчик для кнопки "Записаться"
+        signupButton.addEventListener("click", event => {
+          console.log("Signup button clicked");
+          window.location.href = "https://t.me/m/s_Zqu21RY2Yy";
+        });
+      });
     </script>
-</body>
+
+  </body>
 </html>
