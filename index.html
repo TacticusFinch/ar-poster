@@ -1,164 +1,84 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta charset="utf-8">
-    <title>Волшебный постер</title>
-    
-    <!-- 1. Подключаем A-Frame -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    
-    <!-- 2. Подключаем MindAR для распознавания изображений -->
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>AR-постер «Магический шахматный маг»</title>
 
-    <!-- 3. НОВЫЙ СКРИПТ: Подключаем A-Frame HTML Shader для рендера HTML на текстуру -->
-    <script src="https://unpkg.com/aframe-html-shader@0.2.0/dist/aframe-html-shader.min.js"></script>
+  <!-- Правильное масштабирование на мобильных -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
-    <style>
-      /* Скрываем стандартные UI элементы MindAR */
-      .ar-button { display: none; }
+  <!-- A-Frame и MindAR -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
 
-      /* --- СТИЛИ ДЛЯ НАШИХ КНОПОК (взяты из вашего второго примера) --- */
-      :root {
-        /* Определяем переменные цвета для кнопок */
-        --accent: #6ee7ff;
-        --accent-2: #8bffb1;
-        --btn-bg: #12162e;
-        --text: #e9ecff;
-      }
-      
-      /* Контейнер для скрытых HTML-элементов, которые мы будем рендерить на 3D-плоскости */
-      #html-assets {
-        position: fixed;
-        top: 0; left: 0;
-        width: 1px; height: 1px;
-        overflow: hidden;
-        z-index: -1; /* Прячем от глаз пользователя, но оставляем в DOM */
-        opacity: 0;
-      }
+  <style>
+    html,body {margin:0;overflow:hidden;background:#000;}
+    /* Выравниваем канвас по окну, убираем артефакты прокрутки */
+    #ar-scene canvas {position:absolute;top:0;left:0;}
+  </style>
+</head>
 
-      /* Основной стиль кнопки из вашего примера */
-      .btn {
-        --glow: var(--accent);
-        position: relative;
-        border: 1px solid rgba(255,255,255,.12);
-        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)) , var(--btn-bg);
-        color: var(--text);
-        border-radius: 14px;
-        /* Увеличим паддинг и размер шрифта для лучшей читаемости в AR */
-        padding: 14px 28px; 
-        font-weight: 700;
-        font-size: 24px; /* Используем фиксированный размер для предсказуемого рендера */
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
-        letter-spacing: .2px;
-        cursor: pointer;
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,.06),
-          0 6px 16px rgba(0,0,0,.35);
-        /* Анимация свечения включена постоянно для "живого" эффекта в AR */
-        animation: glow 2.2s ease-in-out infinite;
-      }
+<body>
+  <!-- AR-сцена -->
+  <a-scene id="ar-scene"
+           mindar-image="imageTargetSrc: targets.mind"
+           embedded
+           color-space="sRGB"
+           renderer="colorManagement:true,physicallyCorrectLights"
+           vr-mode-ui="enabled:false"
+           device-orientation-permission-ui="enabled:true">
 
-      /* Определяем цвета свечения для каждой кнопки */
-      .btn.play { --glow: var(--accent); --glow-rgb: 110,231,255; }
-      .btn.signup { --glow: var(--accent-2); --glow-rgb: 139,255,177; }
-      
-      /* Анимация "дыхания" светом, адаптированная для постоянной работы */
-      @keyframes glow {
-        0%, 100% {
-          box-shadow:
-            inset 0 0 0 1px rgba(255,255,255,.08),
-            0 6px 16px rgba(0,0,0,.35),
-            0 0 0px rgba(var(--glow-rgb, 110,231,255), 0),
-            0 0 0px rgba(var(--glow-rgb, 110,231,255), 0);
-        }
-        50% {
-          box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),
-            0 12px 28px rgba(0,0,0,.42),
-            0 0 18px rgba(var(--glow-rgb, 110,231,255), .55),
-            0 0 36px rgba(var(--glow-rgb, 110,231,255), .35);
-        }
-      }
-    </style>
+    <!-- Камера от MindAR -->
+    <a-camera look-controls="enabled:false"></a-camera>
 
-  </head>
-  <body>
+    <!-- Привязка ко всему постеру (0-й таргет в targets.mind) -->
+    <a-entity mindar-image-target="targetIndex:0">
 
-    <!--
-      СКРЫТЫЕ HTML-ЭЛЕМЕНТЫ
-      Это "исходники" для наших 3D-кнопок. aframe-html-shader будет их использовать.
-    -->
-    <div id="html-assets">
-      <div id="html-play-button" class="btn play">Играть</div>
-      <div id="html-signup-button" class="btn signup">Записаться</div>
-    </div>
+      <!-- Кнопка «Играть» -->
+      <a-plane id="playBtn"
+               class="clickable"
+               position="0 0.35 0"   <!-- Чуть выше центра -->
+               width="0.9" height="0.25"
+               material="color:#2b9aff;opacity:0.85;shader:flat"
+               animation="property:scale;dir:alternate;dur:800;from:1 1 1;to:1.1 1.1 1.1;loop:true;easing:easeInOutSine">
+        <a-text value="Играть" align="center" color="#fff" width="2" position="0 0 0.01"></a-text>
+      </a-plane>
 
+      <!-- Кнопка «Записаться» -->
+      <a-plane id="signBtn"
+               class="clickable"
+               position="0 -0.10 0"  <!-- Чуть ниже центра -->
+               width="0.9" height="0.25"
+               material="color:#ff6c00;opacity:0.85;shader:flat"
+               animation="property:scale;dir:alternate;dur:800;delay:400;from:1 1 1;to:1.1 1.1 1.1;loop:true;easing:easeInOutSine">
+        <a-text value="Записаться" align="center" color="#fff" width="2" position="0 0 0.01"></a-text>
+      </a-plane>
 
-    <!-- ОСНОВНАЯ AR-СЦЕНА -->
-    <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; uiScanning: yes; uiLoading: yes;" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false"
-      renderer="colorManagement: true"
-    >
-      <!-- Добавляем курсор, чтобы клики с мыши/экрана работали -->
-      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+    </a-entity>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        
-        <!-- 
-          ИЗМЕНЕННАЯ КНОПКА "ИГРАТЬ"
-          Теперь это плоскость с материалом, который рендерит наш HTML.
-          - shader: html — используем HTML-шейдер.
-          - target: #html-play-button — указываем, какой HTML-элемент рисовать.
-          - transparent: true — чтобы скругленные углы кнопки были прозрачными.
-          - fps: 30 — частота обновления текстуры для плавной анимации свечения.
-        -->
-        <a-plane 
-          id="play-button" 
-          class="clickable"
-          position="0 0.05 0"
-          height="0.15" 
-          width="0.55"
-          material="shader: html; target: #html-play-button; transparent: true; fps: 30;"
-        ></a-plane>
+    <!-- Курсор-луч, чтобы клики работали как на мобильном, так и мышкой -->
+    <a-entity cursor="fuse:false;rayOrigin:mouse"
+              raycaster="objects:.clickable"></a-entity>
+  </a-scene>
 
-        <!-- ИЗМЕНЕННАЯ КНОПКА "ЗАПИСАТЬСЯ" -->
-        <a-plane 
-          id="signup-button" 
-          class="clickable"
-          position="0 -0.15 0"
-          height="0.15" 
-          width="0.55"
-          material="shader: html; target: #html-signup-button; transparent: true; fps: 30;"
-        ></a-plane>
-
-      </a-entity>
-    </a-scene>
-    
-    <script>
-      // Этот скрипт остается почти без изменений!
-      // Он по-прежнему слушает клики на 3D-объектах (a-plane),
-      // так как мы дали им те же ID.
-      document.addEventListener('DOMContentLoaded', () => {
-        const playButton = document.querySelector("#play-button");
-        const signupButton = document.querySelector("#signup-button");
-
-        // Обработчик для кнопки "Играть"
-        playButton.addEventListener("click", event => {
-          console.log("Play button clicked");
-          // Перенаправление на страницу игры
-          window.location.href = "https://lichess.org/ru/learn";
+  <!-- Слушатели нажатий -->
+  <script>
+    AFRAME.registerComponent('open-link-on-click', {
+      schema: {url: {type:'string'}},
+      init() {
+        this.el.addEventListener('click', () => {
+          window.location.href = this.data.url;
         });
+      }
+    });
 
-        // Обработчик для кнопки "Записаться"
-        signupButton.addEventListener("click", event => {
-          console.log("Signup button clicked");
-          // Перенаправление на Telegram
-          window.location.href = "https://t.me/m/s_Zqu21RY2Yy";
-        });
-      });
-    </script>
-
-  </body>
+    // Привязываем компонент к кнопкам
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('#playBtn')
+              .setAttribute('open-link-on-click','url:https://lichess.org/ru/learn');
+      document.querySelector('#signBtn')
+              .setAttribute('open-link-on-click','url:https://t.me/m/s_Zqu21RY2Yy');
+    });
+  </script>
+</body>
 </html>
