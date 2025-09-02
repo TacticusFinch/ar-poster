@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Живой Постер - Шахматная Школа</title>
+    <title>Волшебный Постер</title>
     <style>
-        /* Убираем все отступы и делаем так, чтобы контент занимал весь экран */
+        /* Убираем отступы и скрываем прокрутку */
         body, html {
             margin: 0;
             padding: 0;
@@ -16,192 +16,216 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
         }
 
-        /* Контейнер для видео и холста */
+        /* Контейнер для видео и оверлея */
         #container {
             position: relative;
             width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
-        /* Видео с камеры и холст для эффектов будут наложены друг на друга */
-        #video, #canvas {
+        /* Элемент видео с камеры */
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Заполняет весь экран, обрезая лишнее */
+        }
+
+        /* Контейнер для интерактивных элементов */
+        #overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Видео будет заполнять весь экран без искажений */
+            pointer-events: none; /* Позволяет кликать "сквозь" оверлей, если на нем нет кнопок */
         }
-
-        /* Холст должен быть поверх видео */
-        #canvas {
-            z-index: 10;
-        }
-
-        /* Информационное сообщение для пользователя */
-        #info {
+        
+        /* Стиль для подсвеченной кнопки */
+        .interactive-button {
             position: absolute;
-            top: 20px;
+            border: 3px solid rgba(255, 223, 0, 0.7);
+            border-radius: 12px;
+            background-color: rgba(255, 223, 0, 0.2);
+            box-shadow: 0 0 20px 8px rgba(255, 223, 0, 0.8);
+            cursor: pointer;
+            pointer-events: all; /* Делаем кнопки кликабельными */
+            transition: all 0.2s ease-in-out;
+            animation: pulse-glow 2.5s infinite ease-in-out;
+        }
+
+        .interactive-button:hover {
+             transform: scale(1.05);
+             box-shadow: 0 0 30px 12px rgba(255, 200, 0, 1);
+        }
+
+        /* Анимация пульсации */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 20px 8px rgba(255, 223, 0, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 25px 12px rgba(255, 223, 0, 0.9);
+            }
+            100% {
+                box-shadow: 0 0 20px 8px rgba(255, 223, 0, 0.7);
+            }
+        }
+
+        /* Статус-бар для пользователя */
+        #status {
+            position: absolute;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 10px 20px;
-            border-radius: 10px;
-            z-index: 20;
-            text-align: center;
+            border-radius: 20px;
             font-size: 16px;
+            z-index: 10;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
     <div id="container">
-        <!-- Элемент для отображения видео с камеры -->
-        <video id="video" playsinline autoplay muted></video>
-        <!-- Холст (canvas) для рисования эффектов поверх видео -->
-        <canvas id="canvas"></canvas>
+        <video id="video" autoplay playsinline muted></video>
+        <div id="overlay"></div>
     </div>
 
-    <!-- Информационное сообщение для пользователя -->
-    <div id="info">Запускаем камеру...</div>
+    <div id="status">Включаю волшебную камеру...</div>
+
+    <!-- Подключаем библиотеку Tesseract.js с CDN -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
     <script>
-        // Получаем доступ к элементам на странице
         const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const info = document.getElementById('info');
-
-        // Определяем наши цели: текст и соответствующие ссылки
-        const targets = {
-            'играть': 'https://lichess.org/ru/learn',
-            'записаться': 'https://t.me/m/s_Zqu21RY2Yy'
+        const overlay = document.getElementById('overlay');
+        const statusDiv = document.getElementById('status');
+        
+        // Целевые слова и ссылки, куда они ведут
+        const TARGETS = {
+            'Играть': 'https://lichess.org/ru/learn',
+            'Записаться': 'https://t.me/m/s_Zqu21RY2Yy'
         };
+        const TARGET_WORDS = Object.keys(TARGETS);
 
-        // Массив для хранения активных, подсвеченных областей
-        let activeTargets = [];
+        let worker; // Переменная для Tesseract worker
+        let isRecognizing = false; // Флаг, чтобы избежать параллельных запусков
 
-        // 1. Проверяем, поддерживает ли браузер распознавание текста
-        if (!('TextDetector' in window)) {
-            info.innerHTML = 'К сожалению, ваш браузер не поддерживает распознавание текста. <br>Попробуйте Google Chrome на Android.';
-        } else {
-            // 2. Если поддержка есть, инициализируем детектор текста
-            const textDetector = new TextDetector();
-            startCamera();
+        // Функция для обновления статуса
+        function updateStatus(text) {
+            console.log(text);
+            statusDiv.textContent = text;
         }
 
-        // 3. Функция для запуска камеры
-        async function startCamera() {
+        // Основная функция распознавания
+        async function recognizeText() {
+            if (isRecognizing) return;
+            isRecognizing = true;
+            
+            updateStatus('Сканирую постер...');
+            overlay.innerHTML = ''; // Очищаем старые кнопки
+
             try {
-                // Запрашиваем доступ к задней камере ('environment')
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' },
+                // Распознаем текст на текущем кадре видео
+                const { data } = await worker.recognize(video);
+                updateStatus('Постер просканирован. Ищу кнопки...');
+
+                let found = false;
+                // Проходим по всем найденным словам
+                for (const word of data.words) {
+                    const cleanText = word.text.trim();
+                    // Проверяем, есть ли слово в нашем списке целей
+                    if (TARGET_WORDS.includes(cleanText)) {
+                        found = true;
+                        createInteractiveButton(word, cleanText);
+                    }
+                }
+                
+                if (found) {
+                    updateStatus('Кнопки найдены! Нажмите на них.');
+                } else {
+                     updateStatus('Наведите камеру на постер. Повторный скан через 5 сек...');
+                }
+
+            } catch (error) {
+                console.error('Ошибка распознавания:', error);
+                updateStatus('Ошибка. Попробуйте перезагрузить страницу.');
+            } finally {
+                isRecognizing = false;
+            }
+        }
+
+        // Функция создания интерактивной кнопки поверх видео
+        function createInteractiveButton(wordData, text) {
+            const button = document.createElement('div');
+            button.className = 'interactive-button';
+
+            // Координаты от Tesseract даются относительно размера кадра.
+            // Нам нужно их масштабировать под размер видео на экране.
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            const clientWidth = video.clientWidth;
+            const clientHeight = video.clientHeight;
+
+            const scaleX = clientWidth / videoWidth;
+            const scaleY = clientHeight / videoHeight;
+
+            const bbox = wordData.bbox;
+            button.style.left = `${bbox.x0 * scaleX}px`;
+            button.style.top = `${bbox.y0 * scaleY}px`;
+            button.style.width = `${(bbox.x1 - bbox.x0) * scaleX}px`;
+            button.style.height = `${(bbox.y1 - bbox.y0) * scaleY}px`;
+            
+            // Добавляем действие по клику
+            button.onclick = () => {
+                updateStatus(`Переход по ссылке для "${text}"...`);
+                window.location.href = TARGETS[text];
+            };
+
+            overlay.appendChild(button);
+            console.log(`Создана кнопка для "${text}"`);
+        }
+        
+        // Главная функция запуска
+        async function main() {
+            try {
+                // 1. Получаем доступ к камере
+                const constraints = {
+                    video: {
+                        facingMode: 'environment' // 'environment' - задняя камера
+                    },
                     audio: false
-                });
-
-                // Передаем видеопоток в наш <video> элемент
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = stream;
+                
+                video.onloadedmetadata = async () => {
+                    updateStatus('Камера активна. Готовлю распознавание...');
 
-                // Как только видео загрузится, начнем обработку
-                video.onloadedmetadata = () => {
-                    info.textContent = 'Наведите камеру на постер';
-                    // Устанавливаем размеры холста такими же, как у видео
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
+                    // 2. Инициализируем Tesseract.js Worker для русского языка
+                    worker = await Tesseract.createWorker('rus', 1, {
+                        logger: m => console.log(m) // Для отладки в консоли
+                    });
                     
-                    // Запускаем бесконечный цикл распознавания
-                    detectLoop();
+                    updateStatus('Наведите камеру на постер.');
+                    
+                    // 3. Запускаем цикл распознавания каждые 5 секунд
+                    // Чаще не стоит, т.к. OCR - ресурсоемкий процесс
+                    setInterval(recognizeText, 5000);
+                    recognizeText(); // Первый запуск сразу
                 };
 
             } catch (err) {
-                console.error("Ошибка доступа к камере: ", err);
-                info.textContent = 'Не удалось получить доступ к камере. Пожалуйста, разрешите его.';
+                console.error("Ошибка доступа к камере:", err);
+                updateStatus('Не удалось получить доступ к камере. Проверьте разрешения.');
             }
         }
 
-        // 4. Основной цикл распознавания и отрисовки
-        async function detectLoop() {
-            try {
-                // Распознаем текст на текущем кадре видео
-                const detectedTexts = await textDetector.detect(video);
-                
-                // Очищаем холст перед новой отрисовкой
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                activeTargets = []; // Сбрасываем активные цели
-
-                if (detectedTexts.length > 0) {
-                    detectedTexts.forEach(text => {
-                        const detectedWord = text.rawValue.toLowerCase().trim();
-                        
-                        // Проверяем, есть ли распознанное слово в наших целях
-                        if (targets[detectedWord]) {
-                            const boundingBox = text.boundingBox;
-                            
-                            // Сохраняем активную цель для обработки кликов
-                            activeTargets.push({
-                                word: detectedWord,
-                                box: boundingBox,
-                                url: targets[detectedWord]
-                            });
-
-                            // Рисуем красивый эффект подсветки
-                            drawHighlight(boundingBox);
-                        }
-                    });
-                }
-            } catch (err) {
-                console.error("Ошибка при распознавании текста:", err);
-            }
-
-            // Запрашиваем следующий кадр для анимации
-            requestAnimationFrame(detectLoop);
-        }
-
-        // 5. Функция для отрисовки эффекта подсветки
-        function drawHighlight(box) {
-            // Настройки эффекта свечения
-            ctx.shadowColor = '#00f6ff'; // Цвет свечения (голубой, как магия)
-            ctx.shadowBlur = 20; // Сила размытия свечения
-
-            // Настройки полупрозрачного прямоугольника
-            ctx.fillStyle = 'rgba(0, 246, 255, 0.3)'; // Цвет заливки
-            ctx.strokeStyle = 'rgba(0, 246, 255, 0.8)'; // Цвет обводки
-            ctx.lineWidth = 3;
-
-            // Рисуем прямоугольник по координатам, полученным от детектора
-            ctx.beginPath();
-            ctx.rect(box.x, box.y, box.width, box.height);
-            ctx.fill();
-            ctx.stroke();
-
-            // Сбрасываем тень, чтобы она не применялась к другим элементам
-            ctx.shadowBlur = 0;
-        }
-
-        // 6. Обработка кликов по холсту (canvas)
-        canvas.addEventListener('click', (event) => {
-            // Получаем координаты клика относительно холста
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            const x = (event.clientX - rect.left) * scaleX;
-            const y = (event.clientY - rect.top) * scaleY;
-
-            // Проверяем, попал ли клик в одну из активных областей
-            for (const target of activeTargets) {
-                const box = target.box;
-                if (x >= box.x && x <= box.x + box.width && y >= box.y && y <= box.y + box.height) {
-                    info.textContent = `Переходим по ссылке для "${target.word}"...`;
-                    // Перенаправляем пользователя по нужной ссылке
-                    window.location.href = target.url;
-                    return; // Выходим из цикла после первого совпадения
-                }
-            }
-        });
+        // Запускаем все при загрузке страницы
+        window.onload = main;
     </script>
 </body>
 </html>
