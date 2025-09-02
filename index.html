@@ -1,174 +1,201 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Оживлённый постер — Видео + Кнопки</title>
-
-  <!-- A-Frame и MindAR (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Постер — Играть / Записаться</title>
   <style>
-    html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    /* Оверлей с кнопками */
-    .ui {
-      position: fixed; left: 0; right: 0; bottom: 16px;
-      display: flex; gap: 12px; justify-content: center; align-items: center;
-      opacity: 0; pointer-events: none; transition: opacity .4s ease;
-      padding: 0 16px;
+    :root {
+      --bg1: #0f1226;
+      --bg2: #1b1f3b;
+      --accent: #6ee7ff;
+      --accent-2: #8bffb1;
+      --btn: #12162e;
+      --text: #e9ecff;
     }
-    .ui.show { opacity: 1; pointer-events: all; }
-    .btn {
-      appearance: none; border: none; border-radius: 12px; padding: 14px 18px;
-      color: #fff; font-weight: 700; font-size: 16px; letter-spacing: .2px;
-      cursor: pointer; min-width: 140px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.1);
-      transform: translateZ(0);
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(1200px 800px at 70% 30%, var(--bg2), var(--bg1));
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+
+    .poster {
+      width: min(92vw, 980px);
+      aspect-ratio: 16 / 9;
+      border-radius: 20px;
       position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(160px 160px at 15% 20%, rgba(110,231,255,.25), transparent 70%),
+        radial-gradient(220px 220px at 85% 30%, rgba(139,255,177,.22), transparent 70%),
+        linear-gradient(135deg, #171a35 0%, #0f1226 70%);
+      box-shadow:
+        0 30px 80px rgba(0,0,0,.35),
+        inset 0 0 0 1px rgba(255,255,255,.05);
+      display: grid;
+      grid-template-rows: 1fr auto;
+      padding: clamp(16px, 3vw, 28px);
+      isolation: isolate;
     }
-    .btn:active { transform: translateY(1px); }
-    .btn.play { background: linear-gradient(135deg, #2dd4bf, #10b981); }
-    .btn.signup { background: linear-gradient(135deg, #7c3aed, #9333ea); }
-    /* Подсветка/пульсация */
-    .glow {
-      animation: glow 1.2s ease-in-out infinite alternate;
-      box-shadow: 0 0 0 rgba(255,255,255,0);
+
+    .title {
+      align-self: end;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: 0.2px;
+      font-size: clamp(26px, 4vw + 8px, 52px);
+      text-shadow: 0 4px 20px rgba(0,0,0,.35);
     }
+
+    .subtitle {
+      margin-top: 8px;
+      font-size: clamp(14px, 1.4vw + 6px, 18px);
+      color: #c9d2ff;
+      opacity: .9;
+    }
+
+    .actions {
+      display: flex;
+      gap: clamp(10px, 2vw, 18px);
+      align-items: center;
+      margin-top: clamp(14px, 2.2vw, 24px);
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      --glow: var(--accent);
+      position: relative;
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)) , var(--btn);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-weight: 700;
+      font-size: clamp(14px, 1.2vw + 6px, 18px);
+      letter-spacing: .2px;
+      cursor: pointer;
+      transition: transform .15s ease, border-color .2s ease, background .3s ease, color .2s ease;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.06),
+        0 6px 16px rgba(0,0,0,.35);
+      will-change: transform, box-shadow, filter;
+      /* По умолчанию анимация подготовлена, но остановлена (ожидание "оживления") */
+      animation: glow 2.2s ease-in-out infinite;
+      animation-play-state: paused;
+    }
+
+    .btn.play { --glow: var(--accent); }
+    .btn.signup { --glow: var(--accent-2); }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.2);
+      filter: saturate(1.05);
+    }
+    .btn:active {
+      transform: translateY(0);
+      transition-duration: .05s;
+    }
+
+    /* Светящееся "дыхание" */
     @keyframes glow {
-      from { box-shadow: 0 0 0 rgba(255,255,255,0), 0 0 0 rgba(255,255,255,0); }
-      to   { box-shadow: 0 0 20px rgba(255,255,255,.25), 0 0 40px rgba(255,255,255,.15); }
+      0%, 100% {
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,.08),
+          0 6px 16px rgba(0,0,0,.35),
+          0 0 0px rgba(var(--glow-rgb, 110,231,255), 0),
+          0 0 0px rgba(var(--glow-rgb, 110,231,255), 0);
+      }
+      50% {
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,.12),
+          0 12px 28px rgba(0,0,0,.42),
+          0 0 18px rgba(var(--glow-rgb, 110,231,255), .55),
+          0 0 36px rgba(var(--glow-rgb, 110,231,255), .35);
+      }
     }
-    /* Кнопка звука (по желанию) */
-    .sound {
-      position: fixed; top: 14px; right: 14px; z-index: 10;
-      background: rgba(0,0,0,.45); color: #fff; border: 1px solid rgba(255,255,255,.2);
-      border-radius: 10px; padding: 10px 12px; font-size: 14px; cursor: pointer;
-      backdrop-filter: blur(6px);
+
+    /* Для зеленого свечения зададим RGB отдельно, чтобы анимация была насыщеннее */
+    .btn.signup { --glow-rgb: 139,255,177; }
+    .btn.play { --glow-rgb: 110,231,255; }
+
+    /* Активируем анимацию, когда постер «оживает» */
+    .poster.active .btn {
+      animation-play-state: running;
+    }
+     /* Легкое «дрейфующее» зерно/блик на фоне для живости */
+    .grain {
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+      mix-blend-mode: soft-light;
+      opacity: .12;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.4) 0 2px, transparent 3px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,.25) 0 2px, transparent 3px),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,.25) 0 2px, transparent 3px);
+      animation: float 18s ease-in-out infinite alternate;
+    }
+    @keyframes float {
+      from { transform: translate3d(-2%, -1%, 0) rotate(-1deg) scale(1.02); }
+      to   { transform: translate3d(2%, 1%, 0) rotate(1deg) scale(1.03); }
+    }
+
+    /* Уважение системной настройки "уменьшить анимацию" */
+    @media (prefers-reduced-motion: reduce) {
+      .btn { animation: none !important; }
+      .grain { animation: none !important; }
     }
   </style>
 </head>
 <body>
-  <!-- Кнопка включения звука -->
-  <button id="soundBtn" class="sound">Включить звук</button>
+  <main class="poster" id="poster">
+    <div class="grain" aria-hidden="true"></div>
 
-  <!-- UI с кнопками действий -->
-  <div id="ui" class="ui">
-    <button id="playBtn" class="btn play glow">Играть</button>
-    <button id="signupBtn" class="btn signup glow">Записаться</button>
-  </div>
+    <header class="title">
+      Кибер-турнир 2025
+      <div class="subtitle">Присоединяйся к битве чемпионов — ограниченные места</div>
+    </header>
 
-  <!-- AR‑сцена -->
-  <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1; filterMinCF:0.0001; filterBeta: 0.001;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true, precision: mediump, antialias: true"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: true"
-    embedded
-  >
-    <a-assets timeout="15000">
-      <!-- Ваше видео -->
-      <video id="promo-video"
-             src="./video.mp4"
-             preload="auto"
-             loop
-             playsinline
-             webkit-playsinline
-             crossorigin="anonymous"
-             muted
-             ></video>
-    </a-assets>
-
-    <!-- Камера MindAR -->
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-    <!-- Таргет и плоскость с видео -->
-    <a-entity id="posterAnchor" mindar-image-target="targetIndex: 0">
-      <!-- a-video рисует HTMLVideoElement на плоскость 16:9 размером ~1.6x0.9 метра (масштаб подгоните под свою картинку) -->
-      <a-video id="videoPlane"
-               src="#promo-video"
-               position="0 0 0"
-               rotation="0 0 0"
-               width="1.6"
-               height="0.9"
-               material="transparent: false; shader: standard;"
-               ></a-video>
-    </a-entity>
-  </a-scene>
+    <div class="actions" role="group" aria-label="Действия постера">
+      <button class="btn play" type="button" id="playBtn" aria-label="Играть (начать игру)">Играть</button>
+      <button class="btn signup" type="button" id="signupBtn" aria-label="Записаться на турнир">Записаться</button>
+    </div>
+  </main>
 
   <script>
-    // Настройки ссылок
-    const lichessLink = 'https://lichess.org/learn';
-    const telegramLink = 'https://t.me/your_username'; // ← Замените на ваш чат/бот
+    // «Оживляем» постер: включаем свечение с лёгкой задержкой
+    window.addEventListener('DOMContentLoaded', () => {
+      const poster = document.getElementById('poster');
 
-    const ui = document.getElementById('ui');
-    const playBtn = document.getElementById('playBtn');
-    const signupBtn = document.getElementById('signupBtn');
-    const soundBtn = document.getElementById('soundBtn');
-    const videoEl = document.getElementById('promo-video');
-    const anchor = document.getElementById('posterAnchor');
+      // Небольшая задержка для драматургии
+      setTimeout(() => {
+        poster.classList.add('active');
+      }, 350);
 
-    // Хелперы
-    const showUI = () => ui.classList.add('show');
-    const hideUI = () => ui.classList.remove('show');
+      // Усиливаем свечение при наведении — добавим краткий «пик»
+      const boost = (btn) => {
+        btn.addEventListener('mouseenter', () => {
+          btn.style.transition = 'filter .15s ease, transform .15s ease, box-shadow .15s ease';
+          btn.style.boxShadow =
+            'inset 0 0 0 1px rgba(255,255,255,.15), 0 14px 34px rgba(0,0,0,.5), 0 0 24px rgba(255,255,255,.15)';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.boxShadow = '';
+        });
+      };
 
-    // Попытка автозапуска видео (без звука) — часто работает после тапа “разрешить камеру”
-    const tryPlayMuted = async () => {
-      try {
-        videoEl.muted = true;
-        await videoEl.play();
-      } catch (e) {
-        // Если не получилось, подождём взаимодействия
-        // console.log('Autoplay blocked, will wait for user interaction');
-      }
-    };
-
-    // Включение звука по клику
-    const enableSound = async () => {
-      try {
-        videoEl.muted = false;
-        await videoEl.play();
-        soundBtn.textContent = 'Звук включён';
-        soundBtn.disabled = true;
-        soundBtn.style.opacity = 0.6;
-      } catch (e) {
-        alert('Нажмите ещё раз, чтобы включить звук');
-      }
-    };
-
-    // События трекинга
-    anchor.addEventListener('targetFound', async () => {
-      await tryPlayMuted();
-      // Покажем UI через небольшую паузу, когда видео появилось
-      setTimeout(showUI, 600);
+      boost(document.getElementById('playBtn'));
+      boost(document.getElementById('signupBtn'));
     });
-
-    anchor.addEventListener('targetLost', () => {
-      hideUI();
-    });
-
-    // Клики по кнопкам
-    playBtn.addEventListener('click', () => {
-      window.open(lichessLink, '_blank', 'noopener,noreferrer');
-    });
-
-    signupBtn.addEventListener('click', () => {
-      window.open(telegramLink, '_blank', 'noopener,noreferrer');
-    });
-
-    // Включение звука
-    soundBtn.addEventListener('click', enableSound);
-
-    // На всякий случай: первый пользовательский тап где угодно — попробуем включить звуковое воспроизведение
-    document.addEventListener('touchend', async () => {
-      if (videoEl.paused) {
-        try { await videoEl.play(); } catch (_) {}
-      }
-    }, { once: true });
-
-    // Опционально: подгоняем размер видео под пропорции постера
-    // Если ваш постер не 16:9, можно скорректировать width/height у #videoPlane
   </script>
 </body>
 </html>
