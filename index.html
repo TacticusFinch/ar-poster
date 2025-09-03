@@ -2,293 +2,95 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>AR-постер — Волшебник и кнопки</title>
-  <!-- A‑Frame -->
-  <script src="https://unpkg.com/aframe@1.4.2/dist/aframe.min.js"></script>
-  <!-- MindAR (image tracking, A‑Frame build) -->
-  <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.7/dist/mindar-image-aframe.prod.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AR Poster: Wizard</title>
+
+  <!-- A-Frame и MindAR -->
+  <script src="https://unpkg.com/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://unpkg.com/mind-ar/dist/mindar-image-aframe.prod.js"></script>
+
   <style>
-    html, body { margin:0; height:100%; background:#000; }
-    .start-overlay {
-      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: radial-gradient(ellipse at center, rgba(10,10,14,0.92) 0%, rgba(5,5,8,0.98) 65%, rgba(0,0,0,1) 100%);
-      color: #eef2ff; z-index: 10; flex-direction: column; gap: 16px; padding: 24px; text-align: center;
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%; width: 100%;
+      overflow: hidden; background: #000;
+      -webkit-tap-highlight-color: transparent;
     }
-    .start-overlay h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.2px; }
-    .start-overlay p { margin: 0; opacity: .85; line-height: 1.4; }
-    .start-btn {
-      appearance: none; border: 0; border-radius: 12px; padding: 14px 22px; font-size: 16px; font-weight: 700;
-      color: white; background: linear-gradient(135deg,#7c3aed,#22d3ee);
-      box-shadow: 0 10px 30px rgba(124,58,237,.35), 0 6px 18px rgba(34,211,238,.25);
+    a-scene {
+      position: fixed; inset: 0;
     }
-    .hint {
-      position: fixed; left: 50%; transform: translateX(-50%);
-      bottom: env(safe-area-inset-bottom, 16px);
-      background: rgba(0,0,0,.55); color:#fff; padding:8px 12px; border-radius: 10px; font-size: 13px; z-index: 5;
-      backdrop-filter: blur(6px);
-    }
-    /* Optional: hide watermark button on iOS PWA */
-    .a-enter-vr-button, .a-enter-ar-button { display:none !important; }
   </style>
 </head>
 <body>
-  <!-- On‑screen instructions to unlock camera + audio -->
-  <div class="start-overlay" id="startOverlay">
-    <h1>Наведи камеру на постер</h1>
-    <p>Нажмите «Начать», чтобы включить камеру и звук. Затем наведите на постер с волшебником.</p>
-    <button class="start-btn" id="startBtn">Начать</button>
-    <p style="font-size:12px;opacity:.7">Если картинка не распознаётся, проверьте, что освещение равномерное.</p>
-  </div>
-  <div class="hint">Подсказка: наведите на постер. Когда волшебник заговорит — нажмите кнопку.</div>
-
   <a-scene
-    mindar-image="uiScanning:no; filterMinCF:0.0001; filterBeta: 0.01; warmupTolerance: 5; maxTrack: 1; autoStart: false;"
-    renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true; precision: mediump;"
+    mindar-image="imageTargetSrc: ./targets.mind"
+    embedded
+    color-space="sRGB"
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
+    device-orientation-permission-ui="enabled: true"
   >
-    <a-assets timeout="60000">
-      <!-- Укажите точное имя вашего .mind из репозитория -->
-      <!-- MindAR загрузит targets.mind с того же хоста, где index.html -->
-      <!-- Ваше видео с волшебником -->
-      <video id="wizardVideo" src="./wizard.mp4" preload="auto" webkit-playsinline playsinline crossorigin="anonymous"></video>
-
-      <!-- Сгенерируем текстуры кнопок на лету (через canvas) — см. скрипт ниже -->
-      <canvas id="btnPlayCanvas" width="512" height="192"></canvas>
-      <canvas id="btnEnrollCanvas" width="512" height="192"></canvas>
-      <img id="glowTex" crossorigin="anonymous"
-           src="https://images.unsplash.com/photo-1527443154391-507e9dc6c5cc?q=80&w=600&auto=format&fit=crop" />
+    <a-assets>
+      <!-- Видео для наложения. Должно лежать рядом как wizard.mp4 -->
+      <video id="wizard" src="./wizard.mp4"
+             preload="auto" loop muted playsinline webkit-playsinline
+             crossorigin="anonymous"></video>
     </a-assets>
 
-    <!-- Камера AR -->
-    <a-camera
-      position="0 0 0"
-      look-controls="enabled: false"
-      cursor="rayOrigin: mouse"
-      raycaster="objects: .clickable; far: 20;"
-    ></a-camera>
+    <!-- Камера с курсором по тапу/клику -->
+    <a-camera position="0 0 0" look-controls="enabled: false"
+              cursor="rayOrigin: mouse"></a-camera>
 
-    <!-- Привязка к постеру (таргет 0 из targets.mind) -->
-    <a-entity mindar-image-target="targetIndex: 0" id="posterRoot">
-      <!-- ВИДЕО: расположите и масштабируйте под область волшебника на вашем постере -->
-      <a-video id="wizardPlane"
-               src="#wizardVideo"
-               position="0 0 0.01"
+    <!-- Целевой трекер изображения (первый таргет в targets.mind) -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <!-- Накладываем видео. Подгоните width/height под пропорции постера -->
+      <a-video src="#wizard"
+               position="0 0 0"
                rotation="0 0 0"
-               width="1.0" height="1.4"
+               width="1"
+               height="1.777"
+               autoplay="true"
+               loop="true">
+      </a-video>
 
-Chat AI Bot - Chat GPT 5 | Midjourney | Perplexity | Claude, [03.09.2025 16:51]
-material="shader: standard; metalness:0.1; roughness:0.8;"
-      ></a-video>
+      <!-- Невидимые кликабельные области для кнопок (подгоните позиции/размеры) -->
+      <a-plane id="btn-play"
+               position="0 -0.35 0.01"
+               width="0.6" height="0.18"
+               material="opacity: 0; transparent: true">
+      </a-plane>
 
-      <!-- КНОПКА ИГРАТЬ (выше) -->
-      <a-entity id="btnPlay" class="clickable"
-        position="0 0.55 0.02" rotation="0 0 0" scale="0.55 0.55 0.55">
-        <a-plane width="0.9" height="0.28" radius="0.14"
-                 material="shader: standard; src: #btnPlayCanvas; transparent: true; metalness:0.2; roughness:0.5; emissive:#6ee7ff; emissiveIntensity:0.35">
-        </a-plane>
-        <!-- Пульсация и лёгкое свечение -->
-        <a-entity animation="property: scale; dir: alternate; to: 0.60 0.60 0.60; dur: 900; loop: true; easing: easeInOutSine"></a-entity>
-        <a-entity animation__glow="property: components.material.material.emissiveIntensity; dir: alternate; to: 0.85; dur: 1200; loop: true; easing: easeInOutSine"></a-entity>
-      </a-entity>
-
-      <!-- КНОПКА ЗАПИСАТЬСЯ (ниже) -->
-      <a-entity id="btnEnroll" class="clickable"
-        position="0 0.20 0.02" rotation="0 0 0" scale="0.55 0.55 0.55">
-        <a-plane width="0.9" height="0.28" radius="0.14"
-                 material="shader: standard; src: #btnEnrollCanvas; transparent: true; metalness:0.2; roughness:0.5; emissive:#c4b5fd; emissiveIntensity:0.35">
-        </a-plane>
-        <a-entity animation="property: scale; dir: alternate; to: 0.60 0.60 0.60; dur: 1100; loop: true; easing: easeInOutSine"></a-entity>
-        <a-entity animation__glow="property: components.material.material.emissiveIntensity; dir: alternate; to: 0.9; dur: 1400; loop: true; easing: easeInOutSine"></a-entity>
-      </a-entity>
-
-      <!-- Мягкая подсветка вокруг кнопок (необязательно) -->
-      <a-plane width="1.05" height="0.75" position="0 0.375 0.015" rotation="0 0 0"
-               material="shader: standard; src:#glowTex; color:#7c3aed; transparent:true; opacity:0.18; roughness:1; metalness:0">
-        <a-animation attribute="material.opacity" from="0.12" to="0.22" direction="alternate" dur="1800" repeat="indefinite" easing="ease-in-out-sine"></a-animation>
+      <a-plane id="btn-signup"
+               position="0 -0.6 0.01"
+               width="0.6" height="0.18"
+               material="opacity: 0; transparent: true">
       </a-plane>
     </a-entity>
   </a-scene>
 
   <script>
-    // 1) Подготовим красивую графику кнопок на Canvas, чтобы текст был чётким
-    function drawButton(canvas, label, gradFrom, gradTo, glowStroke) {
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width, h = canvas.height;
-      ctx.clearRect(0,0,w,h);
-
-      // Фон с прозрачностью
-      ctx.globalCompositeOperation = 'source-over';
-      const r = Math.min(h/2, 48);
-      // Градиентная капсула
-      const grad = ctx.createLinearGradient(0,0,w,h);
-      grad.addColorStop(0, gradFrom);
-      grad.addColorStop(1, gradTo);
-
-      // Фигура с закруглениями
-      function roundRect(x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.moveTo(x+r, y);
-        ctx.arcTo(x+w, y, x+w, y+h, r);
-        ctx.arcTo(x+w, y+h, x, y+h, r);
-        ctx.arcTo(x, y+h, x, y, r);
-        ctx.arcTo(x, y, x+w, y, r);
-        ctx.closePath();
-      }
-      roundRect(8, 8, w-16, h-16, r);
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // Внутренний блик
-      roundRect(12, 12, w-24, h-24, r-8);
-      const gloss = ctx.createLinearGradient(0, 12, 0, h-12);
-      gloss.addColorStop(0, 'rgba(255,255,255,.22)');
-      gloss.addColorStop(0.5, 'rgba(255,255,255,.06)');
-      gloss.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = gloss;
-      ctx.fill();
-
-      // Внешнее свечение
-      ctx.shadowColor = glowStroke;
-      ctx.shadowBlur = 40;
-      ctx.lineWidth = 3;
-      roundRect(8, 8, w-16, h-16, r);
-      ctx.strokeStyle = glowStroke;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // Текст
-      ctx.font = '700 84px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = 'rgba(0,0,0,.25)';
-      ctx.lineWidth = 8;
-      ctx.strokeText(label, w/2, h/2 + 4);
-      ctx.fillText(label, w/2, h/2 + 4);
-    }
-
-    function buildButtons(
-
-
-) {
-      drawButton(
-        document.getElementById('btnPlayCanvas'),
-        'Играть',
-        '#06b6d4', '#7c3aed', '#67e8f9'
-      );
-      drawButton(
-        document.getElementById('btnEnrollCanvas'),
-        'Записаться',
-        '#7c3aed', '#a78bfa', '#c4b5fd'
-      );
-    }
-
-    // 2) Управление сценой, камерой и кликами
-    const startOverlay = document.getElementById('startOverlay');
-    const startBtn = document.getElementById('startBtn');
-    const videoEl = document.getElementById('wizardVideo');
-
-    // Ссылки по ТЗ
-    const URL_PLAY = 'https://lichess.org/ru/learn';
-    const URL_ENROLL = 'https://t.me/m/s_Zqu21RY2Yy';
-
-    // Помощник: открыть ссылку безопасно на мобильных
-    function openURL(url) {
-      // Попытка открыть в новой вкладке
-      const win = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!win) {
-        // Если заблокировано, откроем в этом же окне
-        window.location.href = url;
-      }
-    }
-
-    // При тапе на кнопки
-    function wireButtonClicks() {
-      const btnPlay = document.getElementById('btnPlay');
-      const btnEnroll = document.getElementById('btnEnroll');
-
-      btnPlay.addEventListener('click', () => openURL(URL_PLAY));
-      btnPlay.addEventListener('touchstart', (e) => { e.preventDefault(); openURL(URL_PLAY); }, {passive:false});
-
-      btnEnroll.addEventListener('click', () => openURL(URL_ENROLL));
-      btnEnroll.addEventListener('touchstart', (e) => { e.preventDefault(); openURL(URL_ENROLL); }, {passive:false});
-    }
-
-    // Автовоспроизведение видео с голосом требует жест пользователя
-    async function startAR() {
-      try {
-        // Разблокируем звук
-        videoEl.muted = false;
-        videoEl.playsInline = true;
-        await videoEl.play().catch(()=>{}); // может ещё не играть до появления таргета
-
-        // Запуск трекинга
-        const sceneEl = document.querySelector('a-scene');
-        const mindar = sceneEl.systems['mindar-image'];
-        await mindar.start(); // запросит камеру
-        startOverlay.style.display = 'none';
-      } catch (e) {
-        alert('Не удалось запустить камеру. Проверьте разрешения и HTTPS.');
-        console.error(e);
-      }
-    }
-
-    // Когда таргет найден — запускаем/перезапускаем реплику волшебника
-    function setupTrackingEvents() {
-      const posterRoot = document.getElementById('posterRoot');
-      posterRoot.addEventListener('targetFound', async () => {
-        try {
-          // Перемотка и воспроизведение при каждом найденном постере
-          videoEl.currentTime = 0;
-          await videoEl.play();
-        } catch (e) {
-          console.warn('Видео не воспроизвелось сразу, ожидаем пользовательский жест.');
-        }
-      });
-      // При потере — ставим на паузу (не обязательно)
-      posterRoot.addEventListener('targetLost', () => {
-        // videoEl.pause(); // включите, если хотите паузу при потере постера
-      });
-    }
-
-    // Инициализация
     document.addEventListener('DOMContentLoaded', () => {
-      buildButtons();
-      wireButtonClicks();
-      setupTrackingEvents();
+      const videoEl = document.querySelector('#wizard');
+      const targetEl = document.querySelector('[mindar-image-target]');
+      const btnPlay = document.querySelector('#btn-play');
+      const btnSignup = document.querySelector('#btn-signup');
 
-      // Подключаем файл таргетов (должен лежать рядом как targets.mind)
-      const sceneEl = document.querySelector('a-scene');
-      sceneEl.setAttribute('mindar-image', `uiScanning:no; autoStart:false; imageTargetSrc: ./targets.mind`);
-
-      // Некоторые браузеры требуют явного тапа по сцене для первого play()
-      sceneEl.addEventListener('click', async () => {
-        if (videoEl.paused) {
-          try { await videoEl.play(); } catch(_){}
-        }
+      // Автовоспроизведение при детекте/пауза при потере
+      targetEl.addEventListener('targetFound', () => {
+        videoEl.play().catch(() => {});
+      });
+      targetEl.addEventListener('targetLost', () => {
+        videoEl.pause();
       });
 
-      startBtn.addEventListener('click', startAR);
+      // Клики по “кнопкам”
+      btnPlay.addEventListener('click', () => {
+        window.open('https://lichess.org/ru/learn', '_blank');
+      });
+      btnSignup.addEventListener('click', () => {
+        window.open('https://t.me/m/s_Zqu21RY2Yy', '_blank');
+      });
     });
   </script>
-
-  <!-- ПОДСКАЗКИ ПО РАЗМЕТКЕ:
-    1) Положите рядом с index.html файлы:
-       - targets.mind  (сгенерированный для вашего постера)
-       - wizard.mp4    (видео с фразой волшебника)
-    2) Тонкая подгонка размеров/позиций:
-       - a-video (wizardPlane): width/height под пропорции области волшебника на постере.
-       - Кнопки: позиции заданы в координатах плоскости постера (X, Y
-
-Chat AI Bot - Chat GPT 5 | Midjourney | Perplexity | Claude, [03.09.2025 16:51]
-, Z), где центр постера — (0,0,0).
-         Сейчас кнопка "Играть" выше ("Y" = 0.55), "Записаться" — ниже (0.20).
-         Подгоните position/scale под ваше изображение.
-    3) Хост должен быть по HTTPS (или localhost), иначе камера не дастся.
-    4) Если у видео есть зелёный фон, добавьте хромакей‑шейдер, либо используйте webm с альфой.
-  -->
 </body>
 </html>
-```
