@@ -57,8 +57,8 @@
       <!-- видео-плейн (ширина=1 = ширине постера) -->
       <a-plane id="video-plane"
                src="#wizard-video"
-               width="1"
-               height="0.5625"          <!-- если ролик 16:9 => 1 / 16 * 9 -->
+               width="2"
+               height="1.125"          <!-- если ролик 16:9 => 1 / 16 * 9 -->
                position="0 0 0"
                rotation="0 0 0"
                shadow="receive: false"></a-plane>
@@ -68,9 +68,9 @@
                class="clickable"
                color="#2196f3"
                width="0.38" height="0.14"
-               position="0 -0.35 0.01"
+               position="0 -0.15 0.01"
                material="opacity:0.9 emissive:#2196f3 emissiveIntensity:0.4"
-               visible="false"
+               visible="true"
                animation="property:scale; dir:alternate; dur:800; from:1 1 1; to:1.1 1.1 1.1; loop:true">
       </a-plane>
       <a-text id="play-text"
@@ -78,17 +78,17 @@
               align="center"
               width="0.8"
               color="#fff"
-              position="0 -0.35 0.02"
-              visible="false"></a-text>
+              position="0 -0.15 0.02"
+              visible="true"></a-text>
 
       <!-- Кнопка "Записаться" ---------------------------------------------->
       <a-plane id="signup-btn"
                class="clickable"
                color="#ff5722"
                width="0.38" height="0.14"
-               position="0 -0.55 0.01"
+               position="0 -0.35 0.01"
                material="opacity:0.9 emissive:#ff5722 emissiveIntensity:0.4"
-               visible="false"
+               visible="true"
                animation="property:scale; dir:alternate; dur:800; from:1 1 1; to:1.1 1.1 1.1; loop:true">
       </a-plane>
       <a-text  id="signup-text"
@@ -96,8 +96,8 @@
                align="center"
                width="0.8"
                color="#fff"
-               position="0 -0.55 0.02"
-               visible="false"></a-text>
+               position="0 -0.35 0.02"
+               visible="true"></a-text>
 
     </a-entity>
   </a-scene>
