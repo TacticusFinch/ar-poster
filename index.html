@@ -2,246 +2,177 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Wizard Poster AR</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>AR-постер — Волшебник</title>
 
-  <!-- A-Frame + MindAR (Image Tracking) -->
+  <!-- A-Frame и MindAR (WebAR с распознаванием изображения) -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
-    .start-overlay {
-      position: fixed; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.7);
-      color: #fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      z-index: 1000; text-align: center; padding: 24px;
+    html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
+
+    .overlay {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
+      color: #fff; font-family: system-ui, Arial, sans-serif; text-align: center;
+      padding: 10px 12px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.6));
+      pointer-events: none;
     }
-    .start-overlay button {
-      appearance: none; border: none; border-radius: 12px;
-      padding: 14px 20px; font-size: 16px; font-weight: 700;
-      color: #0b0f16; background: linear-gradient(135deg, #ffd86f, #fc6262);
-      box-shadow: 0 8px 24px rgba(252,98,98,0.35), inset 0 1px 0 rgba(255,255,255,0.5);
-      cursor: pointer;
+    
+    .startHint {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.65); color: #fff; font-size: 18px; z-index: 4;
     }
-    .hint {
-      position: fixed; left: 50%; transform: translateX(-50%);
-      bottom: 12px; color: #fff; opacity: 0.8; font-size: 13px; z-index: 999;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    .startHint button {
+      font-size: 18px; padding: 10px 16px; border-radius: 10px; border: none;
+      background: #3b82f6; color: white;
     }
+    body, canvas, .a-canvas { touch-action: none; }
   </style>
 </head>
 <body>
-  <!-- Tap-to-start overlay for audio autoplay compliance -->
-  <div id="startOverlay" class="start-overlay" style="display:none;">
+
+  <div class="overlay">Наведите камеру на постер</div>
+
+  <!-- Показывается, если для звука требуется пользовательский жест -->
+  <div id="tapToUnmute" class="startHint">
     <div>
-      <div style="font-size:18px; margin-bottom:12px;">Наведите камеру на постер и нажмите “Начать”</div>
-      <button id="startBtn">Начать</button>
+      <div style="margin-bottom:12px;">Нажмите, чтобы включить звук</div>
+      <button id="unmuteBtn">Воспроизвести</button>
     </div>
   </div>
-  <div class="hint">Совет: держите постер в кадре целиком</div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001;"
+    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1"
+    renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true; antialias: true"
+    color-space="sRGB"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
-    renderer="alpha: true; colorManagement: true; physicallyCorrectLights: true;"
-  >
-    <a-assets timeout="60000">
-      <!-- Your target video -->
-      <video id="wizardVideo" src="./wizard.mp4" preload="auto" playsinline webkit-playsinline crossorigin="anonymous"></video>
+    embedded
+    cursor="rayOrigin: mouse; fuse: false"
+    raycaster="objects: .clickable">
 
-      <!-- Simple radial glow texture (data-URI) for pulses; replace with your asset if desired -->
-      <img id="glowTex" crossorigin="anonymous" alt="glow"
-        src="data:image/svg+xml;utf8,
-        <svg xmlns='http://www.w3.org/2000/svg' width='256' height='256' viewBox='0 0 256 256'>
-          <defs>
-            <radialGradient id='g' cx='50%%' cy='50%%' r='50%%'>
-              <stop offset='0%%' stop-color='rgba(255,255,255,0.85)'/>
-              <stop offset='50%%' stop-color='rgba(255,180,0,0.35)'/>
-              <stop offset='100%%' stop-color='rgba(255,180,0,0)'/>
-            </radialGradient>
-          </defs>
-          <rect width='256' height='256' fill='url(#g)'/>
-        </svg>" />
+    <a-assets timeout="20000">
+      <!-- Видео с волшебником -->
+      <video id="wizardVideo" src="./wizard.mp4" preload="auto" webkit-playsinline playsinline crossorigin="anonymous"></video>
     </a-assets>
 
-    <!-- Camera and cursor for tap interactions -->
-    <a-camera position="0 0 0" look-controls="enabled: false">
-      <a-entity cursor="rayOrigin: mouse"></a-entity>
-    </a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Image target root -->
-    <a-entity mindar-image-target="targetIndex: 0">
+    <!-- Якорь: все, что внутри, привязано к распознанному постеру -->
+    <a-entity id="anchor" mindar-image-target="targetIndex: 0">
 
-      <!-- 1) Video plane (fits the poster) -->
-      <!-- By default MindAR sets target width to ~1 world unit; adjust width/height matching your poster aspect -->
-      <!-- Suppose poster is A4 vertical (210x297 ~ aspect 0.707); width=1 => height ~1.414 -->
-      <a-plane id="videoPlane"
+      <!-- Видео поверх постера (размер подгоните под ваш макет) -->
+      <!-- width=1 соответствует ширине таргета; подправьте height, чтобы видео заполняло нужную область -->
+      <a-video id="videoPlane"
+               src="#wizardVideo"
                position="0 0 0"
                rotation="0 0 0"
                width="1"
-               height="1.414"
-               material="shader: flat; src: #wizardVideo; transparent: true"
+               height="0.5625"
                visible="false">
-      </a-plane>
+      </a-video>
 
-      <!-- 2) Interactive buttons (appear after video ends) -->
-      <!-- We'll place 'Играть' above 'Записаться' along Y axis -->
-      <!-- Button dimensions (w
+      <!-- Невидимые кликабельные области поверх нарисованных кнопок -->
+      <!-- Позиции/размеры подкорректируйте под ваш конкретный макет постера -->
+      <!-- "Играть" (выше) -->
+      <a-plane id="btnPlay" class="clickable"
+               position="0 0.15 0.01" width="0.62" height="0.14"
+               material="transparent: true; opacity: 0.0; color: #00FF00"
+               visible="false"></a-plane>
 
-Chat AI Bot - Chat GPT 5 | Midjourney | Perplexity | Claude, [04.09.2025 1:26]
-orld units) tuned to the poster; tweak if needed -->
-      <a-entity id="buttonsGroup" visible="false">
-        <!-- 'Играть' button -->
-        <a-entity id="playBtnGroup" position="0 0.25 0.001">
-          <!-- Pulsing glow behind button -->
-          <a-plane position="0 0 -0.001" width="0.58" height="0.2"
-                   material="src: #glowTex; transparent: true; opacity: 0.0"
-                   animation__pulse_opacity="property: material.opacity; from: 0.0; to: 0.85; dir: alternate; dur: 900; loop: true; easing: easeInOutSine"
-                   animation__pulse_scale="property: scale; from: 1 1 1; to: 1.15 1.15 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine">
-          </a-plane>
-          <!-- Button face -->
-          <a-plane id="playBtn" width="0.52" height="0.14" color="#1b6ef3"
-                   material="metalness:0.1; roughness:0.4; emissive:#2f7bff; emissiveIntensity:0.25"
-                   geometry="primitive: plane; width: 0.52; height: 0.14">
-          </a-plane>
-          <!-- Label -->
-          <a-entity position="0 0 0.001"
-                    text="value: Играть; align: center; color: #ffffff; width: 1.3; anchor: center; font: roboto; shader: msdf">
-          </a-entity>
-        </a-entity>
-
-        <!-- 'Записаться' button -->
-        <a-entity id="signupBtnGroup" position="0 -0.05 0.001">
-          <!-- Pulsing glow behind button -->
-          <a-plane position="0 0 -0.001" width="0.62" height="0.2"
-                   material="src: #glowTex; transparent: true; opacity: 0.0"
-                   animation__pulse_opacity="property: material.opacity; from: 0.0; to: 0.85; dir: alternate; dur: 1100; loop: true; easing: easeInOutSine"
-                   animation__pulse_scale="property: scale; from: 1 1 1; to: 1.18 1.18 1; dir: alternate; dur: 1100; loop: true; easing: easeInOutSine">
-          </a-plane>
-          <!-- Button face -->
-          <a-plane id="signupBtn" width="0.56" height="0.14" color="#10b981"
-                   material="metalness:0.1; roughness:0.4; emissive:#10b981; emissiveIntensity:0.22"
-                   geometry="primitive: plane; width: 0.56; height: 0.14">
-          </a-plane>
-          <!-- Label -->
-          <a-entity position="0 0 0.001"
-                    text="value: Записаться; align: center; color: #ffffff; width: 1.3; anchor: center; font: roboto; shader: msdf">
-          </a-entity>
-        </a-entity>
-      </a-entity>
+      <!-- "Записаться" (ниже) -->
+      <a-plane id="btnSignup" class="clickable"
+               position="0 -0.05 0.01" width="0.62" height="0.14"
+               material="transparent: true; opacity: 0.0; color: #FF0000"
+               visible="false"></a-plane>
 
     </a-entity>
   </a-scene>
 
   <script>
-    // URLs for buttons
-    const PLAY_URL = "https://lichess.org/ru/learn";
-    const SIGNUP_URL = "https://t.me/m/s_Zqu21RY2Yy";
+    const anchor = document.querySelector('#anchor');
+    const video = document.querySelector('#wizardVideo');
+    const videoPlane = document.querySelector('#videoPlane');
+    const btnPlay = document.querySelector('#btnPlay');
+    const btnSignup = document.querySelector('#btnSignup');
+    const unmuteOverlay = document.querySelector('#tapToUnmute');
+    const unmuteBtn = document.querySelector('#unmuteBtn');
 
-    const video = document.getElementById('wizardVideo');
-    const videoPlane = document.getElementById('videoPlane');
-    const buttonsGroup = document.getElementById('buttonsGroup');
-    const playBtn = document.getElementById('playBtn');
-    const signupBtn = document.getElementById('signupBtn');
+    let finished = false;
 
-    const startOverlay = document.getElementById('startOverlay');
-    const startBtn = document.getElementById('startBtn');
+    // Переходы по кнопкам
+    const openLink = (url) => {
+      // Для Telegram открываем напрямую; для браузера — обычный переход
+      window.location.href = url;
+    };
+    btnPlay.addEventListener('click', () => openLink('https://lichess.org/ru/learn'));
+    btnSignup.addEventListener('click', () => openLink('https://t.me/m/s_Zqu21RY2Yy'));
 
-    // Track if user interacted (required for autoplay with sound on mobile)
-    let userInteracted = false;
-
-    // MindAR scene + target events
-    const sceneEl = document.querySelector('a-scene');
-    sceneEl.addEventListener('loaded', () => {
-      const arSystem = sceneEl.systems['mindar-image-system'];
-
-      // Show a permission overlay if iOS requires motion permission (A-Frame handles camera permissions prompt)
-      // We also show our start overlay so user can tap => unlock audio
-      startOverlay.style.display = 'flex';
-
-      // Target events
-      const target = sceneEl.querySelector('[mindar-image-target]');
-      target.addEventListener('targetFound', async () => {
-        // When target is found, make the video plane visible
-        videoPlane.setAttribute('visible', true);
-
-        // If user has already interacted, we can try to play immediately with sound
-        if (userInteracted) {
-          try { video.muted = false;
-
-await video.play(); }
-          catch (e) {
-            // fallback muted
-            video.muted = true;
-            await video.play().catch(()=>{});
-          }
-        } else {
-          // Try muted autoplay until user taps "Начать"
-          video.muted = true;
-          await video.play().catch(()=>{});
-        }
-      });
-
-      target.addEventListener('targetLost', () => {
-        // Pause video and hide UI when target lost (optional)
-        if (!video.paused) video.pause();
-      });
-    });
-
-    // Start button — unlock audio and (re)play video with sound
-    startBtn.addEventListener('click', async () => {
-      userInteracted = true;
-      startOverlay.style.display = 'none';
-
-      // Resume or restart video with sound
-      try {
-        // Rewind if it already ended or not started
-        if (video.ended || video.currentTime === 0) {
-          video.currentTime = 0;
-        }
-        video.muted = false;
-        await video.play();
-      } catch (e) {
-        // As a last resort, keep muted
-        video.muted = true;
-        await video.play().catch(()=>{});
+    // Автозапуск видео при распознавании постера
+    anchor.addEventListener('targetFound', () => {
+      if (!finished) {
+        videoPlane.setAttribute('visible', 'true');
+        playVideoWithBestEffort();
+      } else {
+        // После окончания видео показываем кликабельные области
+        btnPlay.setAttribute('visible', 'true');
+        btnSignup.setAttribute('visible', 'true');
       }
     });
 
-    // After video ends, hide it and show buttons
+    // На потерю постера ставим видео на паузу (экономия батареи)
+    anchor.addEventListener('targetLost', () => {
+      if (!video.paused && !video.ended) video.pause();
+    });
+
+    // Пытаемся воспроизвести видео со звуком; если нельзя — включаем немое воспроизведение с предложением включить звук
+    async function playVideoWithBestEffort() {
+      try {
+        video.muted = false;
+        await video.play();
+      } catch (err1) {
+        try {
+          video.muted = true;
+          await video.play();
+          unmuteOverlay.style.display = 'flex';
+        } catch (err2) {
+          // На некоторых устройствах требуется явный тап для старта
+          unmuteOverlay.style.display = 'flex';
+        }
+      }
+    }
+
+    // Включение звука по пользовательскому действию
+    unmuteBtn.addEventListener('click', async () => {
+      try {
+        video.muted = false;
+        await video.play();
+      } catch (e) {
+        // Если не удалось — оставим без звука
+      }
+      unmuteOverlay.style.display = 'none';
+    });
+
+    // Когда видео заканчивается — скрываем видео, показываем кликабельные зоны
     video.addEventListener('ended', () => {
-      videoPlane.setAttribute('visible', false);
-      buttonsGroup.setAttribute('visible', true);
+      finished = true;
+      videoPlane.setAttribute('visible', 'false');
+      btnPlay.setAttribute('visible', 'true');
+      btnSignup.setAttribute('visible', 'true');
     });
 
-    // Open links on tap (must be user gesture; A-Frame cursor sends click events)
-    playBtn.addEventListener('click', () => {
-      window.open(PLAY_URL, '_blank', 'noopener,noreferrer');
-    });
-    signupBtn.addEventListener('click', () => {
-      window.open(SIGNUP_URL, '_blank', 'noopener,noreferrer');
+    // На сворачивание вкладки — ставим на паузу
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && !video.paused) video.pause();
     });
 
-    // Optional: give tactile feedback on press (scale animation)
-    const addPressFeedback = (el) => {
-      el.addEventListener('mousedown', () => el.setAttribute('scale', '0.98 0.98 1'));
-      el.addEventListener('mouseup',   () => el.setAttribute('scale', '1 1 1'));
-      el.addEventListener('mouseleave',() => el.setAttribute('scale', '1 1 1'));
-      el.addEventListener('touchstart',() => el.setAttribute('scale', '0.98 0.98 1'), {passive:true});
-      el.addEventListener('touchend',  () => el.setAttribute('scale', '1 1 1'));
-    };
-    addPressFeedback(playBtn);
-    addPressFeedback(signupBtn);
-
-    // iOS inline playback helper
-    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
-
-    // Safety: if target is already found quickly, ensure startOverlay is visible until user taps
-    // (Handled by on-load showing overlay)
+    // ПРИМЕЧАНИЕ:
+    // - Подгоните размеры/позиции videoPlane, btnPlay и btnSignup под схему вашего постера,
+    //   чтобы невидимые кликабельные области точно совпадали с нарисованными кнопками.
+    // - Если ваш таргет (изображение, на основе которого сделан targets.mind) имеет, например,
+    //   соотношение сторон 1:1.4, то задайте videoPlane width="1" и height="1.4" и уже внутри
+    //   расположите области кнопок.
   </script>
 </body>
 </html>
-```
