@@ -1,25 +1,33 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
   <title>Magic Chess Poster</title>
 
-  <!-- A-Frame и MindAR -->
+  <!-- A-Frame + MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    /* заполняем весь экран камерой, убираем полосы */
-    html,body{margin:0;height:100%;overflow:hidden;background:#000;}
-
-    #ar-scene{position:fixed;inset:0;width:100vw;height:100vh;}
-
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden; background: #000;
+    }
+    #ar-scene {
+      position: fixed;
+      inset: 0;
+      width: 100vw; height: 100vh;
+    }
+    /* Отключаем перехват кликов у оверлеев MindAR */
     video.mindar-video,
-    canvas.mindar-image-canvas{
-      position:absolute;inset:0;
-      width:100vw !important;height:100vh !important;
-      object-fit:cover !important;               /* никаких чёрных полей */
+    canvas.mindar-image-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: cover !important;
+      pointer-events: none !important;
     }
   </style>
 </head>
@@ -27,17 +35,19 @@
   <a-scene
     id="ar-scene"
     mindar-image="imageTargetSrc: targets.mind"
-    color-space="sRGB"
     embedded
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
-    renderer="colorManagement: true, physicallyCorrectLights: true"
+    renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
   >
+    <!-- Камера с cursor + правильным raycaster-ом -->
+    <a-camera
+      look-controls="enabled: false"
+      cursor="rayOrigin: mouse; fuse: false"
+      raycaster="objects: .clickable"
+    ></a-camera>
 
-    <!-- курсор, чтобы тап по экрану считался кликом -->
-    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clickable"></a-entity>
-
-    <!-- ассеты ------------------------------------------------------------->
+    <!-- ассеты -->
     <a-assets>
       <video id="wizard-video"
              src="wizard.mp4"
@@ -45,92 +55,117 @@
              loop="false"
              crossorigin="anonymous"
              playsinline
-             webkit-playsinline></video>
+             webkit-playsinline>
+      </video>
     </a-assets>
 
-    <!-- камера (настраивать не нужно, MindAR её перемещает сам)-------------->
-    <a-camera look-controls="enabled: false"></a-camera>
-
-    <!-- якорь на 0-й target ------------------------------------------------->
+    <!-- Якoрь на первый таргет -->
     <a-entity mindar-image-target="targetIndex: 0">
 
-      <!-- видео-плейн (ширина=1 = ширине постера) -->
+      <!-- видео-плейн -->
       <a-plane id="video-plane"
                src="#wizard-video"
                width="2"
-               height="1.125"          <!-- если ролик 16:9 => 1 / 16 * 9 -->
+               height="1.125"
                position="0 0 0"
                rotation="0 0 0"
-               shadow="receive: false"></a-plane>
-
-      <!-- Кнопка "Играть" --------------------------------------------------->
-      <a-plane id="play-btn"
-               class="clickable"
-               color="#2196f3"
-               width="0.38" height="0.14"
-               position="0 -0.15 0.01"
-               material="opacity:0.9 emissive:#2196f3 emissiveIntensity:0.4"
-               visible="true"
-               animation="property:scale; dir:alternate; dur:800; from:1 1 1; to:1.1 1.1 1.1; loop:true">
+               shadow="receive: false">
       </a-plane>
-      <a-text id="play-text"
-              value="Играть"
-              align="center"
-              width="0.8"
-              color="#fff"
-              position="0 -0.15 0.02"
-              visible="true"></a-text>
 
-      <!-- Кнопка "Записаться" ---------------------------------------------->
-      <a-plane id="signup-btn"
-               class="clickable"
-               color="#ff5722"
-               width="0.38" height="0.14"
-               position="0 -0.35 0.01"
-               material="opacity:0.9 emissive:#ff5722 emissiveIntensity:0.4"
-               visible="true"
-               animation="property:scale; dir:alternate; dur:800; from:1 1 1; to:1.1 1.1 1.1; loop:true">
-      </a-plane>
-      <a-text  id="signup-text"
-               value="Записаться"
-               align="center"
-               width="0.8"
-               color="#fff"
-               position="0 -0.35 0.02"
-               visible="true"></a-text>
+      <!-- Кнопка ИГРАТЬ -->
+      <a-entity id="play-button-container" visible="false">
+        <!-- Тонкая жёлтая рамка -->
+        <a-plane position="0 -0.05 0.005"
+                 width="1.06" height="0.31"
+                 material="color: #ffff00; opacity: 0.3; transparent: true">
+        </a-plane>
+        <!-- Хитбокс -->
+        <a-plane id="play-button"
+                 class="clickable"
+                 position="0 -0.05 0.01"
+                 width="1" height="0.25"
+                 material="color: #111; opacity: 0.7; transparent: true">
+        </a-plane>
+        <!-- Текст -->
+        <a-text value="Играть"
+                align="center"
+                width="2"
+                color="#fff"
+                position="0 -0.05 0.02">
+        </a-text>
+      </a-entity>
+
+      <!-- Кнопка ЗАПИСАТЬСЯ -->
+      <a-entity id="signup-button-container" visible="false">
+        <a-plane position="0 -0.35 0.005"
+                 width="1.06" height="0.31"
+                 material="color: #ffff00; opacity: 0.3; transparent: true">
+        </a-plane>
+        <a-plane id="signup-button"
+                 class="clickable"
+                 position="0 -0.35 0.01"
+                 width="1" height="0.25"
+                 material="color: #111; opacity: 0.7; transparent: true">
+        </a-plane>
+        <a-text value="Записаться"
+                align="center"
+                width="2"
+                color="#fff"
+                position="0 -0.35 0.02">
+        </a-text>
+      </a-entity>
 
     </a-entity>
   </a-scene>
 
-  <!-- логика --------------------------------------------------------------->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const video       = document.querySelector('#wizard-video');
-      const playBtn     = document.querySelector('#play-btn');
-      const signupBtn   = document.querySelector('#signup-btn');
-      const playText    = document.querySelector('#play-text');
-      const signupText  = document.querySelector('#signup-text');
-      const anchor      = document.querySelector('[mindar-image-target]');
+  document.querySelector('a-scene').addEventListener('loaded', () => {
+    const video  = document.querySelector('#wizard-video');
+    const anchor = document.querySelector('[mindar-image-target]');
+    const playBtnCtn   = document.querySelector('#play-button-container');
+    const signupBtnCtn = document.querySelector('#signup-button-container');
+    const playBtn      = document.querySelector('#play-button');
+    const signupBtn    = document.querySelector('#signup-button');
 
-      /* запуск / пауза видео при появлении / исчезновении постера */
-      anchor.addEventListener('targetFound', () => { video.play(); });
-      anchor.addEventListener('targetLost',  () => { video.pause(); });
+    // Открыть ссылку в новой вкладке (с fallback)
+    const openURL = url => {
+      const w = window.open(url, '_blank');
+      if (!w) window.location.href = url;
+    };
 
-      /* когда ролик закончился — показываем кнопки */
-      video.addEventListener('ended', () => {
-        [playBtn, signupBtn, playText, signupText].forEach(el => el.setAttribute('visible', true));
-      });
+    // Воспроизведение видео при нахождении таргета
+    anchor.addEventListener('targetFound', () => video.play().catch(()=>{}));
+    anchor.addEventListener('targetLost',  () => video.pause());
 
-      /* клики по кнопкам */
-      playBtn.addEventListener('click',   () => window.location.href = 'https://lichess.org/ru/learn');
-      playText.addEventListener('click',  () => window.location.href = 'https://lichess.org/ru/learn');
-
-      signupBtn.addEventListener('click', () => window.location.href = 'https://t.me/m/s_Zqu21RY2Yy');
-      signupText.addEventListener('click',() => window.location.href = 'https://t.me/m/s_Zqu21RY2Yy');
-
-      /* Чтобы autoplay сработал на iOS/Android, хватит первого тапа по экрану */
-      document.body.addEventListener('touchstart', () => video.play(), {once:true});
+    // Когда роли закончился — показать кнопки
+    video.addEventListener('ended', () => {
+      playBtnCtn.setAttribute('visible', true);
+      signupBtnCtn.setAttribute('visible', true);
     });
+
+    // Обработчики клика
+    playBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      openURL('https://lichess.org/ru/learn');
+    });
+    signupBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      openURL('https://t.me/m/s_Zqu21RY2Yy');
+    });
+
+    // Немного визуального фидбека
+    const hoverOn  = el => el.setAttribute('material', 'color', '#222');
+    const hoverOff = el => el.setAttribute('material', 'color', '#111');
+    playBtn.addEventListener('mouseenter',  () => hoverOn(playBtn));
+    playBtn.addEventListener('mouseleave',  () => hoverOff(playBtn));
+    signupBtn.addEventListener('mouseenter',() => hoverOn(signupBtn));
+    signupBtn.addEventListener('mouseleave',() => hoverOff(signupBtn));
+
+    // iOS/Android: первый тач — позволит autoplay
+    document.body.addEventListener('touchstart', () => {
+      if (video.paused) video.play().catch(()=>{});
+    }, { once: true });
+  });
   </script>
 </body>
 </html>
