@@ -1,178 +1,173 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>AR-постер — Волшебник</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Wizard Poster</title>
 
-  <!-- A-Frame и MindAR (WebAR с распознаванием изображения) -->
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
+    <!-- Подключаем легкую и быструю библиотеку MindAR -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+    <!-- Подключаем Three.js, который является зависимостью для MindAR -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+    <!-- Подключаем контроллер MindAR для Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"></script>
 
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
+    <style>
+        /* Убираем отступы и скрываем скролл, чтобы AR-сцена занимала весь экран */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
 
-    .overlay {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
-      color: #fff; font-family: system-ui, Arial, sans-serif; text-align: center;
-      padding: 10px 12px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.6));
-      pointer-events: none;
-    }
-    
-    .startHint {
-      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.65); color: #fff; font-size: 18px; z-index: 4;
-    }
-    .startHint button {
-      font-size: 18px; padding: 10px 16px; border-radius: 10px; border: none;
-      background: #3b82f6; color: white;
-    }
-    body, canvas, .a-canvas { touch-action: none; }
-  </style>
+        /* Контейнер для AR-сцены */
+        #ar-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: block;
+        }
+
+        /* Стили для кнопок, которые будут накладываться поверх постера */
+        .action-button {
+            /* Изначально скрыты */
+            display: none; 
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0); /* Прозрачный фон, чтобы были видны кнопки на постере */
+            border: 2px solid rgba(255, 255, 255, 0); /* Прозрачная рамка */
+            cursor: pointer;
+            z-index: 100; /* Поверх всего */
+            
+            /* Центрирование относительно заданной точки */
+            transform: translate(-50%, -50%); 
+        }
+
+        /* Позиционирование кнопки "Играть" */
+        #play-button {
+            /* 
+             * Располагаем по центру постера по горизонтали (left: 50%).
+             * Располагаем на 65% от верха постера. 
+             * Подбери эти значения, если кнопки на постере находятся в других местах.
+            */
+            top: 65%;
+            left: 50%;
+            width: 60%; /* Ширина кликабельной области */
+            height: 15%; /* Высота кликабельной области */
+        }
+
+        /* Позиционирование кнопки "Записаться" */
+        #signup-button {
+            /* Располагаем ниже кнопки "Играть" */
+            top: 85%;
+            left: 50%;
+            width: 60%;
+            height: 15%;
+        }
+    </style>
 </head>
 <body>
-
-  <div class="overlay">Наведите камеру на постер</div>
-
-  <!-- Показывается, если для звука требуется пользовательский жест -->
-  <div id="tapToUnmute" class="startHint">
-    <div>
-      <div style="margin-bottom:12px;">Нажмите, чтобы включить звук</div>
-      <button id="unmuteBtn">Воспроизвести</button>
+    <!-- Контейнер, куда MindAR будет рендерить сцену -->
+    <div id="ar-container">
+        <!-- Кликабельные зоны, которые будут активированы после видео -->
+        <div id="play-button" class="action-button"></div>
+        <div id="signup-button" class="action-button"></div>
     </div>
-  </div>
+    
+    <!-- 
+        Видео-элемент. Важные атрибуты:
+        - muted: Обязательно для автопроигрывания в большинстве мобильных браузеров.
+        - playsinline: Предотвращает разворачивание видео на весь экран на iOS.
+        - preload="auto": Начинает загрузку видео как можно раньше.
+        - style="display: none;": Видео не должно отображаться как обычный HTML-элемент.
+    -->
+    <video id="wizard-video" src="./wizard.mp4" muted playsinline preload="auto" style="display: none;"></video>
 
-  <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind; maxTrack: 1"
-    renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true; antialias: true"
-    color-space="sRGB"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-    embedded
-    cursor="rayOrigin: mouse; fuse: false"
-    raycaster="objects: .clickable">
+    <script>
+        // Ждем полной загрузки DOM, чтобы все элементы были доступны
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Получаем ссылки на DOM-элементы
+            const video = document.querySelector("#wizard-video");
+            const playButton = document.querySelector("#play-button");
+            const signupButton = document.querySelector("#signup-button");
 
-    <a-assets timeout="20000">
-      <!-- Видео с волшебником -->
-      <video id="wizardVideo" src="./wizard.mp4" preload="auto" webkit-playsinline playsinline crossorigin="anonymous"></video>
-    </a-assets>
+            // Инициализация MindAR
+            const mindarThree = new MindAR.MindARThree({
+                container: document.querySelector("#ar-container"),
+                imageTargetSrc: './targets.mind', // Путь к твоему файлу с целями
+                maxTrack: 1 // Отслеживаем только один постер за раз для лучшей производительности
+            });
 
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+            // Деструктуризация для удобного доступа к рендереру, сцене и камере
+            const { renderer, scene, camera } = mindarThree;
 
-    <!-- Якорь: все, что внутри, привязано к распознанному постеру -->
-    <a-entity id="anchor" mindar-image-target="targetIndex: 0">
+            // Создаем текстуру из нашего видео
+            const videoTexture = new THREE.VideoTexture(video);
+            // Создаем материал для плоскости, на которую наложим видео
+            const videoMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
+            // Создаем геометрию плоскости. Размер 1x1, т.к. MindAR автоматически масштабирует ее под размер постера
+            const planeGeometry = new THREE.PlaneGeometry(1, 1);
+            // Создаем сам объект (меш), который будет виден в AR
+            const videoPlane = new THREE.Mesh(planeGeometry, videoMaterial);
 
-      <!-- Видео поверх постера (размер подгоните под ваш макет) -->
-      <!-- width=1 соответствует ширине таргета; подправьте height, чтобы видео заполняло нужную область -->
-      <a-video id="videoPlane"
-               src="#wizardVideo"
-               position="0 0 0"
-               rotation="0 0 0"
-               width="1"
-               height="0.5625"
-               visible="false">
-      </a-video>
+            // Создаем "якорь" для нашей цели (постера). 0 - это индекс цели в файле targets.mind
+            const anchor = mindarThree.addAnchor(0);
+            // Добавляем плоскость с видео к якорю. Теперь она будет появляться и двигаться вместе с постером.
+            anchor.group.add(videoPlane);
+            
+            // --- Логика событий ---
 
-      <!-- Невидимые кликабельные области поверх нарисованных кнопок -->
-      <!-- Позиции/размеры подкорректируйте под ваш конкретный макет постера -->
-      <!-- "Играть" (выше) -->
-      <a-plane id="btnPlay" class="clickable"
-               position="0 0.15 0.01" width="0.62" height="0.14"
-               material="transparent: true; opacity: 0.0; color: #00FF00"
-               visible="false"></a-plane>
+            // Событие: постер найден
+            anchor.on('targetFound', () => {
+                console.log("Target Found");
+                videoPlane.visible = true; // Делаем плоскость с видео видимой
+                video.muted = false; // Включаем звук (браузер разрешит это после взаимодействия пользователя с камерой)
+                video.play();
+            });
 
-      <!-- "Записаться" (ниже) -->
-      <a-plane id="btnSignup" class="clickable"
-               position="0 -0.05 0.01" width="0.62" height="0.14"
-               material="transparent: true; opacity: 0.0; color: #FF0000"
-               visible="false"></a-plane>
+            // Событие: постер потерян из вида
+            anchor.on('targetLost', () => {
+                console.log("Target Lost");
+                video.pause();
+                video.currentTime = 0; // Сбрасываем видео на начало
+                
+                // Скрываем кнопки, если постер потерян
+                playButton.style.display = 'none';
+                signupButton.style.display = 'none';
+            });
 
-    </a-entity>
-  </a-scene>
+            // Событие: видео закончилось
+            video.addEventListener('ended', () => {
+                console.log("Video Ended");
+                // Скрываем плоскость с видео, чтобы был виден оригинальный постер под ней
+                videoPlane.visible = false;
 
-  <script>
-    const anchor = document.querySelector('#anchor');
-    const video = document.querySelector('#wizardVideo');
-    const videoPlane = document.querySelector('#videoPlane');
-    const btnPlay = document.querySelector('#btnPlay');
-    const btnSignup = document.querySelector('#btnSignup');
-    const unmuteOverlay = document.querySelector('#tapToUnmute');
-    const unmuteBtn = document.querySelector('#unmuteBtn');
+                // Показываем наши прозрачные кликабельные кнопки
+                playButton.style.display = 'block';
+                signupButton.style.display = 'block';
+            });
+            
+            // Обработчики нажатий на кнопки
+            playButton.addEventListener('click', () => {
+                window.location.href = 'https://lichess.org/ru/learn';
+            });
 
-    let finished = false;
+            signupButton.addEventListener('click', () => {
+                window.location.href = 'https://t.me/m/s_Zqu21RY2Yy';
+            });
 
-    // Переходы по кнопкам
-    const openLink = (url) => {
-      // Для Telegram открываем напрямую; для браузера — обычный переход
-      window.location.href = url;
-    };
-    btnPlay.addEventListener('click', () => openLink('https://lichess.org/ru/learn'));
-    btnSignup.addEventListener('click', () => openLink('https://t.me/m/s_Zqu21RY2Yy'));
+            // --- Старт AR-движка ---
 
-    // Автозапуск видео при распознавании постера
-    anchor.addEventListener('targetFound', () => {
-      if (!finished) {
-        videoPlane.setAttribute('visible', 'true');
-        playVideoWithBestEffort();
-      } else {
-        // После окончания видео показываем кликабельные области
-        btnPlay.setAttribute('visible', 'true');
-        btnSignup.setAttribute('visible', 'true');
-      }
-    });
+            // Асинхронный запуск MindAR (запросит доступ к камере)
+            await mindarThree.start();
 
-    // На потерю постера ставим видео на паузу (экономия батареи)
-    anchor.addEventListener('targetLost', () => {
-      if (!video.paused && !video.ended) video.pause();
-    });
-
-    // Пытаемся воспроизвести видео со звуком; если нельзя — включаем немое воспроизведение с предложением включить звук
-    async function playVideoWithBestEffort() {
-      try {
-        video.muted = false;
-        await video.play();
-      } catch (err1) {
-        try {
-          video.muted = true;
-          await video.play();
-          unmuteOverlay.style.display = 'flex';
-        } catch (err2) {
-          // На некоторых устройствах требуется явный тап для старта
-          unmuteOverlay.style.display = 'flex';
-        }
-      }
-    }
-
-    // Включение звука по пользовательскому действию
-    unmuteBtn.addEventListener('click', async () => {
-      try {
-        video.muted = false;
-        await video.play();
-      } catch (e) {
-        // Если не удалось — оставим без звука
-      }
-      unmuteOverlay.style.display = 'none';
-    });
-
-    // Когда видео заканчивается — скрываем видео, показываем кликабельные зоны
-    video.addEventListener('ended', () => {
-      finished = true;
-      videoPlane.setAttribute('visible', 'false');
-      btnPlay.setAttribute('visible', 'true');
-      btnSignup.setAttribute('visible', 'true');
-    });
-
-    // На сворачивание вкладки — ставим на паузу
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && !video.paused) video.pause();
-    });
-
-    // ПРИМЕЧАНИЕ:
-    // - Подгоните размеры/позиции videoPlane, btnPlay и btnSignup под схему вашего постера,
-    //   чтобы невидимые кликабельные области точно совпадали с нарисованными кнопками.
-    // - Если ваш таргет (изображение, на основе которого сделан targets.mind) имеет, например,
-    //   соотношение сторон 1:1.4, то задайте videoPlane width="1" и height="1.4" и уже внутри
-    //   расположите области кнопок.
-  </script>
+            // Запускаем цикл рендеринга
+            renderer.setAnimationLoop(() => {
+                renderer.render(scene, camera);
+            });
+        });
+    </script>
 </body>
 </html>
