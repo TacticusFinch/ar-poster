@@ -1,171 +1,186 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>Magic Chess Poster</title>
+<meta charset="utf-8">
+<title>Magic Chess Poster</title>
+<meta name="viewport" content="width=device-width,initial-scale=1, user-scalable=no,viewport-fit=cover">
 
-  <!-- A-Frame + MindAR -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
 
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      overflow: hidden; background: #000;
-    }
-    #ar-scene {
-      position: fixed;
-      inset: 0;
-      width: 100vw; height: 100vh;
-    }
-    /* Отключаем перехват кликов у оверлеев MindAR */
-    video.mindar-video,
-    canvas.mindar-image-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100vw !important;
-      height: 100vh !important;
-      object-fit: cover !important;
-      pointer-events: none !important;
-    }
-  </style>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;}
+#app,a-scene{width:100%;height:100%;}
+
+/* Камера на весь экран, как cover */
+#mindar-image-video{
+  position:fixed !important;
+  top:0;left:0;width:100vw;height:100vh;
+  object-fit:cover;
+  z-index:-2;
+}
+
+/* Канвас A-Frame на весь экран */
+a-scene canvas{
+  position:fixed !important;
+  top:0;left:0;width:100vw !important;height:100vh !important;
+}
+
+#buttons{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;gap:22px;align-items:center;
+  pointer-events:none;opacity:0;transition:opacity .5s;
+}
+#buttons.show{opacity:1;pointer-events:auto;}
+
+#buttons a{
+  font:700 2rem/1 "Trebuchet MS",sans-serif;
+  color:#fff;text-decoration:none;
+  padding:18px 64px;border-radius:14px;
+  background:linear-gradient(135deg,#ff512f 0%,#dd2476 100%);
+  box-shadow:0 0 18px rgba(255,255,255,.7);
+  transition:transform .15s,box-shadow .15s;
+}
+#buttons a:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(255,255,255,1);}
+</style>
 </head>
-<body>
-  <a-scene
-    id="ar-scene"
-    mindar-image="imageTargetSrc: targets.mind"
-    embedded
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-    renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true"
-  >
-    <!-- Камера с cursor + правильным raycaster-ом -->
-    <a-camera
-      look-controls="enabled: false"
-      cursor="rayOrigin: mouse; fuse: false"
-      raycaster="objects: .clickable"
-    ></a-camera>
 
-    <!-- ассеты -->
+<body>
+<div id="app">
+
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; uiScanning: false; uiLoading: false;"
+    color-space="sRGB" embedded
+    renderer="colorManagement:true,physicallyCorrectLights"
+    vr-mode-ui="enabled:false"
+    device-orientation-permission-ui="enabled:false">
+
     <a-assets>
-      <video id="wizard-video"
-             src="wizard.mp4"
-             preload="auto"
-             loop="false"
-             crossorigin="anonymous"
-             playsinline
-             webkit-playsinline>
-      </video>
+      <video id="wizard" src="wizard.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline></video>
     </a-assets>
 
-    <!-- Якoрь на первый таргет -->
-    <a-entity mindar-image-target="targetIndex: 0">
+    <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-      <!-- видео-плейн -->
-      <a-plane id="video-plane"
-               src="#wizard-video"
-               width="2"
-               height="1.125"
-               position="0 0 0"
-               rotation="0 0 0"
-               shadow="receive: false">
-      </a-plane>
-
-      <!-- Кнопка ИГРАТЬ -->
-      <a-entity id="play-button-container" visible="false">
-        <!-- Тонкая жёлтая рамка -->
-        <a-plane position="0 -0.05 0.005"
-                 width="1.06" height="0.31"
-                 material="color: #ffff00; opacity: 0.3; transparent: true">
-        </a-plane>
-        <!-- Хитбокс -->
-        <a-plane id="play-button"
-                 class="clickable"
-                 position="0 -0.05 0.01"
-                 width="1" height="0.25"
-                 material="color: #111; opacity: 0.7; transparent: true">
-        </a-plane>
-        <!-- Текст -->
-        <a-text value="Играть"
-                align="center"
-                width="2"
-                color="#fff"
-                position="0 -0.05 0.02">
-        </a-text>
+    <a-entity mindar-image-target="targetIndex:0">
+      <!-- Плоскость постера (точно под таргет), видео как текстура -->
+      <a-entity id="poster"
+        geometry="primitive: plane; width: 1; height: 1"  <!-- высоту зададим по ratio -->
+        material="shader: flat; src: #wizard; transparent: false">
       </a-entity>
-
-      <!-- Кнопка ЗАПИСАТЬСЯ -->
-      <a-entity id="signup-button-container" visible="false">
-        <a-plane position="0 -0.35 0.005"
-                 width="1.06" height="0.31"
-                 material="color: #ffff00; opacity: 0.3; transparent: true">
-        </a-plane>
-        <a-plane id="signup-button"
-                 class="clickable"
-                 position="0 -0.35 0.01"
-                 width="1" height="0.25"
-                 material="color: #111; opacity: 0.7; transparent: true">
-        </a-plane>
-        <a-text value="Записаться"
-                align="center"
-                width="2"
-                color="#fff"
-                position="0 -0.35 0.02">
-        </a-text>
-      </a-entity>
-
     </a-entity>
   </a-scene>
 
-  <script>
-  document.querySelector('a-scene').addEventListener('loaded', () => {
-    const video  = document.querySelector('#wizard-video');
-    const anchor = document.querySelector('[mindar-image-target]');
-    const playBtnCtn   = document.querySelector('#play-button-container');
-    const signupBtnCtn = document.querySelector('#signup-button-container');
-    const playBtn      = document.querySelector('#play-button');
-    const signupBtn    = document.querySelector('#signup-button');
+  <div id="buttons">
+    <a id="play" href="https://lichess.org/ru/learn" target="_blank" rel="noopener">Играть</a>
+    <a id="sign" href="https://t.me/m/s_Zqu21RY2Yy" target="_blank" rel="noopener">Записаться</a>
+  </div>
 
-    // Открыть ссылку в новой вкладке (с fallback)
-    const openURL = url => {
-      const w = window.open(url, '_blank');
-      if (!w) window.location.href = url;
-    };
+</div>
 
-    // Воспроизведение видео при нахождении таргета
-    anchor.addEventListener('targetFound', () => video.play().catch(()=>{}));
-    anchor.addEventListener('targetLost',  () => video.pause());
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const scene   = document.querySelector("a-scene");
+  const video   = document.querySelector("#wizard");
+  const anchor  = document.querySelector("[mindar-image-target]");
+  const poster  = document.querySelector("#poster");
+  const ui      = document.querySelector("#buttons");
 
-    // Когда роли закончился — показать кнопки
-    video.addEventListener('ended', () => {
-      playBtnCtn.setAttribute('visible', true);
-      signupBtnCtn.setAttribute('visible', true);
-    });
-
-    // Обработчики клика
-    playBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      openURL('https://lichess.org/ru/learn');
-    });
-    signupBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      openURL('https://t.me/m/s_Zqu21RY2Yy');
-    });
-
-    // Немного визуального фидбека
-    const hoverOn  = el => el.setAttribute('material', 'color', '#222');
-    const hoverOff = el => el.setAttribute('material', 'color', '#111');
-    playBtn.addEventListener('mouseenter',  () => hoverOn(playBtn));
-    playBtn.addEventListener('mouseleave',  () => hoverOff(playBtn));
-    signupBtn.addEventListener('mouseenter',() => hoverOn(signupBtn));
-    signupBtn.addEventListener('mouseleave',() => hoverOff(signupBtn));
-
-    // iOS/Android: первый тач — позволит autoplay
-    document.body.addEventListener('touchstart', () => {
-      if (video.paused) video.play().catch(()=>{});
-    }, { once: true });
+  // Камера — «cover» на фоне
+  scene.addEventListener("renderstart", () => {
+    const camVideo = document.querySelector("#mindar-image-video");
+    if (camVideo) camVideo.style.objectFit = "cover";
   });
-  </script>
+
+  const onARReady = new Promise(resolve => {
+    scene.addEventListener("arReady", resolve, { once: true });
+  });
+
+  const onMeta = new Promise(resolve => {
+    if (video.readyState >= 1 && video.videoWidth) resolve();
+    else video.addEventListener("loadedmetadata", resolve, { once: true });
+  });
+
+  Promise.all([onARReady, onMeta]).then(() => {
+    // Соотношение сторон постера из MindAR
+    const ratios = scene.systems["mindar-image-system"]?.imageTargetRatios || [];
+    const targetIndex = 0;
+    const posterHeight = ratios[targetIndex] || 1; // ratio = height/width
+    const posterWidth  = 1;
+
+    // Точный размер плоскости под постер (ровно поверх таргета)
+    poster.setAttribute("geometry", `primitive: plane; width: ${posterWidth}; height: ${posterHeight}`);
+    poster.setAttribute("material", "shader: flat; src: #wizard; transparent: false");
+
+    // Дождёмся пока A-Frame создаст mesh, чтобы достучаться до three.js-материала
+    const ensureMesh = () => new Promise(res => {
+      const mesh = poster.getObject3D("mesh");
+      if (mesh && mesh.material && mesh.material.map) return res(mesh);
+      poster.addEventListener("model-loaded", () => res(poster.getObject3D("mesh")), { once: true });
+      // запасной таймер если событие не придёт
+      setTimeout(() => res(poster.getObject3D("mesh")), 0);
+    });
+
+    ensureMesh().then(mesh => {
+      if (!mesh || !mesh.material || !mesh.material.map) return;
+
+      const tex = mesh.material.map;
+      // Включаем повтор, чтобы заработали repeat/offset
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.needsUpdate = true;
+
+      const vidAspect    = video.videoWidth / video.videoHeight;  // w/h
+      const posterAspect = posterWidth / posterHeight;            // w/h
+
+      // Выберите нужное поведение: 'cover' (обрезаем лишнее) или 'contain' (вписываем с полями)
+      const FIT = 'cover'; // 'cover' | 'contain'
+
+      let repeatX = 1, repeatY = 1, offsetX = 0, offsetY = 0;
+
+      if (FIT === 'cover') {
+        // Заполняем всю плоскость постера без искажений, лишнее обрезаем
+        if (vidAspect > posterAspect) {
+          // Видео шире постера — обрежем по бокам
+          repeatX = posterAspect / vidAspect; // < 1
+          offsetX = (1 - repeatX) / 2;
+        } else if (vidAspect < posterAspect) {
+          // Видео выше — обрежем сверху/снизу
+          repeatY = vidAspect / posterAspect; // < 1
+          offsetY = (1 - repeatY) / 2;
+        }
+      } else {
+        // 'contain' — целиком вписываем видео, оставляя поля (без обрезки)
+        if (vidAspect > posterAspect) {
+          // Видео шире — впишем по ширине, добавятся полосы сверху/снизу
+          repeatY = vidAspect / posterAspect; // > 1
+          offsetY = (1 - repeatY) / 2;        // отрицательный сдвиг вверх (three.js считает от 0..1)
+        } else if (vidAspect < posterAspect) {
+          // Видео выше — впишем по высоте, полосы слева/справа
+          repeatX = posterAspect / vidAspect; // > 1
+          offsetX = (1 - repeatX) / 2;
+        }
+      }
+
+      // Применяем и к материалу A-Frame (для синхронизации), и к самой карте three.js
+      poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false; repeat: ${repeatX} ${repeatY}; offset: ${offsetX} ${offsetY}`);
+      tex.repeat.set(repeatX, repeatY);
+      tex.offset.set(offsetX, offsetY);
+      tex.needsUpdate = true;
+      mesh.material.needsUpdate = true;
+    });
+
+    // Воспроизведение при детекте
+    anchor.addEventListener("targetFound", () => {
+      // iOS: лучше muted + playsinline, чтобы autoplay прошёл без жеста
+      video.muted = true;
+      video.play().catch(()=>{});
+    });
+
+    video.addEventListener("ended", () => {
+      ui.classList.add("show");
+    });
+  });
+});
+</script>
 </body>
 </html>
