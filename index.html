@@ -6,48 +6,57 @@
 
 <meta name="viewport" content="width=device-width,initial-scale=1, user-scalable=no,viewport-fit=cover">
 
+<!-- A-Frame + MindAR -->
 <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
 
 <style>
-html,body{margin:0;padding:0;width:100%;height:100%;}
+html,body{margin:0;padding:0;width:100%;height:100%;font-family:Trebuchet MS, sans-serif;}
 #app,a-scene{width:100%;height:100%;}
 
-/* --- NEW ------------------------------------------------------------------ */
-/* заставляем видео-поток MindAR растягиваться на весь экран без «рамок» */
+/* --- Камера MindAR и канвас на весь экран -------------------------------- */
 #mindar-image-video{
-  position:fixed !important;           /* поверх всего, под 3D-слоем */
+  position:fixed !important;
   top:0;left:0;width:100vw;height:100vh;
-  object-fit:cover;                    /* заполняем экран, без чёрных полос */
-  z-index:-2;                          /* под канvas-ом A-Frame */
+  object-fit:cover;
+  z-index:-2;
 }
-
-/* сам канvas с 3D сценой тоже на весь экран */
 a-scene canvas{
   position:fixed !important;
   top:0;left:0;width:100vw !important;height:100vh !important;
 }
 /* -------------------------------------------------------------------------- */
 
+/* --- Кнопки --------------------------------------------------------------- */
 #buttons{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%) translateY(100px); /* +100 px вниз */
-  display:flex;flex-direction:column;gap:22px;align-items:center;
-  pointer-events:none;opacity:0;transition:opacity .5s;
+  position:fixed;                         /* теперь фиксируем к окну */
+  transform:translate(-50%,-50%);         /* центрируем по своей точке */
+  display:flex;flex-direction:column;gap:24px;align-items:center;
+  opacity:0;pointer-events:none;          /* скрыто до конца видео */
+  transition:opacity .6s ease;
+  z-index:10;
 }
 #buttons.show{opacity:1;pointer-events:auto;}
 
 #buttons a{
-  font:700 2rem/1 "Trebuchet MS",sans-serif;
+  --glow1:#00e0ff;
+  --glow2:#a200ff;
   color:#fff;text-decoration:none;
-  padding:18px 64px;border-radius:14px;
-  background:linear-gradient(135deg,#ff512f 0%,#dd2476 100%);
-  box-shadow:0 0 18px rgba(255,255,255,.7);
-  transition:transform .15s,box-shadow .15s;
+  font-weight:700;font-size:2rem;letter-spacing:.5px;
+  padding:20px 70px;border-radius:16px;
+  background:linear-gradient(135deg,var(--glow1) 0%,var(--glow2) 100%);
+  box-shadow:0 0 12px var(--glow1),0 0 25px var(--glow2);
+  transition:transform .18s cubic-bezier(.3,1.5,.5,1),
+             box-shadow .25s,
+             filter .25s;
 }
-#buttons a:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(255,255,255,1);}
+#buttons a:hover{
+  transform:scale(1.06);
+  box-shadow:0 0 18px var(--glow1),0 0 38px var(--glow2),0 0 65px rgba(255,255,255,.4);
+  filter:brightness(1.15) saturate(1.3);
+}
+#buttons a:active{transform:scale(.96);} /* клик-отклик */
+/* -------------------------------------------------------------------------- */
 </style>
 </head>
 
@@ -67,12 +76,15 @@ a-scene canvas{
 
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
-    <a-entity mindar-image-target="targetIndex:0">
+    <!-- anchor с видео и компонентом ui-follow -->
+    <a-entity mindar-image-target="targetIndex:0"
+              ui-follow="ui:#buttons; offsetY:100">
       <a-video src="#wizard" width="1" height="0.5625" position="0 0 0"
                autoplay="false" loop="false"></a-video>
     </a-entity>
   </a-scene>
 
+  <!-- UI-кнопки -->
   <div id="buttons">
     <a id="play" href="https://lichess.org/ru/learn" target="_blank" rel="noopener">Играть</a>
     <a id="sign" href="https://t.me/m/s_Zqu21RY2Yy" target="_blank" rel="noopener">Записаться</a>
@@ -81,36 +93,77 @@ a-scene canvas{
 </div>
 
 <script>
-/* JS */
+/* --------------------------------------------------------------------------
+   Компонент ui-follow:
+   – каждый кадр проецирует центр якоря в экранные координаты
+   – размещает HTML-блок ui там же (смещение offsetY px вниз)
+-------------------------------------------------------------------------- */
+AFRAME.registerComponent('ui-follow', {
+  schema: {
+    ui:      {type: 'selector'}, // CSS-селектор HTML-блока
+    offsetY: {type: 'number', default: 0}
+  },
+  init() {
+    this.uiEl      = this.data.ui;
+    this.offsetY   = this.data.offsetY;
+    this.visible   = false;
+
+    this.el.addEventListener('targetFound', () => { this.visible = true; });
+    this.el.addEventListener('targetLost',  () => { this.visible = false;  });
+  },
+  tick() {
+    if (!this.visible) return;
+    const camera = this.el.sceneEl.camera;
+    if (!camera) return;
+
+    // мировая позиция центра якоря
+    const worldPos = new THREE.Vector3();
+    this.el.object3D.getWorldPosition(worldPos);
+
+    // проекция в NDC
+    worldPos.project(camera);
+
+    // перевод в координаты экрана
+    const x = ( worldPos.x + 1) / 2 * window.innerWidth;
+    const y = (-worldPos.y + 1) / 2 * window.innerHeight + this.offsetY;
+
+    // размещаем UI-блок
+    this.uiEl.style.left = `${x}px`;
+    this.uiEl.style.top  = `${y}px`;
+  }
+});
+
+/* --------------------------------------------------------------------------
+   Подгоняем плоскость под нужное соотношение сторон видео,
+   запускаем ролик, показываем кнопки после окончания видео.
+-------------------------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
 
   const scene  = document.querySelector("a-scene");
   const video  = document.querySelector("#wizard");
   const anchor = document.querySelector("[mindar-image-target]");
   const ui     = document.querySelector("#buttons");
-  const plane  = anchor.querySelector("a-video");   // плоскость-носитель
+  const plane  = anchor.querySelector("a-video");
 
-  /* ждём метаданные, чтобы узнать точные размеры ролика */
+  /* корректное соотношение сторон плоскости */
   video.addEventListener("loadedmetadata", () => {
-    const ratio = video.videoHeight / video.videoWidth; // h/w
-
-    /*  Ширина маркера у MindAR = 1 (единица мира).
-        Подгоняем высоту плоскости под ролик динамически,
-        чтобы заполнять маркер без искажений.               */
+    const ratio = video.videoHeight / video.videoWidth; // h / w
     plane.setAttribute("width", 1);
     plane.setAttribute("height", ratio);
   });
 
-  /* заставляем камеру-стрим «без рамок» */
+  /* камере – режим object-fit:cover */
   scene.addEventListener("renderstart", () => {
     const camVideo = document.querySelector("#mindar-image-video");
     if (camVideo) camVideo.style.objectFit = "cover";
   });
 
-  anchor.addEventListener("targetFound", () => setTimeout(()=>video.play(), 500));
+  /* запускаем ролик с небольшой задержкой после захвата маркера */
+  anchor.addEventListener("targetFound", () => setTimeout(() => video.play(), 500));
+
+  /* показываем UI после окончания видео */
   video.addEventListener("ended", () => ui.classList.add("show"));
 });
-
 </script>
 </body>
 </html>
