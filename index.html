@@ -27,9 +27,12 @@ a-scene canvas{
 }
 
 #buttons{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  position:absolute;
+  /* left/top выставляем из JS по центру постера */
+  transform:translate(-50%,-50%);
   display:flex;flex-direction:column;gap:22px;align-items:center;
   pointer-events:none;opacity:0;transition:opacity .5s;
+  z-index:10;
 }
 #buttons.show{opacity:1;pointer-events:auto;}
 
@@ -64,8 +67,8 @@ a-scene canvas{
     <a-entity mindar-image-target="targetIndex:0">
       <!-- Плоскость постера (точно под таргет), видео как текстура -->
       <a-entity id="poster"
-        geometry="primitive: plane; width: 1; height: 1"  <!-- высоту зададим по ratio -->
-        <material="shader: flat; src: #wizard; transparent: false">
+        geometry="primitive: plane; width: 1; height: 1"
+        material="shader: flat; src: #wizard; transparent: false">
       </a-entity>
     </a-entity>
   </a-scene>
@@ -85,18 +88,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const poster  = document.querySelector("#poster");
   const ui      = document.querySelector("#buttons");
 
+  let targetVisible = false;
+  let videoEnded = false;
+
   // Камера — «cover» на фоне
   scene.addEventListener("renderstart", () => {
     const camVideo = document.querySelector("#mindar-image-video");
     if (camVideo) camVideo.style.objectFit = "cover";
   });
 
-  // Дожидаемся, когда AR инициализируется и узнаём пропорции таргета
   const onARReady = new Promise(resolve => {
     scene.addEventListener("arReady", resolve, { once: true });
   });
 
-  // Дожидаемся метаданных видео (узнаем его реальное соотношение сторон)
   const onMeta = new Promise(resolve => {
     if (video.readyState >= 1 && video.videoWidth) resolve();
     else video.addEventListener("loadedmetadata", resolve, { once: true });
@@ -109,35 +113,60 @@ document.addEventListener("DOMContentLoaded", () => {
     const posterHeight = ratios[targetIndex] || 1; // ratio = height/width
     const posterWidth  = 1;
 
-    // Задаём точный размер плоскости под постер
-    poster.setAttribute("geometry", `primitive: plane; width: ${posterWidth}; height: ${posterHeight}`);
+    // Размер базового постера под таргет (контур постера)
+    // (оставим его как контейнер центра и границ)
+    // А реальный видеоплейн впишем внутрь без искажений
+    // Для простоты используем сам #poster как видеоплейн:
+    const vidAspect    = video.videoWidth / video.videoHeight; // w/h
+    const posterAspect = posterWidth / posterHeight;           // w/h
 
-    // Адаптивное «cover» для видео-текстуры
-    const vidAspect    = video.videoWidth / video.videoHeight;       // w/h
-    const posterAspect = posterWidth / posterHeight;                 // w/h
-
-    let repeatX = 1, repeatY = 1, offsetX = 0, offsetY = 0;
-
+    let planeW, planeH;
     if (vidAspect > posterAspect) {
-      // Видео шире: режем по бокам
-      repeatX = posterAspect / vidAspect; // < 1
-      offsetX = (1 - repeatX) / 2;
-    } else if (vidAspect < posterAspect) {
-      // Видео выше: режем сверху/снизу
-      repeatY = vidAspect / posterAspect; // < 1
-      offsetY = (1 - repeatY) / 2;
+      // Видео шире постера — фиксируем ширину, уменьшаем высоту (появятся поля сверху/снизу)
+      planeW = posterWidth;
+      planeH = posterWidth / vidAspect;
+    } else {
+      // Видео выше/уже постера — фиксируем высоту, уменьшаем ширину (поля слева/справа)
+      planeH = posterHeight;
+      planeW = posterHeight * vidAspect;
     }
-    poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false; repeat: ${repeatX} ${repeatY}; offset: ${offsetX} ${offsetY}`);
+
+    // Плоскость под видео без повторов/offset (никакого кропа и искажений)
+    poster.setAttribute("geometry", `primitive: plane; width: ${planeW}; height: ${planeH}`);
+    poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false`);
 
     // Воспроизведение при детекте
     anchor.addEventListener("targetFound", () => {
-      // Подстраховка для iOS: попытка play в колбэке события
+      targetVisible = true;
       video.play().catch(()=>{});
+      if (videoEnded) ui.classList.add("show");
+    });
+    anchor.addEventListener("targetLost", () => {
+      targetVisible = false;
+      ui.classList.remove("show");
     });
 
     video.addEventListener("ended", () => {
-      ui.classList.add("show");
+      videoEnded = true;
+      if (targetVisible) ui.classList.add("show");
     });
+
+    // Привязка HTML-кнопок к центру постера + смещение ниже центра
+    const UI_OFFSET_PX = 120; // сдвиг вниз (подберите под себя)
+    const updateUIPosition = () => {
+      if (targetVisible && scene.camera && poster.object3D) {
+        poster.object3D.updateMatrixWorld();
+        const worldCenter = new THREE.Vector3();
+        worldCenter.set(0, 0, 0).applyMatrix4(poster.object3D.matrixWorld);
+        const projected = worldCenter.clone().project(scene.camera);
+        const x = (projected.x + 1) / 2 * window.innerWidth;
+        const y = (1 - projected.y) / 2 * window.innerHeight + UI_OFFSET_PX;
+        ui.style.left = `${x}px`;
+        ui.style.top  = `${y}px`;
+      }
+      requestAnimationFrame(updateUIPosition);
+    };
+    requestAnimationFrame(updateUIPosition);
   });
 });
 </script>
