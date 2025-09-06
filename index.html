@@ -65,7 +65,7 @@ a-scene canvas{
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex:0">
-      <!-- Плоскость постера (точно под таргет), видео как текстура -->
+      <!-- Плоскость постера (ровно размер таргета). Видео будет «cover» без искажений -->
       <a-entity id="poster"
         geometry="primitive: plane; width: 1; height: 1"
         material="shader: flat; src: #wizard; transparent: false">
@@ -91,6 +91,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let targetVisible = false;
   let videoEnded = false;
 
+  // Для автоплея на iOS/Android
+  video.muted = true;
+  video.setAttribute("muted", "true");
+
   // Камера — «cover» на фоне
   scene.addEventListener("renderstart", () => {
     const camVideo = document.querySelector("#mindar-image-video");
@@ -106,34 +110,61 @@ document.addEventListener("DOMContentLoaded", () => {
     else video.addEventListener("loadedmetadata", resolve, { once: true });
   });
 
+  // Настройка UV, чтобы видео было "cover" под размер постера без искажений (с кропом)
+  function applyVideoCoverUV(posterWidth, posterHeight) {
+    const mesh = poster.getObject3D("mesh");
+    if (!mesh || !mesh.material || !mesh.material.map) return;
+
+    const texture = mesh.material.map;
+    // Соотношения сторон
+    const vidAspect    = video.videoWidth / video.videoHeight;    // w/h
+    const posterAspect = posterWidth / posterHeight;              // w/h
+
+    // Сбрасываем на всякий случай
+    texture.offset.set(0, 0);
+    texture.repeat.set(1, 1);
+
+    if (vidAspect > posterAspect) {
+      // Видео шире постера — кропим по бокам
+      const scale = vidAspect / posterAspect;      // > 1
+      const repeatX = 1 / scale;                   // < 1
+      texture.repeat.set(repeatX, 1);
+      texture.offset.set((1 - repeatX) / 2, 0);    // центрируем
+    } else if (vidAspect < posterAspect) {
+      // Видео выше/уже — кропим сверху/снизу
+      const scale = posterAspect / vidAspect;      // > 1
+      const repeatY = 1 / scale;                   // < 1
+      texture.repeat.set(1, repeatY);
+      texture.offset.set(0, (1 - repeatY) / 2);    // центрируем
+    }
+    texture.needsUpdate = true;
+    mesh.material.needsUpdate = true;
+  }
+
   Promise.all([onARReady, onMeta]).then(() => {
     // Соотношение сторон постера (из MindAR)
     const ratios = scene.systems["mindar-image-system"]?.imageTargetRatios || [];
     const targetIndex = 0;
-    const posterHeight = ratios[targetIndex] || 1; // ratio = height/width
+
+    // Размер нашего таргета в A-Frame (ширину оставляем = 1 единица, высота — ratio)
     const posterWidth  = 1;
+    const posterHeight = ratios[targetIndex] || 1; // ratio = height/width
 
-    // Размер базового постера под таргет (контур постера)
-    // (оставим его как контейнер центра и границ)
-    // А реальный видеоплейн впишем внутрь без искажений
-    // Для простоты используем сам #poster как видеоплейн:
-    const vidAspect    = video.videoWidth / video.videoHeight; // w/h
-    const posterAspect = posterWidth / posterHeight;           // w/h
-
-    let planeW, planeH;
-    if (vidAspect > posterAspect) {
-      // Видео шире постера — фиксируем ширину, уменьшаем высоту (появятся поля сверху/снизу)
-      planeW = posterWidth;
-      planeH = posterWidth / vidAspect;
-    } else {
-      // Видео выше/уже постера — фиксируем высоту, уменьшаем ширину (поля слева/справа)
-      planeH = posterHeight;
-      planeW = posterHeight * vidAspect;
-    }
-
-    // Плоскость под видео без повторов/offset (никакого кропа и искажений)
-    poster.setAttribute("geometry", `primitive: plane; width: ${planeW}; height: ${planeH}`);
+    // Плоскость РОВНО размера постера (никакого подгона под видео)
+    poster.setAttribute("geometry", `primitive: plane; width: ${posterWidth}; height: ${posterHeight}`);
     poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false`);
+
+    // Дождемся, когда карта материала (видео-текстура) применится
+    const ensureTextureReady = new Promise(resolve => {
+      const mesh = poster.getObject3D("mesh");
+      if (mesh?.material?.map) return resolve();
+      poster.addEventListener("materialtextureloaded", resolve, { once: true });
+    });
+
+    ensureTextureReady.then(() => {
+      // Применяем UV cover сейчас и при ресайзах/изменениях метаданных
+      applyVideoCoverUV(posterWidth, posterHeight);
+    });
 
     // Воспроизведение при детекте
     anchor.addEventListener("targetFound", () => {
@@ -144,6 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
     anchor.addEventListener("targetLost", () => {
       targetVisible = false;
       ui.classList.remove("show");
+      // Опционально: останавливать видео при потере таргета
+      // video.pause();
     });
 
     video.addEventListener("ended", () => {
@@ -151,8 +184,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (targetVisible) ui.classList.add("show");
     });
 
+    // Если вдруг браузер изменит метаданные (поворот и т.д.)
+    video.addEventListener("loadedmetadata", () => {
+      applyVideoCoverUV(posterWidth, posterHeight);
+    });
+
     // Привязка HTML-кнопок к центру постера + смещение ниже центра
-    const UI_OFFSET_PX = 120; // сдвиг вниз (подберите под себя)
+    const UI_OFFSET_PX = 100; // сдвиг вниз (подберите под себя)
     const updateUIPosition = () => {
       if (targetVisible && scene.camera && poster.object3D) {
         poster.object3D.updateMatrixWorld();
