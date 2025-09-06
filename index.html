@@ -40,11 +40,15 @@ a-scene canvas{
   font:700 2rem/1 "Trebuchet MS",sans-serif;
   color:#fff;text-decoration:none;
   padding:18px 64px;border-radius:14px;
-  background:linear-gradient(135deg,#ff512f 0%,#dd2476 100%);
-  box-shadow:0 0 18px rgba(255,255,255,.7);
-  transition:transform .15s,box-shadow .15s;
+  background:linear-gradient(135deg,#00D1FF 0%,#7B61FF 100%);
+  box-shadow:0 0 18px rgba(123,97,255,.8);
+  transition:transform .15s,box-shadow .15s,filter .15s;
 }
-#buttons a:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(255,255,255,1);}
+#buttons a:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 30px rgba(0,209,255,1), 0 0 48px rgba(123,97,255,.9);
+  filter:saturate(1.1);
+}
 </style>
 </head>
 
@@ -91,9 +95,33 @@ document.addEventListener("DOMContentLoaded", () => {
   let targetVisible = false;
   let videoEnded = false;
 
-  // Для автоплея на iOS/Android
+  // Для автоплея на iOS/Android — стартуем без звука
   video.muted = true;
   video.setAttribute("muted", "true");
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+
+  // Разблокировка звука на первый пользовательский жест
+  let audioUnlocked = false;
+  const unlockAudio = async () => {
+    try {
+      // Важно: действия в рамках пользовательского события
+      video.muted = false;
+      video.volume = 1;
+      await video.play(); // если таргет уже детектирован — заиграет со звуком
+      audioUnlocked = true;
+    } catch (e) {
+      // Если не удалось (например, видео еще не начато) — ничего страшного
+      audioUnlocked = true; // все равно считаем, что страницу «активировали»
+    } finally {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("click", unlockAudio);
+    }
+  };
+  window.addEventListener("pointerdown", unlockAudio, { once: true });
+  window.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
+  window.addEventListener("click", unlockAudio, { once: true });
 
   // Камера — «cover» на фоне
   scene.addEventListener("renderstart", () => {
@@ -110,51 +138,42 @@ document.addEventListener("DOMContentLoaded", () => {
     else video.addEventListener("loadedmetadata", resolve, { once: true });
   });
 
-  // Настройка UV, чтобы видео было "cover" под размер постера без искажений (с кропом)
   function applyVideoCoverUV(posterWidth, posterHeight) {
     const mesh = poster.getObject3D("mesh");
     if (!mesh || !mesh.material || !mesh.material.map) return;
-
     const texture = mesh.material.map;
-    // Соотношения сторон
-    const vidAspect    = video.videoWidth / video.videoHeight;    // w/h
-    const posterAspect = posterWidth / posterHeight;              // w/h
 
-    // Сбрасываем на всякий случай
+    const vidAspect    = video.videoWidth / video.videoHeight;
+    const posterAspect = posterWidth / posterHeight;
+
     texture.offset.set(0, 0);
     texture.repeat.set(1, 1);
 
     if (vidAspect > posterAspect) {
-      // Видео шире постера — кропим по бокам
-      const scale = vidAspect / posterAspect;      // > 1
-      const repeatX = 1 / scale;                   // < 1
+      const scale = vidAspect / posterAspect;
+      const repeatX = 1 / scale;
       texture.repeat.set(repeatX, 1);
-      texture.offset.set((1 - repeatX) / 2, 0);    // центрируем
+      texture.offset.set((1 - repeatX) / 2, 0);
     } else if (vidAspect < posterAspect) {
-      // Видео выше/уже — кропим сверху/снизу
-      const scale = posterAspect / vidAspect;      // > 1
-      const repeatY = 1 / scale;                   // < 1
+      const scale = posterAspect / vidAspect;
+      const repeatY = 1 / scale;
       texture.repeat.set(1, repeatY);
-      texture.offset.set(0, (1 - repeatY) / 2);    // центрируем
+      texture.offset.set(0, (1 - repeatY) / 2);
     }
     texture.needsUpdate = true;
     mesh.material.needsUpdate = true;
   }
 
   Promise.all([onARReady, onMeta]).then(() => {
-    // Соотношение сторон постера (из MindAR)
     const ratios = scene.systems["mindar-image-system"]?.imageTargetRatios || [];
     const targetIndex = 0;
 
-    // Размер нашего таргета в A-Frame (ширину оставляем = 1 единица, высота — ratio)
     const posterWidth  = 1;
-    const posterHeight = ratios[targetIndex] || 1; // ratio = height/width
+    const posterHeight = ratios[targetIndex] || 1;
 
-    // Плоскость РОВНО размера постера (никакого подгона под видео)
     poster.setAttribute("geometry", `primitive: plane; width: ${posterWidth}; height: ${posterHeight}`);
     poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false`);
 
-    // Дождемся, когда карта материала (видео-текстура) применится
     const ensureTextureReady = new Promise(resolve => {
       const mesh = poster.getObject3D("mesh");
       if (mesh?.material?.map) return resolve();
@@ -162,21 +181,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     ensureTextureReady.then(() => {
-      // Применяем UV cover сейчас и при ресайзах/изменениях метаданных
       applyVideoCoverUV(posterWidth, posterHeight);
     });
 
-    // Воспроизведение при детекте
-    anchor.addEventListener("targetFound", () => {
+    // Умный запуск при детекте:
+    // 1) Пытаемся сразу со звуком (если страница уже «разблокирована» пользователем)
+    // 2) Если не получится — запускаем в muted
+    anchor.addEventListener("targetFound", async () => {
       targetVisible = true;
-      video.play().catch(()=>{});
+
+      const tryPlayWithSoundFirst = async () => {
+        try {
+          if (audioUnlocked) {
+            video.muted = false;
+            video.volume = 1;
+          }
+          await video.play();
+        } catch (e) {
+          // Фоллбэк: гарантированно играем без звука
+          video.muted = true;
+          try { await video.play(); } catch {}
+        }
+      };
+
+      tryPlayWithSoundFirst();
       if (videoEnded) ui.classList.add("show");
     });
+
     anchor.addEventListener("targetLost", () => {
       targetVisible = false;
       ui.classList.remove("show");
-      // Опционально: останавливать видео при потере таргета
-      // video.pause();
+      // video.pause(); // опционально
     });
 
     video.addEventListener("ended", () => {
@@ -184,13 +219,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (targetVisible) ui.classList.add("show");
     });
 
-    // Если вдруг браузер изменит метаданные (поворот и т.д.)
     video.addEventListener("loadedmetadata", () => {
       applyVideoCoverUV(posterWidth, posterHeight);
     });
 
     // Привязка HTML-кнопок к центру постера + смещение ниже центра
-    const UI_OFFSET_PX = 100; // сдвиг вниз (подберите под себя)
+    const UI_OFFSET_PX = 100;
     const updateUIPosition = () => {
       if (targetVisible && scene.camera && poster.object3D) {
         poster.object3D.updateMatrixWorld();
