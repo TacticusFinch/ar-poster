@@ -42,13 +42,6 @@ a-scene canvas{
   transition:transform .15s,box-shadow .15s;
 }
 #buttons a:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(255,255,255,1);}
-#tap-to-start{
-  position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
-  background:rgba(0,0,0,.6);color:#fff;padding:10px 16px;border-radius:10px;
-  font:600 15px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  opacity:0;pointer-events:none;transition:.3s;
-}
-#tap-to-start.show{opacity:1;pointer-events:auto;}
 </style>
 </head>
 
@@ -63,24 +56,16 @@ a-scene canvas{
     device-orientation-permission-ui="enabled:false">
 
     <a-assets>
-      <video id="wizard"
-             src="wizard.mp4"
-             preload="auto"
-             crossorigin="anonymous"
-             playsinline
-             webkit-playsinline
-             muted
-             controlslist="nodownload noplaybackrate foobar">
-      </video>
+      <video id="wizard" src="wizard.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline></video>
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex:0">
-      <!-- Плоскость постера (под таргет) -->
+      <!-- Плоскость постера (точно под таргет), видео как текстура -->
       <a-entity id="poster"
-        geometry="primitive: plane; width: 1; height: 1"
-        material="shader: flat; src: #wizard; transparent: false">
+        geometry="primitive: plane; width: 1; height: 1"  <!-- высоту зададим по ratio -->
+        <material="shader: flat; src: #wizard; transparent: false">
       </a-entity>
     </a-entity>
   </a-scene>
@@ -90,7 +75,6 @@ a-scene canvas{
     <a id="sign" href="https://t.me/m/s_Zqu21RY2Yy" target="_blank" rel="noopener">Записаться</a>
   </div>
 
-  <div id="tap-to-start" class="show">Нажмите, чтобы включить звук</div>
 </div>
 
 <script>
@@ -100,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const anchor  = document.querySelector("[mindar-image-target]");
   const poster  = document.querySelector("#poster");
   const ui      = document.querySelector("#buttons");
-  const tapHint = document.querySelector("#tap-to-start");
 
   // Камера — «cover» на фоне
   scene.addEventListener("renderstart", () => {
@@ -108,12 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (camVideo) camVideo.style.objectFit = "cover";
   });
 
-  // Когда AR готов
+  // Дожидаемся, когда AR инициализируется и узнаём пропорции таргета
   const onARReady = new Promise(resolve => {
     scene.addEventListener("arReady", resolve, { once: true });
   });
 
-  // Метаданные видео (чтобы узнать его пропорции)
+  // Дожидаемся метаданных видео (узнаем его реальное соотношение сторон)
   const onMeta = new Promise(resolve => {
     if (video.readyState >= 1 && video.videoWidth) resolve();
     else video.addEventListener("loadedmetadata", resolve, { once: true });
@@ -129,37 +112,32 @@ document.addEventListener("DOMContentLoaded", () => {
     // Задаём точный размер плоскости под постер
     poster.setAttribute("geometry", `primitive: plane; width: ${posterWidth}; height: ${posterHeight}`);
 
-    // ВАЖНО: убираем подрезание. Просто маппим текстуру на плоскость.
-    // Если соотношения отличаются, видео будет равномерно РАСТЯНУТО по плоскости.
-    // Это гарантирует "без обрезки" и "закрывает весь постер".
-    poster.setAttribute("material", "shader: flat; src: #wizard; transparent: false;");
+    // Адаптивное «cover» для видео-текстуры
+    const vidAspect    = video.videoWidth / video.videoHeight;       // w/h
+    const posterAspect = posterWidth / posterHeight;                 // w/h
 
-    // Попытка автозапуска при детекте (зачастую будет без звука из-за политик браузера)
-    anchor.addEventListener("targetFound", async () => {
-      try { await video.play(); } catch(e) { /* ждём жест */ }
+    let repeatX = 1, repeatY = 1, offsetX = 0, offsetY = 0;
+
+    if (vidAspect > posterAspect) {
+      // Видео шире: режем по бокам
+      repeatX = posterAspect / vidAspect; // < 1
+      offsetX = (1 - repeatX) / 2;
+    } else if (vidAspect < posterAspect) {
+      // Видео выше: режем сверху/снизу
+      repeatY = vidAspect / posterAspect; // < 1
+      offsetY = (1 - repeatY) / 2;
+    }
+    poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false; repeat: ${repeatX} ${repeatY}; offset: ${offsetX} ${offsetY}`);
+
+    // Воспроизведение при детекте
+    anchor.addEventListener("targetFound", () => {
+      // Подстраховка для iOS: попытка play в колбэке события
+      video.play().catch(()=>{});
     });
 
-    // После окончания ролика показываем кнопки
     video.addEventListener("ended", () => {
       ui.classList.add("show");
     });
-
-    // Разрешение звука по первому пользовательскому тапу
-    const enableSoundOnce = async () => {
-      // Снимаем mute и запускаем со звуком
-      try {
-        video.muted = false;
-        // некоторые браузеры требуют явную установку volume перед play
-        video.volume = 1.0;
-        await video.play();
-        tapHint.classList.remove("show");
-        window.removeEventListener("pointerdown", enableSoundOnce, { once: true });
-      } catch (e) {
-        // если не удалось — оставим подсказку
-        tapHint.classList.add("show");
-      }
-    };
-    window.addEventListener("pointerdown", enableSoundOnce, { once: true });
   });
 });
 </script>
