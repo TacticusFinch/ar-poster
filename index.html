@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Magic Chess Poster</title>
+
 <meta name="viewport" content="width=device-width,initial-scale=1, user-scalable=no,viewport-fit=cover">
 
 <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
@@ -12,27 +13,29 @@
 html,body{margin:0;padding:0;width:100%;height:100%;}
 #app,a-scene{width:100%;height:100%;}
 
-/* Камера на весь экран, как cover */
+/* --- NEW ------------------------------------------------------------------ */
+/* заставляем видео-поток MindAR растягиваться на весь экран без «рамок» */
 #mindar-image-video{
-  position:fixed !important;
+  position:fixed !important;           /* поверх всего, под 3D-слоем */
   top:0;left:0;width:100vw;height:100vh;
-  object-fit:cover;
-  z-index:-2;
+  object-fit:cover;                    /* заполняем экран, без чёрных полос */
+  z-index:-2;                          /* под канvas-ом A-Frame */
 }
 
-/* Канвас A-Frame на весь экран */
+/* сам канvas с 3D сценой тоже на весь экран */
 a-scene canvas{
   position:fixed !important;
   top:0;left:0;width:100vw !important;height:100vh !important;
 }
+/* -------------------------------------------------------------------------- */
 
 #buttons{
   position:absolute;
-  /* left/top выставляем из JS по центру постера */
-  transform:translate(-50%,-50%);
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) translateY(100px); /* +100 px вниз */
   display:flex;flex-direction:column;gap:22px;align-items:center;
   pointer-events:none;opacity:0;transition:opacity .5s;
-  z-index:10;
 }
 #buttons.show{opacity:1;pointer-events:auto;}
 
@@ -40,15 +43,11 @@ a-scene canvas{
   font:700 2rem/1 "Trebuchet MS",sans-serif;
   color:#fff;text-decoration:none;
   padding:18px 64px;border-radius:14px;
-  background:linear-gradient(135deg,#00D1FF 0%,#7B61FF 100%);
-  box-shadow:0 0 18px rgba(123,97,255,.8);
-  transition:transform .15s,box-shadow .15s,filter .15s;
+  background:linear-gradient(135deg,#ff512f 0%,#dd2476 100%);
+  box-shadow:0 0 18px rgba(255,255,255,.7);
+  transition:transform .15s,box-shadow .15s;
 }
-#buttons a:hover{
-  transform:scale(1.05);
-  box-shadow:0 0 30px rgba(0,209,255,1), 0 0 48px rgba(123,97,255,.9);
-  filter:saturate(1.1);
-}
+#buttons a:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(255,255,255,1);}
 </style>
 </head>
 
@@ -63,17 +62,14 @@ a-scene canvas{
     device-orientation-permission-ui="enabled:false">
 
     <a-assets>
-      <video id="wizard" src="wizard.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline></video>
+      <video id="wizard" src="wizard.mp4" preload="auto" crossorigin="anonymous"></video>
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex:0">
-      <!-- Плоскость постера (ровно размер таргета). Видео будет «cover» без искажений -->
-      <a-entity id="poster"
-        geometry="primitive: plane; width: 1; height: 1"
-        material="shader: flat; src: #wizard; transparent: false">
-      </a-entity>
+      <a-video src="#wizard" width="1" height="0.5625" position="0 0 0"
+               autoplay="false" loop="false"></a-video>
     </a-entity>
   </a-scene>
 
@@ -85,162 +81,36 @@ a-scene canvas{
 </div>
 
 <script>
+/* JS */
 document.addEventListener("DOMContentLoaded", () => {
-  const scene   = document.querySelector("a-scene");
-  const video   = document.querySelector("#wizard");
-  const anchor  = document.querySelector("[mindar-image-target]");
-  const poster  = document.querySelector("#poster");
-  const ui      = document.querySelector("#buttons");
 
-  let targetVisible = false;
-  let videoEnded = false;
+  const scene  = document.querySelector("a-scene");
+  const video  = document.querySelector("#wizard");
+  const anchor = document.querySelector("[mindar-image-target]");
+  const ui     = document.querySelector("#buttons");
+  const plane  = anchor.querySelector("a-video");   // плоскость-носитель
 
-  // Для автоплея на iOS/Android — стартуем без звука
-  video.muted = true;
-  video.setAttribute("muted", "true");
-  video.setAttribute("playsinline", "");
-  video.setAttribute("webkit-playsinline", "");
+  /* ждём метаданные, чтобы узнать точные размеры ролика */
+  video.addEventListener("loadedmetadata", () => {
+    const ratio = video.videoHeight / video.videoWidth; // h/w
 
-  // Разблокировка звука на первый пользовательский жест
-  let audioUnlocked = false;
-  const unlockAudio = async () => {
-    try {
-      // Важно: действия в рамках пользовательского события
-      video.muted = false;
-      video.volume = 1;
-      await video.play(); // если таргет уже детектирован — заиграет со звуком
-      audioUnlocked = true;
-    } catch (e) {
-      // Если не удалось (например, видео еще не начато) — ничего страшного
-      audioUnlocked = true; // все равно считаем, что страницу «активировали»
-    } finally {
-      window.removeEventListener("pointerdown", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
-      window.removeEventListener("click", unlockAudio);
-    }
-  };
-  window.addEventListener("pointerdown", unlockAudio, { once: true });
-  window.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
-  window.addEventListener("click", unlockAudio, { once: true });
+    /*  Ширина маркера у MindAR = 1 (единица мира).
+        Подгоняем высоту плоскости под ролик динамически,
+        чтобы заполнять маркер без искажений.               */
+    plane.setAttribute("width", 1);
+    plane.setAttribute("height", ratio);
+  });
 
-  // Камера — «cover» на фоне
+  /* заставляем камеру-стрим «без рамок» */
   scene.addEventListener("renderstart", () => {
     const camVideo = document.querySelector("#mindar-image-video");
     if (camVideo) camVideo.style.objectFit = "cover";
   });
 
-  const onARReady = new Promise(resolve => {
-    scene.addEventListener("arReady", resolve, { once: true });
-  });
-
-  const onMeta = new Promise(resolve => {
-    if (video.readyState >= 1 && video.videoWidth) resolve();
-    else video.addEventListener("loadedmetadata", resolve, { once: true });
-  });
-
-  function applyVideoCoverUV(posterWidth, posterHeight) {
-    const mesh = poster.getObject3D("mesh");
-    if (!mesh || !mesh.material || !mesh.material.map) return;
-    const texture = mesh.material.map;
-
-    const vidAspect    = video.videoWidth / video.videoHeight;
-    const posterAspect = posterWidth / posterHeight;
-
-    texture.offset.set(0, 0);
-    texture.repeat.set(1, 1);
-
-    if (vidAspect > posterAspect) {
-      const scale = vidAspect / posterAspect;
-      const repeatX = 1 / scale;
-      texture.repeat.set(repeatX, 1);
-      texture.offset.set((1 - repeatX) / 2, 0);
-    } else if (vidAspect < posterAspect) {
-      const scale = posterAspect / vidAspect;
-      const repeatY = 1 / scale;
-      texture.repeat.set(1, repeatY);
-      texture.offset.set(0, (1 - repeatY) / 2);
-    }
-    texture.needsUpdate = true;
-    mesh.material.needsUpdate = true;
-  }
-
-  Promise.all([onARReady, onMeta]).then(() => {
-    const ratios = scene.systems["mindar-image-system"]?.imageTargetRatios || [];
-    const targetIndex = 0;
-
-    const posterWidth  = 1;
-    const posterHeight = ratios[targetIndex] || 1;
-
-    poster.setAttribute("geometry", `primitive: plane; width: ${posterWidth}; height: ${posterHeight}`);
-    poster.setAttribute("material", `shader: flat; src: #wizard; transparent: false`);
-
-    const ensureTextureReady = new Promise(resolve => {
-      const mesh = poster.getObject3D("mesh");
-      if (mesh?.material?.map) return resolve();
-      poster.addEventListener("materialtextureloaded", resolve, { once: true });
-    });
-
-    ensureTextureReady.then(() => {
-      applyVideoCoverUV(posterWidth, posterHeight);
-    });
-
-    // Умный запуск при детекте:
-    // 1) Пытаемся сразу со звуком (если страница уже «разблокирована» пользователем)
-    // 2) Если не получится — запускаем в muted
-    anchor.addEventListener("targetFound", async () => {
-      targetVisible = true;
-
-      const tryPlayWithSoundFirst = async () => {
-        try {
-          if (audioUnlocked) {
-            video.muted = false;
-            video.volume = 1;
-          }
-          await video.play();
-        } catch (e) {
-          // Фоллбэк: гарантированно играем без звука
-          video.muted = true;
-          try { await video.play(); } catch {}
-        }
-      };
-
-      tryPlayWithSoundFirst();
-      if (videoEnded) ui.classList.add("show");
-    });
-
-    anchor.addEventListener("targetLost", () => {
-      targetVisible = false;
-      ui.classList.remove("show");
-      // video.pause(); // опционально
-    });
-
-    video.addEventListener("ended", () => {
-      videoEnded = true;
-      if (targetVisible) ui.classList.add("show");
-    });
-
-    video.addEventListener("loadedmetadata", () => {
-      applyVideoCoverUV(posterWidth, posterHeight);
-    });
-
-    // Привязка HTML-кнопок к центру постера + смещение ниже центра
-    const UI_OFFSET_PX = 100;
-    const updateUIPosition = () => {
-      if (targetVisible && scene.camera && poster.object3D) {
-        poster.object3D.updateMatrixWorld();
-        const worldCenter = new THREE.Vector3();
-        worldCenter.set(0, 0, 0).applyMatrix4(poster.object3D.matrixWorld);
-        const projected = worldCenter.clone().project(scene.camera);
-        const x = (projected.x + 1) / 2 * window.innerWidth;
-        const y = (1 - projected.y) / 2 * window.innerHeight + UI_OFFSET_PX;
-        ui.style.left = `${x}px`;
-        ui.style.top  = `${y}px`;
-      }
-      requestAnimationFrame(updateUIPosition);
-    };
-    requestAnimationFrame(updateUIPosition);
-  });
+  anchor.addEventListener("targetFound", () => setTimeout(()=>video.play(), 500));
+  video.addEventListener("ended", () => ui.classList.add("show"));
 });
+
 </script>
 </body>
 </html>
