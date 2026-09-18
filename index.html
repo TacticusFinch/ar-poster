@@ -5,66 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Тактикус Финч — Вильгельм Стейниц AR</title>
 
-    <!-- Правильные ссылки на проверенные библиотеки A-Frame и MindAR -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.5.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        body { margin: 0; overflow: hidden; }
-        
+        body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        /* Оверлей сканирования */
         #scanning-overlay {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             position: absolute; left: 0; right: 0; top: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.75); color: #00ffcc; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            z-index: 100;
-            transition: opacity 0.4s ease;
-            text-align: center;
-            padding: 20px;
+            background: rgba(0, 0, 0, 0.7); color: #00ffcc; z-index: 100;
+            transition: opacity 0.3s ease; pointer-events: none; text-align: center;
         }
-        #scanning-overlay.hidden { 
-            opacity: 0; 
-            pointer-events: none; 
-        }
+        #scanning-overlay.hidden { opacity: 0; }
         .spinner {
-            border: 4px solid rgba(0, 255, 204, 0.15); 
-            width: 48px; height: 48px;
-            border-radius: 50%; 
-            border-left-color: #00ffcc;
-            animation: spin 1s linear infinite; 
-            margin-bottom: 20px;
+            border: 4px solid rgba(0, 255, 204, 0.15); width: 45px; height: 45px;
+            border-radius: 50%; border-left-color: #00ffcc;
+            animation: spin 1s linear infinite; margin-bottom: 15px;
         }
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Кнопка включения звука */
+        #sound-btn {
+            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75); border: 1.5px solid #00ffcc; color: #fff;
+            padding: 10px 20px; border-radius: 30px; font-size: 14px;
+            display: none; align-items: center; gap: 8px; z-index: 150;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
         }
+        #sound-btn.active { display: flex; }
     </style>
 </head>
 <body>
 
     <div id="scanning-overlay">
         <div class="spinner"></div>
-        <div style="font-size: 1.1em; font-weight: bold;">Активация сканера «Тактикус Финч»...</div>
-        <div style="font-size: 0.85em; color: #ccc; margin-top: 8px;">Наведите камеру на визитку Стейница</div>
+        <div style="font-size: 1.1em; font-weight: bold;">Наведите камеру на визитку</div>
     </div>
 
+    <!-- Кнопка появится, как только карточка распознается -->
+    <button id="sound-btn">🔊 Включить звук</button>
+
+    <!-- filterMinCF и filterBeta настроены на сильное гашение тряски рук -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./cards.mind; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001;" 
+        mindar-image="imageTargetSrc: ./cards.mind; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; warmupTolerance: 3; missTolerance: 8;" 
         color-space="sRGB" 
-        renderer="colorManagement: true, physicallyCorrectLights" 
+        renderer="colorManagement: true" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
-        <a-assets>
-            <!-- muted необходим для iOS/Android, чтобы видео разрешалось запускать автоматически -->
-            <video id="video-steinitz" src="./steinitz.mp4" preload="auto" loop="true" playsinline webkit-playsinline muted></video>
+        <a-assets timeout="4000">
+            <!-- Видео обязательно стартует muted, чтобы браузер не заблокировал показ -->
+            <video id="video-steinitz" src="./steinitz.mp4" preload="metadata" loop="true" playsinline webkit-playsinline muted></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- Таргет с индексом 0 -->
         <a-entity id="target-steinitz" mindar-image-target="targetIndex: 0">
-            <!-- Соотношение сторон 1 к 1.54 под евро-визитку -->
             <a-video src="#video-steinitz" width="1" height="1.54" position="0 0 0" rotation="0 0 0"></a-video>
         </a-entity>
 
@@ -74,22 +72,41 @@
         const target = document.getElementById("target-steinitz");
         const video = document.getElementById("video-steinitz");
         const overlay = document.getElementById("scanning-overlay");
+        const soundBtn = document.getElementById("sound-btn");
 
-        // Прячем оверлей, когда движок MindAR полностью загрузился и готов распознавать
-        const sceneEl = document.querySelector('a-scene');
-        sceneEl.addEventListener("arReady", () => {
-            // Сканер готов к работе
-        });
+        let lostTimeout = null;
 
-        // Визитка попала в кадр
+        // Карточка распознана
         target.addEventListener("targetFound", () => {
+            // Если карточка вернулась до истечения таймаута — отменяем паузу
+            if (lostTimeout) clearTimeout(lostTimeout);
+
             overlay.classList.add("hidden");
-            video.play();
+            soundBtn.classList.add("active");
+            
+            video.play().catch(e => console.log("Автозапуск ожидает действия"));
         });
 
-        // Визитка ушла из кадра
+        // Карточка пропала из кадра (добавлена задержка в 1.2 секунды против тряски)
         target.addEventListener("targetLost", () => {
-            video.pause();
+            lostTimeout = setTimeout(() => {
+                video.pause();
+                overlay.classList.remove("hidden");
+                soundBtn.classList.remove("active");
+            }, 1200); // 1200 мс телефон может спокойно дрожать и терять цель — видео не прервется
+        });
+
+        // Обработка кнопки включения звука
+        soundBtn.addEventListener("click", () => {
+            if (video.muted) {
+                video.muted = false;
+                soundBtn.innerHTML = "🔇 Выключить звук";
+                soundBtn.style.borderColor = "#ff4444";
+            } else {
+                video.muted = true;
+                soundBtn.innerHTML = "🔊 Включить звук";
+                soundBtn.style.borderColor = "#00ffcc";
+            }
         });
     </script>
 </body>
