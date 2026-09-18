@@ -34,7 +34,7 @@
     </div>
 
     <!-- Настройка сцены. По умолчанию uiScanning указывает на наш кастомный прелоадер -->
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiScanning: #scanning-overlay;" 
+    <a-scene mindar-image="imageTargetSrc: ./cards.mind; uiScanning: #scanning-overlay;" 
              color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
@@ -45,7 +45,7 @@
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- Индекс 0 — это первая загруженная картинка в скомпилированном targets.mind -->
+        <!-- Индекс 0 — это первая загруженная картинка в скомпилированном cards.mind -->
         
             <!-- Соотношение сторон 1 к 1.54 (для евро-визитки 85х55мм). Видео идеально перекроет карту -->
             <a-video src="#video-steinitz" width="1" height="1.54" position="0 0 0" rotation="0 0 0"></a-video>
