@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тактикус Финч — Живые Визитки Чемпионов</title>
+    <title>Тактикус Финч — Чемпионы мира по шахматам</title>
 
-    <!-- Движки A-Frame и MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
 
@@ -20,124 +19,272 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            background-color: #000;
         }
 
-        /* Прелоадер / Инструкция */
+        /* Прелоадер и стартовая инструкция */
         #scanner-hint {
-            position: absolute; inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #00ffcc; z-index: 100; text-align: center; padding: 20px;
-            transition: opacity 0.4s ease; pointer-events: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #00ffcc;
+            z-index: 100;
+            text-align: center;
+            padding: 24px;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
         }
-        #scanner-hint.hidden { opacity: 0; }
+        #scanner-hint.hidden {
+            opacity: 0;
+        }
         .spinner {
-            border: 4px solid rgba(0, 255, 204, 0.15); width: 45px; height: 45px;
-            border-radius: 50%; border-left-color: #00ffcc;
-            animation: spin 1s linear infinite; margin-bottom: 15px;
+            border: 3px solid rgba(0, 255, 204, 0.2);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border-left-color: #00ffcc;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-        /* Кнопка звука */
+        /* Переключатель звука */
         #sound-toggle {
-            position: absolute; top: 20px; right: 20px;
-            background: rgba(0, 0, 0, 0.65); border: 1.5px solid var(--accent-color);
-            color: #fff; border-radius: 50%; width: 44px; height: 44px;
-            display: none; align-items: center; justify-content: center;
-            font-size: 18px; z-index: 120; cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(10, 12, 18, 0.85);
+            border: 1px solid var(--accent-color);
+            color: #fff;
+            border-radius: 8px;
+            padding: 9px 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            z-index: 120;
+            cursor: pointer;
             backdrop-filter: blur(8px);
         }
 
-        /* Нижняя панель кнопок (Glassmorphism) */
+        /* Нижнее меню из трех кнопок */
         #interactive-dock {
-            position: absolute; bottom: 25px; left: 15px; right: 15px;
-            display: none; justify-content: center; gap: 10px; z-index: 110;
+            position: absolute;
+            bottom: 24px;
+            left: 16px;
+            right: 16px;
+            display: none;
+            justify-content: space-between;
+            gap: 10px;
+            z-index: 110;
         }
         .dock-btn {
-            flex: 1; padding: 13px 8px; border-radius: 16px;
-            background: rgba(15, 15, 25, 0.75);
-            border: 1.5px solid var(--accent-color);
-            color: #fff; font-size: 13px; font-weight: 700;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
-            transition: transform 0.1s;
+            flex: 1;
+            padding: 13px 6px;
+            border-radius: 10px;
+            background: rgba(12, 15, 22, 0.88);
+            border: 1px solid var(--accent-color);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.1s, background-color 0.2s;
         }
-        .dock-btn:active { transform: scale(0.95); }
+        .dock-btn:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.12);
+        }
 
-        /* Модальные всплывающие окна */
+        /* Модальные окна */
         .modal-overlay {
-            position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 200; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease; padding: 20px;
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            padding: 16px;
+            box-sizing: border-box;
         }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
         .modal-card {
-            background: #11141a; border: 2px solid var(--accent-color);
-            border-radius: 22px; width: 100%; max-width: 340px;
-            padding: 22px; color: #fff; position: relative;
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
-            max-height: 80vh; overflow-y: auto;
+            background: #0d1117;
+            border: 1px solid var(--accent-color);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 420px;
+            padding: 22px;
+            color: #fff;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+            max-height: 84vh;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
         .modal-close {
-            position: absolute; top: 12px; right: 14px;
-            background: rgba(255,255,255,0.1); border: none; color: #aaa;
-            font-size: 18px; border-radius: 50%; width: 30px; height: 30px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: #aaa;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
         }
         .modal-title {
-            font-size: 18px; font-weight: 900; color: var(--accent-color);
-            margin-bottom: 12px; padding-right: 25px;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+            padding-right: 70px;
+            letter-spacing: 0.3px;
         }
-        .modal-quote {
-            font-style: italic; color: #ddd; font-size: 13px;
-            border-left: 3px solid var(--accent-color); padding-left: 10px; margin: 12px 0;
-        }
-        .fact-item {
-            font-size: 13px; margin-bottom: 8px; line-height: 1.4; color: #ccc;
+        .modal-subtitle {
+            font-size: 11px;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 14px;
         }
 
-        /* Статы карточки героя */
-        .stat-row { margin-bottom: 10px; }
-        .stat-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 4px; }
-        .stat-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        .stat-fill { height: 100%; background: var(--accent-color); border-radius: 4px; }
+        /* Оформление текста биографии */
+        .bio-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-color);
+            margin-top: 16px;
+            margin-bottom: 6px;
+        }
+        .bio-paragraph {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #ccc;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+        .modal-quote {
+            font-style: italic;
+            color: #ddd;
+            font-size: 12px;
+            line-height: 1.45;
+            border-left: 2px solid var(--accent-color);
+            padding-left: 10px;
+            margin: 14px 0;
+            background: rgba(255, 255, 255, 0.03);
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        /* Задачи */
+        .puzzle-option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+        }
+        .puzzle-option-btn:active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Шкалы характеристик */
+        .stat-row {
+            margin-bottom: 12px;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #ccc;
+        }
+        .stat-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .stat-fill {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+        .skill-box {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
     </style>
 </head>
 <body>
 
-    <!-- Прелоадер / Подсказка -->
     <div id="scanner-hint">
         <div class="spinner"></div>
-        <div style="font-size: 18px; font-weight: bold;">Наведите на визитку</div>
-        <div style="font-size: 13px; color: #aaa; margin-top: 6px;">Стейниц, Ласкер или Капабланка</div>
+        <div style="font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">НАВЕДИТЕ КАМЕРУ НА ВИЗИТКУ</div>
+        <div style="font-size: 12px; color: #888; margin-top: 6px;">Стейниц, Ласкер или Капабланка</div>
     </div>
 
-    <!-- Кнопка звука -->
-    <button id="sound-toggle">🔇</button>
+    <button id="sound-toggle">ЗВУК: ВЫКЛ</button>
 
-    <!-- Нижняя панель действий -->
     <div id="interactive-dock">
-        <button class="dock-btn" onclick="openModal('bio')">📜 Досье</button>
-        <button class="dock-btn" onclick="openModal('oracle')">🔮 Оракул</button>
-        <button class="dock-btn" onclick="openModal('stats')">⚡ Статы</button>
+        <button class="dock-btn" onclick="openModal('bio')">Биография</button>
+        <button class="dock-btn" onclick="openModal('puzzle')">Задача</button>
+        <button class="dock-btn" onclick="openModal('stats')">Статы</button>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО -->
     <div id="modal-container" class="modal-overlay">
         <div class="modal-card">
-            <button class="modal-close" onclick="closeModal()">✕</button>
+            <button class="modal-close" onclick="closeModal()">Закрыть</button>
             <div id="modal-content"></div>
         </div>
     </div>
 
-    <!-- AR СЦЕНА -->
     <a-scene 
         mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 8;" 
-        color-space="sRGB" renderer="colorManagement: true" 
-        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        color-space="sRGB" 
+        renderer="colorManagement: true" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
         
         <a-assets timeout="4000">
             <video id="vid-0" src="./steinitz.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
@@ -147,17 +294,14 @@
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- ТАРГЕТ 0: СТЕЙНИЦ -->
         <a-entity id="target-0" mindar-image-target="targetIndex: 0">
             <a-video src="#vid-0" width="1" height="1.54" position="0 0 0"></a-video>
         </a-entity>
 
-        <!-- ТАРГЕТ 1: ЛАСКЕР -->
         <a-entity id="target-1" mindar-image-target="targetIndex: 1">
             <a-video src="#vid-1" width="1" height="1.54" position="0 0 0"></a-video>
         </a-entity>
 
-        <!-- ТАРГЕТ 2: КАПАБЛАНКА -->
         <a-entity id="target-2" mindar-image-target="targetIndex: 2">
             <a-video src="#vid-2" width="1" height="1.54" position="0 0 0"></a-video>
         </a-entity>
@@ -165,73 +309,117 @@
     </a-scene>
 
     <script>
-        // БАЗА ДАННЫХ ЧЕМПИОНОВ
         const HEROES = {
             0: {
                 name: "Вильгельм Стейниц",
-                title: "I Чемпион Мира (1886—1894)",
+                title: "I Чемпион мира по шахматам (1886—1894)",
                 color: "#00ffcc",
-                quote: "«Шахматы не для слабонервных. Здесь побеждает тот, чья позиция крепка как скала».",
-                facts: [
-                    "⚡ <b>Матч против Бога:</b> Публично заявил, что готов дать Богу фору в одну пешку и всё равно победить.",
-                    "🦯 <b>Трость-оружие:</b> Хромал и в пылу споров яростно стучал тростью, а однажды в дебатах даже плюнул в соперника!",
-                    "🕵️ <b>Арест за шпионаж:</b> Полиция задержала его, решив, что шахматные ходы в письмах — это секретные шифры шпионов."
-                ],
-                oracleTips: [
-                    "Не спеши атаковать сложную задачу. Построй прочную базу!",
-                    "Твоя позиция крепка. Не суетись — соперник сам ошибется.",
-                    "Укрепи слабые места, прежде чем делать главный шаг."
+                quote: "«Шахматы не для слабонервных. Здесь побеждает тот, чья позиция надежна как гранит».",
+                bio: [
+                    {
+                        title: "Происхождение и юность",
+                        text: "Вильгельм Стейниц родился в Праге в бедной многодетной семье. Несмотря на слабое здоровье и хромоту, он обладал выдающимися математическими способностями. Переехав в Вену для учебы в политехническом институте, Стейниц увлекся шахматами в знаменитых венских кофейнях, что вскоре стало его главным жизненным призванием."
+                    },
+                    {
+                        title: "Революция в теории шахмат",
+                        text: "В XIX веке шахматы считались романтической игрой, где ценились лишь безрассудные атаки и жертвы фигур. Стейниц первым в истории доказал, что успешная атака невозможна без предварительной позиционной подготовки. Он сформулировал законы накопления мелких преимуществ, важности пешечной структуры и открытых линий, создав научный фундамент, на котором базируются современные шахматы."
+                    },
+                    {
+                        title: "Борьба за титул и наследие",
+                        text: "В 1886 году в матче против Иоганна Цукерторта Стейниц официально стал первым в истории признанным чемпионом мира. Он доказал силу активного использования короля в эндшпиле и оставил после себя фундаментальные труды и шахматные журналы, навсегда изменившие понимание стратегической борьбы."
+                    }
                 ],
                 stats: [
-                    { name: "Защита", val: 100 },
-                    { name: "Стратегия", val: 95 },
-                    { name: "Хладнокровие", val: 90 }
+                    { name: "Позиционная защита", val: 100 },
+                    { name: "Научный расчет", val: 95 },
+                    { name: "Сила воли", val: 92 },
+                    { name: "Психологическое давление", val: 75 }
                 ],
-                skill: "«Пешечная блокада» — душит любые попытки нападения на корню."
+                skillName: "Позиционная блокада",
+                skillDesc: "Методичное лишение соперника пространства и вариантов контригры.",
+                puzzle: {
+                    title: "Гастингс, 1895 год",
+                    desc: "Черный король застрял в центре доски. Соперник ожидал отступления белых фигур. Какое решение принял первый чемпион?",
+                    options: [
+                        { text: "Ферзь отступает назад", correct: false, comment: "Пассивный ход. Стейниц никогда не упускал атакующую инициативу." },
+                        { text: "Ладья d7! Жертва ладьи", correct: true, comment: "Верно. Ладья встает под бой трех фигур, создавая неотвратимую матовую сеть." },
+                        { text: "Шах пешкой с фланга", correct: false, comment: "Неточно. Черный король успевает покинуть опасную зону." }
+                    ]
+                }
             },
             1: {
                 name: "Эмануил Ласкер",
-                title: "II Чемпион Мира (1894—1921)",
+                title: "II Чемпион мира по шахматам (1894—1921)",
                 color: "#c0392b",
-                quote: "«В шахматах борются не фигуры, а люди. Ударь по психологии — и армия врага рухнет».",
-                facts: [
-                    "⏳ <b>27 лет на троне:</b> Удерживал шахматную корону почти три десятилетия — этот рекорд не побит до сих пор.",
-                    "💨 <b>Дымовая завеса:</b> За доской демонстративно курил дешевые едкие сигары, чтобы выводить соперников из равновесия.",
-                    "🧠 <b>Друг Эйнштейна:</b> Был доктором математики и годами спорил с Эйнштейном о теории относительности."
-                ],
-                oracleTips: [
-                    "Боишься экзамена? Главное — не подавай вида. Спокойствие пугает соперника!",
-                    "Самый опасный момент — когда кажется, что победа уже в кармане. Сконцентрируйся!",
-                    "Не играй по чужим правилам. Навяжи оппоненту то, чего он боится."
+                quote: "«В шахматах борются не фигуры, а люди. Пойми слабость человека — и его позиция рухнет».",
+                bio: [
+                    {
+                        title: "Ученый и мыслитель",
+                        text: "Эмануил Ласкер родился в Пруссии. Он сочетал шахматную карьеру мирового уровня с фундаментальной наукой: получил степень доктора математических наук и публиковал труды по философии. Ласкер состоял в многолетней дружеской переписке с Альбертом Эйнштейном, с которым вел глубокие споры о законах физики."
+                    },
+                    {
+                        title: "Психологический метод",
+                        text: "Ласкер стал первым шахматистом, который применил глубокий психологический подход к игре. Он оценивал не только объективную силу ходов на доске, но и личные качества соперника. Против агрессивных игроков он играл сдержанно, лишая их простора, а методичных теоретиков втягивал в хаос и неопределенность, провоцируя их на ошибки."
+                    },
+                    {
+                        title: "Эпоха великого правления",
+                        text: "Ласкер удерживал шахматную корону 27 лет подряд — это абсолютный рекорд, не побитый по сей день. Его фантастическая выносливость, умение защищать безнадежные позиции и совершать переломы в тяжелейших партиях сделали его одной из ключевых фигур в истории интеллектуального спорта."
+                    }
                 ],
                 stats: [
-                    { name: "Психология", val: 100 },
-                    { name: "Выносливость", val: 100 },
-                    { name: "Тактика", val: 88 }
+                    { name: "Психология и гибкость", val: 100 },
+                    { name: "Стрессоустойчивость", val: 100 },
+                    { name: "Комбинационный удар", val: 88 },
+                    { name: "Позиционная строгость", val: 72 }
                 ],
-                skill: "«Психологический гамбит» — заставляет противника паниковать и ошибаться."
+                skillName: "Психологический гамбит",
+                skillDesc: "Создает напряжение на доске, вынуждая соперника сомневаться и совершать грубые ошибки.",
+                puzzle: {
+                    title: "Амстердам, 1889 год",
+                    desc: "Король противника укрыт за пешечной цепью. Каким ходом Ласкер начал сокрушительный прорыв?",
+                    options: [
+                        { text: "Слон берет h7+! Жертва слона", correct: true, comment: "Верно. Ласкер пожертвовал обоих слонов и поставил мат. Этот маневр вошел во все учебники." },
+                        { text: "Спокойная короткая рокировка", correct: false, comment: "Слишком медленно. Противник успеет надежно укрепить позицию." },
+                        { text: "Движение крайней пешки", correct: false, comment: "Неэффективно. Атака захлебнется без прямого вскрытия линий." }
+                    ]
+                }
             },
             2: {
                 name: "Хосе Рауль Капабланка",
-                title: "III Чемпион Мира (1921—1927)",
+                title: "III Чемпион мира по шахматам (1921—1927)",
                 color: "#f1c40f",
                 quote: "«Хороший игрок всегда везуч. Ошибается тот, кто играет против меня».",
-                facts: [
-                    "👶 <b>Обыграл отца в 4 года:</b> Научился правилам, молча наблюдая за игрой со стороны, и в первой же партии поставил отцу мат.",
-                    "🛡️ <b>8 лет без единого поражения:</b> На протяжении 8 лет не проиграл ни одной официальной партии в мире.",
-                    "🍸 <b>Светский щеголь:</b> Был кубинским дипломатом, обожал салоны 1920-х, одевался по моде Гэтсби и играл играючи."
-                ],
-                oracleTips: [
-                    "Не усложняй то, что просто. Самый очевидный ход — лучший!",
-                    "Действуй легко и изящно. Уверенность притягивает победу.",
-                    "Оставайся хладнокровным, даже если всё вокруг идет не по плану."
+                bio: [
+                    {
+                        title: "Врожденный гений Гаваны",
+                        text: "Хосе Рауль Капабланка родился на Кубе. Он проявил уникальные способности вундеркинда: освоил шахматные правила в возрасте четырех лет, лишь наблюдая за игрой отца со стороны, и обыграл его в первой же партии. В двенадцать лет Капабланка уже победил чемпиона своей страны в официальном матче."
+                    },
+                    {
+                        title: "Шахматная машина и интуиция",
+                        text: "Капабланка играл с непостижимой легкостью, почти не расходуя время на обдумывание ходов. За невероятную точность расчета и безупречную технику его называли шахматным автоматом. На пике карьеры он установил уникальный рекорд: за восемь лет подряд (с 1916 по 1924 год) он не потерпел ни одного поражения в турнирных партиях."
+                    },
+                    {
+                        title: "Дипломат и популяризатор",
+                        text: "Обладая утонченными манерами и безупречным стилем, Капабланка долгие годы служил дипломатом Кубы. Он превратил шахматы в светское искусство и доказал, что высшее мастерство достигается не заучиванием вариантов, а кристальной ясностью мышления и пониманием гармонии позиции."
+                    }
                 ],
                 stats: [
-                    { name: "Интуиция", val: 100 },
+                    { name: "Интуиция и гармония", val: 100 },
                     { name: "Скорость мысли", val: 98 },
-                    { name: "Элегантность", val: 100 }
+                    { name: "Техника эндшпиля", val: 100 },
+                    { name: "Стрессоустойчивость", val: 78 }
                 ],
-                skill: "«Безупречный эндшпиль» — побеждает с ювелирной точностью без единого лишнего движения."
+                skillName: "Кристальный эндшпиль",
+                skillDesc: "Безошибочно трансформирует минимальное позиционное преимущество в чистую победу.",
+                puzzle: {
+                    title: "Москва, 1914 год",
+                    desc: "Капабланка играет черными. Найдите ход высокой точности, вынудивший белых немедленно признать поражение.",
+                    options: [
+                        { text: "Защита пешки ладьей", correct: false, comment: "Пассивный ход. Капабланка всегда стремился к чистой динамике." },
+                        { text: "Ферзь b2! Вторжение ферзя", correct: true, comment: "Верно. Ферзь атакует ключевые фигуры. Первая горизонталь белых оказывается беззащитна." },
+                        { text: "Размен тяжелых фигур", correct: false, comment: "Приводит к нейтральному эндшпилю без явного преимущества." }
+                    ]
+                }
             }
         };
 
@@ -245,7 +433,6 @@
         const modal = document.getElementById("modal-container");
         const modalContent = document.getElementById("modal-content");
 
-        // Слушатели таргетов
         [0, 1, 2].forEach(id => {
             const targetEl = document.getElementById(`target-${id}`);
             const videoEl = document.getElementById(`vid-${id}`);
@@ -260,6 +447,7 @@
                 dock.style.display = "flex";
                 soundBtn.style.display = "flex";
 
+                videoEl.muted = isMuted;
                 videoEl.play().catch(() => {});
             });
 
@@ -270,26 +458,23 @@
                     soundBtn.style.display = "none";
                     hint.classList.remove("hidden");
                     closeModal();
-                }, 1200); // 1.2 сек задержка от тряски рук
+                }, 1200);
             });
         });
 
-        // Смена акцентного неонового цвета под героя
         function applyHeroTheme(color) {
             document.documentElement.style.setProperty('--accent-color', color);
             soundBtn.style.borderColor = color;
         }
 
-        // Кнопка звука
         soundBtn.addEventListener("click", () => {
             if (currentHeroId === null) return;
             const vid = document.getElementById(`vid-${currentHeroId}`);
             isMuted = !isMuted;
             vid.muted = isMuted;
-            soundBtn.innerHTML = isMuted ? "🔇" : "🔊";
+            soundBtn.innerText = isMuted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ";
         });
 
-        // Модальные окна
         function openModal(type) {
             if (currentHeroId === null) return;
             const hero = HEROES[currentHeroId];
@@ -297,33 +482,44 @@
             if (type === 'bio') {
                 modalContent.innerHTML = `
                     <div class="modal-title">${hero.name}</div>
-                    <div style="font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px;">${hero.title}</div>
+                    <div class="modal-subtitle">${hero.title}</div>
                     <div class="modal-quote">${hero.quote}</div>
-                    <div style="margin-top: 14px; font-weight: bold; font-size: 13px; color: var(--accent-color);">ШОК-ФАКТЫ:</div>
-                    ${hero.facts.map(f => `<div class="fact-item">${f}</div>`).join('')}
+                    ${hero.bio.map(sec => `
+                        <div class="bio-section-title">${sec.title}</div>
+                        <div class="bio-paragraph">${sec.text}</div>
+                    `).join('')}
                 `;
-            } else if (type === 'oracle') {
-                const randomTip = hero.oracleTips[Math.floor(Math.random() * hero.oracleTips.length)];
+            } else if (type === 'puzzle') {
+                const p = hero.puzzle;
                 modalContent.innerHTML = `
-                    <div class="modal-title">🔮 Совет от ${hero.name.split(' ')[1]}</div>
-                    <div style="font-size: 14px; line-height: 1.5; margin: 20px 0; color: #eee; font-weight: 500;">
-                        "${randomTip}"
+                    <div class="modal-title">Шахматная задача</div>
+                    <div class="modal-subtitle">${p.title}</div>
+                    <div style="font-size: 13px; color: #ccc; line-height: 1.45; margin-bottom: 14px;">${p.desc}</div>
+                    
+                    <div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin-bottom: 12px; padding: 10px; border-radius: 6px;"></div>
+
+                    <div>
+                        ${p.options.map((opt, i) => `
+                            <button class="puzzle-option-btn" onclick="checkAnswer(${i})">
+                                ${opt.text}
+                            </button>
+                        `).join('')}
                     </div>
-                    <button class="dock-btn" style="width: 100%;" onclick="openModal('oracle')">Спросить еще раз</button>
                 `;
             } else if (type === 'stats') {
                 modalContent.innerHTML = `
-                    <div class="modal-title">⚡ Карточка Героя</div>
-                    <div style="font-size: 12px; color: #aaa; margin-bottom: 15px;">${hero.name}</div>
+                    <div class="modal-title">Характеристики</div>
+                    <div class="modal-subtitle">${hero.name}</div>
                     ${hero.stats.map(s => `
                         <div class="stat-row">
                             <div class="stat-header"><span>${s.name}</span><span>${s.val}%</span></div>
                             <div class="stat-track"><div class="stat-fill" style="width: ${s.val}%"></div></div>
                         </div>
                     `).join('')}
-                    <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                        <div style="font-size: 11px; color: var(--accent-color); font-weight: bold;">КОРОННЫЙ НАВЫК:</div>
-                        <div style="font-size: 12px; color: #ccc; margin-top: 4px;">${hero.skill}</div>
+                    <div class="skill-box">
+                        <div style="font-size: 11px; color: var(--accent-color); font-weight: 700; text-transform: uppercase;">Ключевой навык:</div>
+                        <div style="font-size: 13px; font-weight: bold; margin-top: 2px;">${hero.skillName}</div>
+                        <div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">${hero.skillDesc}</div>
                     </div>
                 `;
             }
@@ -333,6 +529,26 @@
 
         function closeModal() {
             modal.classList.remove("active");
+        }
+
+        function checkAnswer(index) {
+            const opt = HEROES[currentHeroId].puzzle.options[index];
+            const fb = document.getElementById("puzzle-feedback");
+            fb.style.display = "block";
+
+            if (opt.correct) {
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                fb.style.background = "rgba(46, 204, 113, 0.2)";
+                fb.style.color = "#2ecc71";
+                fb.style.border = "1px solid #2ecc71";
+                fb.innerHTML = opt.comment;
+            } else {
+                if (navigator.vibrate) navigator.vibrate(200);
+                fb.style.background = "rgba(231, 76, 60, 0.2)";
+                fb.style.color = "#e74c3c";
+                fb.style.border = "1px solid #e74c3c";
+                fb.innerHTML = opt.comment;
+            }
         }
     </script>
 </body>
