@@ -3,312 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тактикус Финч — Битва Чемпионов</title>
+    <title>Тактикус Финч — Живые Визитки Чемпионов</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
+    <!-- Движки A-Frame и MindAR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.5.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        body { margin: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
-
-        /* Экран подсказки сканирования */
-        #hint-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #00ffcc; z-index: 100; pointer-events: none; text-align: center; padding: 20px;
-            transition: opacity 0.3s;
+        :root {
+            --accent-color: #00ffcc;
         }
-        #hint-overlay.hidden { opacity: 0; }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Прелоадер / Инструкция */
+        #scanner-hint {
+            position: absolute; inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #00ffcc; z-index: 100; text-align: center; padding: 20px;
+            transition: opacity 0.4s ease; pointer-events: none;
+        }
+        #scanner-hint.hidden { opacity: 0; }
         .spinner {
-            border: 4px solid rgba(0, 255, 204, 0.2); width: 45px; height: 45px;
+            border: 4px solid rgba(0, 255, 204, 0.15); width: 45px; height: 45px;
             border-radius: 50%; border-left-color: #00ffcc;
             animation: spin 1s linear infinite; margin-bottom: 15px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Кнопка включения звука для соло-видео */
-        #sound-btn {
-            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8); border: 1.5px solid #00ffcc; color: #fff;
-            padding: 10px 22px; border-radius: 30px; font-size: 14px;
-            display: none; align-items: center; gap: 8px; z-index: 150; cursor: pointer;
+        /* Кнопка звука */
+        #sound-toggle {
+            position: absolute; top: 20px; right: 20px;
+            background: rgba(0, 0, 0, 0.65); border: 1.5px solid var(--accent-color);
+            color: #fff; border-radius: 50%; width: 44px; height: 44px;
+            display: none; align-items: center; justify-content: center;
+            font-size: 18px; z-index: 120; cursor: pointer;
+            backdrop-filter: blur(8px);
         }
 
-        /* HUD БИТВЫ (Полоски HP файтинга) */
-        #battle-hud {
-            display: none; position: absolute; top: 15px; left: 10px; right: 10px;
-            z-index: 120; pointer-events: none;
+        /* Нижняя панель кнопок (Glassmorphism) */
+        #interactive-dock {
+            position: absolute; bottom: 25px; left: 15px; right: 15px;
+            display: none; justify-content: center; gap: 10px; z-index: 110;
         }
-        .hp-container { display: flex; justify-content: space-between; align-items: center; }
-        .fighter-box { width: 44%; }
-        .fighter-name { color: #fff; font-size: 13px; font-weight: bold; text-shadow: 0 2px 4px #000; margin-bottom: 4px; }
-        .hp-bar-bg { width: 100%; height: 16px; background: rgba(0,0,0,0.6); border: 2px solid #fff; border-radius: 8px; overflow: hidden; }
-        .hp-bar-fill { height: 100%; width: 100%; transition: width 0.3s ease; }
-        #hp-steinitz { background: linear-gradient(90deg, #00ffcc, #00aa88); }
-        #hp-lasker { background: linear-gradient(90deg, #ff0077, #9b59b6); }
+        .dock-btn {
+            flex: 1; padding: 13px 8px; border-radius: 16px;
+            background: rgba(15, 15, 25, 0.75);
+            border: 1.5px solid var(--accent-color);
+            color: #fff; font-size: 13px; font-weight: 700;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: transform 0.1s;
+        }
+        .dock-btn:active { transform: scale(0.95); }
 
-        #battle-log {
-            text-align: center; color: #ffeb3b; font-weight: bold; font-size: 14px;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.9); margin-top: 8px;
+        /* Модальные всплывающие окна */
+        .modal-overlay {
+            position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 200; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease; padding: 20px;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            background: #11141a; border: 2px solid var(--accent-color);
+            border-radius: 22px; width: 100%; max-width: 340px;
+            padding: 22px; color: #fff; position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
+            max-height: 80vh; overflow-y: auto;
+        }
+        .modal-close {
+            position: absolute; top: 12px; right: 14px;
+            background: rgba(255,255,255,0.1); border: none; color: #aaa;
+            font-size: 18px; border-radius: 50%; width: 30px; height: 30px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-title {
+            font-size: 18px; font-weight: 900; color: var(--accent-color);
+            margin-bottom: 12px; padding-right: 25px;
+        }
+        .modal-quote {
+            font-style: italic; color: #ddd; font-size: 13px;
+            border-left: 3px solid var(--accent-color); padding-left: 10px; margin: 12px 0;
+        }
+        .fact-item {
+            font-size: 13px; margin-bottom: 8px; line-height: 1.4; color: #ccc;
         }
 
-        /* Кнопки управления боем */
-        #action-controls {
-            display: none; position: absolute; bottom: 20px; left: 15px; right: 15px;
-            justify-content: center; gap: 8px; z-index: 150;
-        }
-        .btn-action {
-            flex: 1; padding: 12px 6px; border-radius: 12px; border: none;
-            font-size: 12px; font-weight: bold; color: #fff; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-        }
-        .btn-atk { background: #e74c3c; }
-        .btn-def { background: #3498db; }
-        .btn-skill { background: #9b59b6; }
+        /* Статы карточки героя */
+        .stat-row { margin-bottom: 10px; }
+        .stat-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+        .stat-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .stat-fill { height: 100%; background: var(--accent-color); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="hint-overlay">
+    <!-- Прелоадер / Подсказка -->
+    <div id="scanner-hint">
         <div class="spinner"></div>
-        <div style="font-size: 16px; font-weight: bold;">Наведите камеру на визитку</div>
-        <div style="font-size: 12px; color: #aaa; margin-top: 8px;">1 карта = видео | 2 карты рядом = битва</div>
+        <div style="font-size: 18px; font-weight: bold;">Наведите на визитку</div>
+        <div style="font-size: 13px; color: #aaa; margin-top: 6px;">Стейниц, Ласкер или Капабланка</div>
     </div>
 
-    <button id="sound-btn">🔊 Включить звук</button>
+    <!-- Кнопка звука -->
+    <button id="sound-toggle">🔇</button>
 
-    <!-- Боевой интерфейс -->
-    <div id="battle-hud">
-        <div class="hp-container">
-            <div class="fighter-box">
-                <div class="fighter-name">В. Стейниц</div>
-                <div class="hp-bar-bg"><div id="hp-steinitz" class="hp-bar-fill"></div></div>
-            </div>
-            <div style="color: #fff; font-weight: 900; font-size: 18px;">VS</div>
-            <div class="fighter-box" style="text-align: right;">
-                <div class="fighter-name">Э. Ласкер</div>
-                <div class="hp-bar-bg"><div id="hp-lasker" class="hp-bar-fill"></div></div>
-            </div>
+    <!-- Нижняя панель действий -->
+    <div id="interactive-dock">
+        <button class="dock-btn" onclick="openModal('bio')">📜 Досье</button>
+        <button class="dock-btn" onclick="openModal('oracle')">🔮 Оракул</button>
+        <button class="dock-btn" onclick="openModal('stats')">⚡ Статы</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div id="modal-container" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div id="modal-content"></div>
         </div>
-        <div id="battle-log">Дуэль началась! Ваш ход (Стейниц):</div>
     </div>
 
-    <!-- Кнопки ударов -->
-    <div id="action-controls">
-        <button class="btn-action btn-atk" onclick="playerMove('attack')">⚔️ Атака</button>
-        <button class="btn-action btn-def" onclick="playerMove('defense')">🛡️ Защита</button>
-        <button class="btn-action btn-skill" onclick="playerMove('skill')">✨ Блокада</button>
-    </div>
-
-    <!-- Сцена MindAR: maxTrack: 2 обязательно! -->
+    <!-- AR СЦЕНА -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 2; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 8;" 
+        mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 8;" 
         color-space="sRGB" renderer="colorManagement: true" 
         vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
         <a-assets timeout="4000">
-            <video id="vid-0" src="./steinitz.mp4" preload="metadata" loop="true" playsinline webkit-playsinline muted></video>
-            <video id="vid-1" src="./lasker.mp4" preload="metadata" loop="true" playsinline webkit-playsinline muted></video>
+            <video id="vid-0" src="./steinitz.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+            <video id="vid-1" src="./lasker.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+            <video id="vid-2" src="./capablanca.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- КАРТОЧКА 0: СТЕЙНИЦ -->
+        <!-- ТАРГЕТ 0: СТЕЙНИЦ -->
         <a-entity id="target-0" mindar-image-target="targetIndex: 0">
-            <!-- Видео для одиночного просмотра -->
-            <a-video id="mesh-video-0" src="#vid-0" width="1" height="1.54" position="0 0 0"></a-video>
-            <!-- Боевая аура и урон -->
-            <a-ring id="ring-0" visible="false" color="#00ffcc" radius-inner="0.6" radius-outer="0.68" rotation="-90 0 0"></a-ring>
-            <a-text id="dmg-0" value="" align="center" position="0 0.8 0" scale="1.5 1.5 1.5" color="#ff4444"></a-text>
+            <a-video src="#vid-0" width="1" height="1.54" position="0 0 0"></a-video>
         </a-entity>
 
-        <!-- КАРТОЧКА 1: ЛАСКЕР -->
+        <!-- ТАРГЕТ 1: ЛАСКЕР -->
         <a-entity id="target-1" mindar-image-target="targetIndex: 1">
-            <!-- Видео для одиночного просмотра -->
-            <a-video id="mesh-video-1" src="#vid-1" width="1" height="1.54" position="0 0 0"></a-video>
-            <!-- Боевая аура и урон -->
-            <a-ring id="ring-1" visible="false" color="#ff0077" radius-inner="0.6" radius-outer="0.68" rotation="-90 0 0"></a-ring>
-            <a-text id="dmg-1" value="" align="center" position="0 0.8 0" scale="1.5 1.5 1.5" color="#ff4444"></a-text>
+            <a-video src="#vid-1" width="1" height="1.54" position="0 0 0"></a-video>
+        </a-entity>
+
+        <!-- ТАРГЕТ 2: КАПАБЛАНКА -->
+        <a-entity id="target-2" mindar-image-target="targetIndex: 2">
+            <a-video src="#vid-2" width="1" height="1.54" position="0 0 0"></a-video>
         </a-entity>
 
     </a-scene>
 
     <script>
-        // Статистика чемпионов
-        let steinitz = { hp: 100, maxHp: 100, atk: 22, def: 18, isDef: false, isBlocking: false };
-        let lasker = { hp: 100, maxHp: 100, atk: 26, def: 12, isDef: false };
+        // БАЗА ДАННЫХ ЧЕМПИОНОВ
+        const HEROES = {
+            0: {
+                name: "Вильгельм Стейниц",
+                title: "I Чемпион Мира (1886—1894)",
+                color: "#00ffcc",
+                quote: "«Шахматы не для слабонервных. Здесь побеждает тот, чья позиция крепка как скала».",
+                facts: [
+                    "⚡ <b>Матч против Бога:</b> Публично заявил, что готов дать Богу фору в одну пешку и всё равно победить.",
+                    "🦯 <b>Трость-оружие:</b> Хромал и в пылу споров яростно стучал тростью, а однажды в дебатах даже плюнул в соперника!",
+                    "🕵️ <b>Арест за шпионаж:</b> Полиция задержала его, решив, что шахматные ходы в письмах — это секретные шифры шпионов."
+                ],
+                oracleTips: [
+                    "Не спеши атаковать сложную задачу. Построй прочную базу!",
+                    "Твоя позиция крепка. Не суетись — соперник сам ошибется.",
+                    "Укрепи слабые места, прежде чем делать главный шаг."
+                ],
+                stats: [
+                    { name: "Защита", val: 100 },
+                    { name: "Стратегия", val: 95 },
+                    { name: "Хладнокровие", val: 90 }
+                ],
+                skill: "«Пешечная блокада» — душит любые попытки нападения на корню."
+            },
+            1: {
+                name: "Эмануил Ласкер",
+                title: "II Чемпион Мира (1894—1921)",
+                color: "#c0392b",
+                quote: "«В шахматах борются не фигуры, а люди. Ударь по психологии — и армия врага рухнет».",
+                facts: [
+                    "⏳ <b>27 лет на троне:</b> Удерживал шахматную корону почти три десятилетия — этот рекорд не побит до сих пор.",
+                    "💨 <b>Дымовая завеса:</b> За доской демонстративно курил дешевые едкие сигары, чтобы выводить соперников из равновесия.",
+                    "🧠 <b>Друг Эйнштейна:</b> Был доктором математики и годами спорил с Эйнштейном о теории относительности."
+                ],
+                oracleTips: [
+                    "Боишься экзамена? Главное — не подавай вида. Спокойствие пугает соперника!",
+                    "Самый опасный момент — когда кажется, что победа уже в кармане. Сконцентрируйся!",
+                    "Не играй по чужим правилам. Навяжи оппоненту то, чего он боится."
+                ],
+                stats: [
+                    { name: "Психология", val: 100 },
+                    { name: "Выносливость", val: 100 },
+                    { name: "Тактика", val: 88 }
+                ],
+                skill: "«Психологический гамбит» — заставляет противника паниковать и ошибаться."
+            },
+            2: {
+                name: "Хосе Рауль Капабланка",
+                title: "III Чемпион Мира (1921—1927)",
+                color: "#f1c40f",
+                quote: "«Хороший игрок всегда везуч. Ошибается тот, кто играет против меня».",
+                facts: [
+                    "👶 <b>Обыграл отца в 4 года:</b> Научился правилам, молча наблюдая за игрой со стороны, и в первой же партии поставил отцу мат.",
+                    "🛡️ <b>8 лет без единого поражения:</b> На протяжении 8 лет не проиграл ни одной официальной партии в мире.",
+                    "🍸 <b>Светский щеголь:</b> Был кубинским дипломатом, обожал салоны 1920-х, одевался по моде Гэтсби и играл играючи."
+                ],
+                oracleTips: [
+                    "Не усложняй то, что просто. Самый очевидный ход — лучший!",
+                    "Действуй легко и изящно. Уверенность притягивает победу.",
+                    "Оставайся хладнокровным, даже если всё вокруг идет не по плану."
+                ],
+                stats: [
+                    { name: "Интуиция", val: 100 },
+                    { name: "Скорость мысли", val: 98 },
+                    { name: "Элегантность", val: 100 }
+                ],
+                skill: "«Безупречный эндшпиль» — побеждает с ювелирной точностью без единого лишнего движения."
+            }
+        };
 
-        const visibleTargets = new Set();
-        const hint = document.getElementById("hint-overlay");
-        const soundBtn = document.getElementById("sound-btn");
-        const battleHud = document.getElementById("battle-hud");
-        const actionControls = document.getElementById("action-controls");
-        const battleLog = document.getElementById("battle-log");
+        let currentHeroId = null;
+        let isMuted = true;
+        let lostTimer = null;
 
-        const vids = [document.getElementById("vid-0"), document.getElementById("vid-1")];
-        const meshes = [document.getElementById("mesh-video-0"), document.getElementById("mesh-video-1")];
-        const rings = [document.getElementById("ring-0"), document.getElementById("ring-1")];
+        const hint = document.getElementById("scanner-hint");
+        const dock = document.getElementById("interactive-dock");
+        const soundBtn = document.getElementById("sound-toggle");
+        const modal = document.getElementById("modal-container");
+        const modalContent = document.getElementById("modal-content");
 
-        // Слушатели событий распознавания
-        [0, 1].forEach(index => {
-            const target = document.getElementById(`target-${index}`);
-            target.addEventListener("targetFound", () => {
-                visibleTargets.add(index);
-                handleStateChange();
-            });
-            target.addEventListener("targetLost", () => {
-                visibleTargets.delete(index);
-                handleStateChange();
-            });
-        });
+        // Слушатели таргетов
+        [0, 1, 2].forEach(id => {
+            const targetEl = document.getElementById(`target-${id}`);
+            const videoEl = document.getElementById(`vid-${id}`);
 
-        // Диспетчер режимов: Соло или Дуэль
-        function handleStateChange() {
-            if (visibleTargets.size === 0) {
-                // Ничего не видно
-                hint.classList.remove("hidden");
-                soundBtn.style.display = "none";
-                battleHud.style.display = "none";
-                actionControls.style.display = "none";
-                vids.forEach(v => v.pause());
-            } 
-            else if (visibleTargets.size === 1) {
-                // СОЛО-РЕЖИМ: играет видео найденного чемпиона
+            targetEl.addEventListener("targetFound", () => {
+                if (lostTimer) clearTimeout(lostTimer);
+                
+                currentHeroId = id;
+                applyHeroTheme(HEROES[id].color);
+
                 hint.classList.add("hidden");
-                battleHud.style.display = "none";
-                actionControls.style.display = "none";
+                dock.style.display = "flex";
                 soundBtn.style.display = "flex";
 
-                rings.forEach(r => r.setAttribute("visible", "false"));
-                meshes.forEach(m => m.setAttribute("visible", "true"));
+                videoEl.play().catch(() => {});
+            });
 
-                const activeIndex = [...visibleTargets][0];
-                const inactiveIndex = activeIndex === 0 ? 1 : 0;
-
-                vids[inactiveIndex].pause();
-                vids[activeIndex].play().catch(() => {});
-            } 
-            else if (visibleTargets.size >= 2) {
-                // БОЕВОЙ РЕЖИМ: обе визитки на столе!
-                hint.classList.add("hidden");
-                soundBtn.style.display = "none";
-                vids.forEach(v => v.pause()); // глушим видео
-
-                // Прячем видео, включаем неоновые кольца дуэли
-                meshes.forEach(m => m.setAttribute("visible", "false"));
-                rings.forEach(r => r.setAttribute("visible", "true"));
-
-                battleHud.style.display = "block";
-                actionControls.style.display = "flex";
-            }
-        }
-
-        // Включение/выключение звука
-        soundBtn.addEventListener("click", () => {
-            const activeIndex = [...visibleTargets][0];
-            if (activeIndex !== undefined) {
-                const vid = vids[activeIndex];
-                vid.muted = !vid.muted;
-                soundBtn.innerHTML = vid.muted ? "🔊 Включить звук" : "🔇 Выключить звук";
-            }
+            targetEl.addEventListener("targetLost", () => {
+                lostTimer = setTimeout(() => {
+                    videoEl.pause();
+                    dock.style.display = "none";
+                    soundBtn.style.display = "none";
+                    hint.classList.remove("hidden");
+                    closeModal();
+                }, 1200); // 1.2 сек задержка от тряски рук
+            });
         });
 
-        // 3D-анимация вылетающих цифр урона над визиткой
-        function showDamage(targetIdx, text, color = "#ff4444") {
-            const el = document.getElementById(`dmg-${targetIdx}`);
-            el.setAttribute("value", text);
-            el.setAttribute("color", color);
-            el.setAttribute("position", "0 0.8 0");
-            
-            let y = 0.8;
-            const anim = setInterval(() => {
-                y += 0.02;
-                el.setAttribute("position", `0 ${y} 0`);
-            }, 30);
-
-            setTimeout(() => {
-                clearInterval(anim);
-                el.setAttribute("value", "");
-            }, 1200);
+        // Смена акцентного неонового цвета под героя
+        function applyHeroTheme(color) {
+            document.documentElement.style.setProperty('--accent-color', color);
+            soundBtn.style.borderColor = color;
         }
 
-        // Логика дуэли
-        function playerMove(action) {
-            steinitz.isDef = false;
-            steinitz.isBlocking = false;
+        // Кнопка звука
+        soundBtn.addEventListener("click", () => {
+            if (currentHeroId === null) return;
+            const vid = document.getElementById(`vid-${currentHeroId}`);
+            isMuted = !isMuted;
+            vid.muted = isMuted;
+            soundBtn.innerHTML = isMuted ? "🔇" : "🔊";
+        });
 
-            if (action === 'attack') {
-                let dmg = Math.max(8, steinitz.atk - (lasker.isDef ? lasker.def : 0));
-                lasker.hp = Math.max(0, lasker.hp - dmg);
-                battleLog.innerText = `Стейниц атакует: -${dmg} HP!`;
-                showDamage(1, `-${dmg}`);
-            } else if (action === 'defense') {
-                steinitz.isDef = true;
-                battleLog.innerText = `Стейниц выстроил пешечный вал!`;
-                showDamage(0, "+DEF", "#3498db");
-            } else if (action === 'skill') {
-                steinitz.isBlocking = true;
-                battleLog.innerText = `Стейниц: «Позиционная блокада»!`;
-                showDamage(0, "БЛОКАДА", "#9b59b6");
+        // Модальные окна
+        function openModal(type) {
+            if (currentHeroId === null) return;
+            const hero = HEROES[currentHeroId];
+
+            if (type === 'bio') {
+                modalContent.innerHTML = `
+                    <div class="modal-title">${hero.name}</div>
+                    <div style="font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 8px;">${hero.title}</div>
+                    <div class="modal-quote">${hero.quote}</div>
+                    <div style="margin-top: 14px; font-weight: bold; font-size: 13px; color: var(--accent-color);">ШОК-ФАКТЫ:</div>
+                    ${hero.facts.map(f => `<div class="fact-item">${f}</div>`).join('')}
+                `;
+            } else if (type === 'oracle') {
+                const randomTip = hero.oracleTips[Math.floor(Math.random() * hero.oracleTips.length)];
+                modalContent.innerHTML = `
+                    <div class="modal-title">🔮 Совет от ${hero.name.split(' ')[1]}</div>
+                    <div style="font-size: 14px; line-height: 1.5; margin: 20px 0; color: #eee; font-weight: 500;">
+                        "${randomTip}"
+                    </div>
+                    <button class="dock-btn" style="width: 100%;" onclick="openModal('oracle')">Спросить еще раз</button>
+                `;
+            } else if (type === 'stats') {
+                modalContent.innerHTML = `
+                    <div class="modal-title">⚡ Карточка Героя</div>
+                    <div style="font-size: 12px; color: #aaa; margin-bottom: 15px;">${hero.name}</div>
+                    ${hero.stats.map(s => `
+                        <div class="stat-row">
+                            <div class="stat-header"><span>${s.name}</span><span>${s.val}%</span></div>
+                            <div class="stat-track"><div class="stat-fill" style="width: ${s.val}%"></div></div>
+                        </div>
+                    `).join('')}
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                        <div style="font-size: 11px; color: var(--accent-color); font-weight: bold;">КОРОННЫЙ НАВЫК:</div>
+                        <div style="font-size: 12px; color: #ccc; margin-top: 4px;">${hero.skill}</div>
+                    </div>
+                `;
             }
 
-            updateBars();
-            if (checkDuelEnd()) return;
-
-            actionControls.style.pointerEvents = "none";
-            setTimeout(() => {
-                enemyTurn();
-                updateBars();
-                checkDuelEnd();
-                actionControls.style.pointerEvents = "auto";
-            }, 1100);
+            modal.classList.add("active");
         }
 
-        function enemyTurn() {
-            lasker.isDef = false;
-            const moves = ['attack', 'defense', 'skill'];
-            const move = moves[Math.floor(Math.random() * moves.length)];
-
-            if (steinitz.isBlocking) {
-                lasker.hp = Math.max(0, lasker.hp - 15);
-                battleLog.innerText = "Ласкер попал в блокаду: -15 контратаки!";
-                showDamage(1, "-15 (Контр)", "#9b59b6");
-                return;
-            }
-
-            if (move === 'attack') {
-                let dmg = Math.max(8, lasker.atk - (steinitz.isDef ? steinitz.def : 0));
-                steinitz.hp = Math.max(0, steinitz.hp - dmg);
-                battleLog.innerText = `Ласкер наносит удар: -${dmg} HP!`;
-                showDamage(0, `-${dmg}`);
-            } else if (move === 'defense') {
-                lasker.isDef = true;
-                battleLog.innerText = `Ласкер уходит в защиту!`;
-                showDamage(1, "+DEF", "#3498db");
-            } else if (move === 'skill') {
-                steinitz.hp = Math.max(0, steinitz.hp - 35);
-                battleLog.innerText = `💥 Ласкер: «Психологический гамбит» (-35 чистый урон)!`;
-                showDamage(0, "-35 КРИТ!", "#ff0077");
-            }
-        }
-
-        function updateBars() {
-            document.getElementById("hp-steinitz").style.width = `${(steinitz.hp / steinitz.maxHp) * 100}%`;
-            document.getElementById("hp-lasker").style.width = `${(lasker.hp / lasker.maxHp) * 100}%`;
-        }
-
-        function checkDuelEnd() {
-            if (lasker.hp <= 0) {
-                battleLog.innerText = "🏆 Стейниц одержал победу и защитил титул!";
-                actionControls.style.display = "none";
-                return true;
-            }
-            if (steinitz.hp <= 0) {
-                battleLog.innerText = "👑 Ласкер победил! Шахматная корона переходит к нему!";
-                actionControls.style.display = "none";
-                return true;
-            }
-            return false;
+        function closeModal() {
+            modal.classList.remove("active");
         }
     </script>
 </body>
