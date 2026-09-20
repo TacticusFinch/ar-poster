@@ -283,7 +283,7 @@
     <div id="interactive-dock">
         <button class="dock-btn" onclick="openModal('bio')">Биография</button>
         <button class="dock-btn" onclick="openModal('test')">Тест</button>
-        <button class="dock-btn" onclick="openModal('stats')">Статы</button>
+        <button class="dock-btn" onclick="openModal('stats')">Характеристики</button>
     </div>
 
     <div id="modal-container" class="modal-overlay">
@@ -695,7 +695,7 @@
             } else if (testScore === 1) {
                 evaluation = "Базовый уровень пройден. Рекомендуется повторить позиционные принципы.";
             } else {
-                evaluation = "Тест не пройден. Изучите биографию гроссмейстера и попробуйте снова.";
+                evaluation = "Тест не пройден. Потренируйтесь и попробуйте снова.";
             }
 
             modalContent.innerHTML = `
