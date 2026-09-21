@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Тактикус Финч — Чемпионы мира по шахматам</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.4/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
         :root {
             --accent-color: #00ffcc;
+            --accent-glow: rgba(0, 255, 204, 0.4);
         }
 
         body {
@@ -26,12 +27,12 @@
         #scanner-hint {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: radial-gradient(circle, rgba(10, 15, 24, 0.85) 0%, rgba(0,0,0,0.95) 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #00ffcc;
+            color: var(--accent-color);
             z-index: 100;
             text-align: center;
             padding: 24px;
@@ -40,79 +41,115 @@
         }
         #scanner-hint.hidden { opacity: 0; }
         .spinner {
-            border: 3px solid rgba(0, 255, 204, 0.2);
-            width: 44px;
-            height: 44px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            border-left-color: #00ffcc;
+            border-left-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-glow);
             animation: spin 1s linear infinite;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* Кнопка включения звука */
-        #sound-toggle {
+        /* Верхняя панель (HUD) */
+        .top-hud {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(10, 12, 18, 0.85);
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 120;
+            pointer-events: none;
+        }
+
+        .hud-btn {
+            pointer-events: auto;
+            background: rgba(12, 16, 26, 0.75);
             border: 1px solid var(--accent-color);
             color: #fff;
-            border-radius: 8px;
-            padding: 9px 16px;
-            display: none;
+            border-radius: 12px;
+            padding: 8px 14px;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 6px;
             font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            z-index: 120;
+            text-decoration: none;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px var(--accent-glow);
             cursor: pointer;
-            backdrop-filter: blur(8px);
+            transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+        }
+        .hud-btn:active {
+            transform: scale(0.95);
         }
 
-        /* Нижнее меню */
+        #bot-link-btn {
+            border-color: #00e5ff;
+        }
+
+        /* Нижнее эффектное меню */
         #interactive-dock {
             position: absolute;
             bottom: 24px;
-            left: 16px;
-            right: 16px;
+            left: 14px;
+            right: 14px;
             display: none;
             justify-content: space-between;
             gap: 10px;
             z-index: 110;
+            animation: dockRise 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+
+        @keyframes dockRise {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
         .dock-btn {
             flex: 1;
-            padding: 13px 6px;
-            border-radius: 10px;
-            background: rgba(12, 15, 22, 0.88);
-            border: 1px solid var(--accent-color);
+            padding: 12px 6px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(25, 32, 48, 0.85) 0%, rgba(10, 14, 22, 0.95) 100%);
+            border: 1.5px solid var(--accent-color);
             color: #fff;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.4px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 15px var(--accent-glow);
             cursor: pointer;
             text-align: center;
-            transition: transform 0.1s, background-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .dock-btn span.icon {
+            font-size: 16px;
         }
         .dock-btn:active {
-            transform: scale(0.96);
-            background: rgba(255, 255, 255, 0.12);
+            transform: scale(0.92);
+            box-shadow: 0 2px 8px var(--accent-glow);
+            background: var(--accent-color);
+            color: #000;
         }
 
         /* Модальные окна */
         .modal-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(4, 6, 12, 0.85);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -122,20 +159,21 @@
             transition: opacity 0.25s ease;
             padding: 16px;
             box-sizing: border-box;
+            backdrop-filter: blur(8px);
         }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
         .modal-card {
-            background: #0d1117;
+            background: linear-gradient(160deg, #121824 0%, #080b11 100%);
             border: 1px solid var(--accent-color);
-            border-radius: 14px;
+            border-radius: 18px;
             width: 100%;
             max-width: 420px;
-            padding: 20px;
+            padding: 22px;
             color: #fff;
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
-            max-height: 86vh;
+            box-shadow: 0 0 35px var(--accent-glow);
+            max-height: 85vh;
             overflow-y: auto;
             box-sizing: border-box;
         }
@@ -144,30 +182,69 @@
             top: 14px;
             right: 14px;
             background: rgba(255, 255, 255, 0.08);
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #aaa;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-radius: 6px;
-            padding: 6px 10px;
+            border-radius: 8px;
+            padding: 7px 12px;
             cursor: pointer;
+            transition: background 0.2s;
         }
+        .modal-close:active { background: rgba(255, 255, 255, 0.2); color: #fff; }
+
         .modal-title {
-            font-size: 17px;
+            font-size: 18px;
             font-weight: 800;
             color: var(--accent-color);
             margin-bottom: 4px;
-            padding-right: 70px;
+            padding-right: 65px;
             letter-spacing: 0.3px;
         }
         .modal-subtitle {
             font-size: 11px;
-            color: #777;
+            color: #8a99ad;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
+        }
+
+        /* Вспомогательные блоки ссылок */
+        .external-promo-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            text-align: center;
+        }
+        .action-link-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 11px 16px;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 10px;
+            background: var(--accent-color);
+            color: #000;
+            font-size: 11px;
+            font-weight: 800;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            box-shadow: 0 4px 12px var(--accent-glow);
+            transition: transform 0.15s;
+        }
+        .action-link-btn:active { transform: scale(0.97); }
+        .action-link-btn.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-shadow: none;
         }
 
         /* Биография */
@@ -192,16 +269,17 @@
             color: #ddd;
             font-size: 12px;
             line-height: 1.45;
-            border-left: 2px solid var(--accent-color);
-            padding: 6px 10px;
+            border-left: 3px solid var(--accent-color);
+            padding: 8px 12px;
             margin: 12px 0;
             background: rgba(255, 255, 255, 0.03);
+            border-radius: 0 8px 8px 0;
         }
 
-        /* Тест и Картинка-Диаграмма */
+        /* Задачи / Тесты */
         .diagram-container {
             width: 100%;
-            margin: 10px 0;
+            margin: 12px 0;
             display: flex;
             justify-content: center;
         }
@@ -209,9 +287,10 @@
             max-width: 250px;
             width: 100%;
             height: auto;
-            border: 2px solid #333;
-            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             background-color: #1a1e28;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .difficulty-badge {
             display: inline-block;
@@ -219,29 +298,29 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
             color: var(--accent-color);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .puzzle-option-btn {
             width: 100%;
             text-align: left;
-            padding: 11px;
+            padding: 12px;
             font-size: 12px;
             margin-bottom: 8px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #fff;
             cursor: pointer;
             box-sizing: border-box;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
-        .puzzle-option-btn:active { background: rgba(255, 255, 255, 0.15); }
+        .puzzle-option-btn:active { background: rgba(255, 255, 255, 0.15); border-color: var(--accent-color); }
 
-        /* Статы */
+        /* Статистика */
         .stat-row { margin-bottom: 12px; }
         .stat-header {
             display: flex;
@@ -252,47 +331,70 @@
             color: #ccc;
         }
         .stat-track {
-            height: 6px;
+            height: 7px;
             background: rgba(255, 255, 255, 0.08);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
         }
         .stat-fill {
             height: 100%;
             background: var(--accent-color);
-            border-radius: 3px;
+            box-shadow: 0 0 8px var(--accent-glow);
+            border-radius: 4px;
         }
         .skill-box {
             margin-top: 16px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 8px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
     </style>
 </head>
+
 <body>
 
     <div id="scanner-hint">
         <div class="spinner"></div>
-        <div style="font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">НАВЕДИТЕ КАМЕРУ НА ПЕРСОНАЖА</div>
+        <div style="font-size: 15px; font-weight: 800; letter-spacing: 0.8px;">НАВЕДИТЕ КАМЕРУ НА КАРТОЧКУ</div>
+        <div style="font-size: 12px; color: #888; margin-top: 6px;">Стейниц • Ласкер • Капабланка</div>
     </div>
 
-    <button id="sound-toggle">ЗВУК: ВЫКЛ</button>
+    <!-- Верхний HUD -->
+    <div class="top-hud">
+        <a id="bot-link-btn" class="hud-btn" href="https://max.ru/se14097294_bot" target="_blank">
+            <span>🤖</span> БОТ ФИНЧ
+        </a>
+        <button id="sound-toggle" class="hud-btn" style="display: none;">
+            <span>🔇</span> ЗВУК: ВЫКЛ
+        </button>
+    </div>
 
+    <!-- Нижнее меню с иконками -->
     <div id="interactive-dock">
-        <button class="dock-btn" onclick="openModal('bio')">Биография</button>
-        <button class="dock-btn" onclick="openModal('test')">Тест</button>
-        <button class="dock-btn" onclick="openModal('stats')">Характеристики</button>
+        <button class="dock-btn" onclick="openModal('bio')">
+            <span class="icon">📖</span>
+            <span>Биография</span>
+        </button>
+        <button class="dock-btn" onclick="openModal('test')">
+            <span class="icon">♟️</span>
+            <span>Тест</span>
+        </button>
+        <button class="dock-btn" onclick="openModal('stats')">
+            <span class="icon">⚡</span>
+            <span>Характеристики</span>
+        </button>
     </div>
 
+    <!-- Модальные окна -->
     <div id="modal-container" class="modal-overlay">
         <div class="modal-card">
-            <button class="modal-close" onclick="closeModal()">Закрыть</button>
+            <button class="modal-close" onclick="closeModal()">Закрыть ✕</button>
             <div id="modal-content"></div>
         </div>
     </div>
 
+    <!-- Сцена MindAR -->
     <a-scene 
         mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 8;" 
         color-space="sRGB" 
@@ -319,28 +421,28 @@
         <a-entity id="target-2" mindar-image-target="targetIndex: 2">
             <a-video src="#vid-2" width="1" height="1.54" position="0 0 0"></a-video>
         </a-entity>
-
     </a-scene>
 
-    <script>
+<script>
         const HEROES = {
             0: {
                 name: "Вильгельм Стейниц",
                 title: "I Чемпион мира по шахматам (1886—1894)",
                 color: "#00ffcc",
+                colorGlow: "rgba(0, 255, 204, 0.4)",
                 quote: "«Шахматы не для слабонервных. Здесь побеждает тот, чья позиция надежна как гранит».",
                 bio: [
                     {
                         title: "Происхождение и юность",
-                        text: "Вильгельм Стейниц родился в Праге в бедной семье. Обладая слабым здоровьем и хромотой с ранних лет, он компенсировал физические ограничения выдающимися способностями к математике. Переехав в Вену для поступления в политехнический институт, Стейниц начал проводить свободные часы в знаменитых шахматных кофейнях, где открыл в себе исключительный аналитический дар."
+                        text: "Вильгельм Стейниц родился в Праге в бедной семье. Обладая слабым здоровьем и хромотой с ранних лет, он компенсировал физические ограничения выдающимися способностями к математике. В Вене он открыл в себе уникальный комбинационный и позиционный дар."
                     },
                     {
                         title: "Революция в теории шахмат",
-                        text: "В XIX столетии шахматный мир признавал лишь романтический стиль: стихийные атаки, каскады жертв и игру на обострение. Стейниц первым научно обосновал, что успешное нападение невозможно без предварительного позиционного перевеса. Он систематизировал правила позиционной борьбы, описал силу пешечного центра, слабых полей и открытых линий, заложив законы, на которых строится вся современная шахматная школа."
+                        text: "Стейниц первым научно обосновал, что атака успешна только при наличии позиционного перевеса. Он заложил фундаментальные правила центра и слабых полей."
                     },
                     {
                         title: "Наследие первого чемпиона",
-                        text: "В 1886 году, одержав триумфальную победу над Иоганном Цукертортом, Стейниц стал первым официальным чемпионом мира. Он доказал силу активного короля в окончаниях и оставил после себя фундаментальные труды и аналитические издания, превратившие шахматы из салонного увлечения в строгую академическую дисциплину."
+                        text: "В 1886 году он стал первым официальным чемпионом мира, превратив шахматы из салонного развлечения в строгую академическую дисциплину."
                     }
                 ],
                 stats: [
@@ -350,14 +452,14 @@
                     { name: "Психологическое давление", val: 75 }
                 ],
                 skillName: "Позиционная блокада",
-                skillDesc: "Методичное связывание сил оппонента с последующим лишением контригры.",
+                skillDesc: "Методичное связывание сил оппонента с последующим лишением всякой контригры.",
                 puzzles: [
                     {
                         difficulty: "Уровень 1: Легкий",
                         image: "./s1.png",
                         desc: "Ход белых. Черный король раскрыт. Найдите простейший путь к быстрому мату:",
                         options: [
-                            { text: "1. Слон f7", correct: false, comment: "Черные король спасется на е7." },
+                            { text: "1. Слон f7", correct: false, comment: "Черный король спасется на е7." },
                             { text: "2. Ферзь f7", correct: true, comment: "Верно. Поле f7 оказалось роковым при поддержке слона." },
                             { text: "3. Ферзь е4", correct: false, comment: "Пассивно. Упущен немедленный выигрыш." }
                         ]
@@ -367,7 +469,7 @@
                         image: "./s2.png",
                         desc: "Ход черных. Найдите какой ход Стейница начинает 3-ходовую матовую комбинацию.",
                         options: [
-                            { text: "Конь f2", correct: true, comment: "Верно! Вариант продолжается: Король h4 - Ладья f4+! и после gf Ладья g4 мат!" },
+                            { text: "Конь f2", correct: true, comment: "Верно! Вариант: Крh4 - Лf4+! и после gf Лg4 мат!" },
                             { text: "Ладья g3", correct: false, comment: "Эта жертва ладьи приводит к поражению." },
                             { text: "Конь g5", correct: false, comment: "Ошибочное направление. Король сбежит." }
                         ]
@@ -375,11 +477,11 @@
                     {
                         difficulty: "Уровень 3: Сложный",
                         image: "./s3.png",
-                        desc: "Гастингс, 1895 год. Ход белых. Исторический шедевр Стейница. Найдите ход, начинащий гениальный план первого чемпиона мира.",
+                        desc: "Гастингс, 1895 год. Ход белых. Найдите легендарный ход первого чемпиона мира:",
                         options: [
                             { text: "Ферзь е7 — лобовой удар", correct: false, comment: "Ошибка. Черные заберут ферзя и выиграют партию." },
-                            { text: "Ладья с3 — подготовка тарана", correct: false, comment: "Нет. Слишком медленно, черные перестроятся после король f7." },
-                            { text: "Пешка d5 — освобождающий ход", correct: true, comment: "Блестяще! Освобождение поля для коня, который стремится на e6 с парализующим эффектом." }
+                            { text: "Ладья с3 — подготовка тарана", correct: false, comment: "Слишком медленно, черные консолидируются." },
+                            { text: "Пешка d5 — освобождающий ход", correct: true, comment: "Блестяще! Освобождение поля d4 для решающего перевода коня на e6." }
                         ]
                     }
                 ]
@@ -387,20 +489,21 @@
             1: {
                 name: "Эмануил Ласкер",
                 title: "II Чемпион мира по шахматам (1894—1921)",
-                color: "#c0392b",
+                color: "#ff4d6d",
+                colorGlow: "rgba(255, 77, 109, 0.4)",
                 quote: "«В шахматах борются не фигуры, а люди. Пойми слабость человека — и его позиция рухнет».",
                 bio: [
                     {
                         title: "Ученый и шахматист",
-                        text: "Эмануил Ласкер сочетал выступления на высшем мировом уровне с академической карьерой. Он защитил докторскую диссертацию по высшей математике, разрабатывал теорию идеалов в коммутативной алгебре и создавал философские труды. Ласкер состоял в дружеской переписке с Альбертом Эйнштейном, обсуждая фундаментальные проблемы теории относительности."
+                        text: "Доктор математики, философ и близкий друг Альберта Эйнштейна. Ласкер гармонично сочетал академическую карьеру с мировыми шахматными триумфами."
                     },
                     {
                         title: "Психологический метод",
-                        text: "Ласкер первым осознал, что за доской сидит живой человек со своими страхами и предрассудками. Он намеренно избирал продолжения, неудобные конкретному противнику: атакующих игроков связывал пассивной маневренной игрой, а сторонников строгого академизма втягивал в тактический хаос, заставляя расходовать время и нервы."
+                        text: "Ласкер первым начал целенаправленно ставить оппонентов в некомфортные для их темперамента позиции, провоцируя фатальные ошибки."
                     },
                     {
                         title: "27 лет на троне",
-                        text: "Ласкер удерживал шахматную корону 27 лет подряд — абсолютный рекорд, не превзойденный никем в истории. Его стойкость в тяжелейших позициях, способность переворачивать безнадежные партии и психологическая устойчивость сделали его легендой интеллектуального спорта."
+                        text: "Удерживал шахматную корону рекордные 27 лет подряд — достижение, остающееся непревзойденным."
                     }
                 ],
                 stats: [
@@ -410,7 +513,7 @@
                     { name: "Позиционная строгость", val: 72 }
                 ],
                 skillName: "Психологический гамбит",
-                skillDesc: "Создание нестандартных условий на доске, вызывающих сомнения и ошибки оппонента.",
+                skillDesc: "Создание условий хаоса на доске, ведущих к ошибкам оппонента.",
                 puzzles: [
                     {
                         difficulty: "Уровень 1: Легкий",
@@ -448,19 +551,20 @@
                 name: "Хосе Рауль Капабланка",
                 title: "III Чемпион мира по шахматам (1921—1927)",
                 color: "#f1c40f",
+                colorGlow: "rgba(241, 196, 15, 0.4)",
                 quote: "«Хороший игрок всегда везуч. Ошибается тот, кто играет против меня».",
                 bio: [
                     {
                         title: "Вундеркинд из Гаваны",
-                        text: "Хосе Рауль Капабланка родился на Кубе и проявил шахматный гений в четыре года. Научившись правилам исключительно по наблюдениям за партиями отца, он обыграл его в первой же самостоятельной игре. Уже в двенадцатилетнем возрасте Капабланка завоевал звание сильнейшего шахматиста Кубы в официальном матче."
+                        text: "Научился играть в 4 года, лишь наблюдая за отцом. Уже в 12 лет победил сильнейшего мастера Кубы в официальном матче."
                     },
                     {
-                        title: "Непобедимый автомат",
-                        text: "Капабланка поражал современников кристальной чистотой игры и скоростью мышления: он мгновенно видел гармонию позиции, почти не считая длинных вариантов. На пике карьеры он установил непревзойденный ориентир надежности, не проиграв ни одной официальной турнирной партии на протяжении восьми лет подряд (1916—1924)."
+                        title: "Шахматный автомат",
+                        text: "Отличался феноменальной интуицией и скоростью игры. На протяжении 8 лет подряд (1916—1924) не проиграл ни одной турнирной партии."
                     },
                     {
-                        title: "Дипломатия и стиль",
-                        text: "Элегантный, эрудированный и безупречно одетый, Капабланка представлял свою страну на дипломатической арене. Он вывел шахматы в ранг подлинного светского искусства, показав, что наивысшее мастерство рождается из естественности, ясности плана и филигранной техники простых окончаний."
+                        title: "Гений эндшпиля",
+                        text: "Его визитная карточка — кажущаяся простота и безупречная техника реализации малейшего позиционного перевеса."
                     }
                 ],
                 stats: [
@@ -470,7 +574,7 @@
                     { name: "Стрессоустойчивость", val: 78 }
                 ],
                 skillName: "Кристальный эндшпиль",
-                skillDesc: "Хирургически точная конвертация микроскопического преимущества в чистую победу.",
+                skillDesc: "Хирургически точная реализация минимального перевеса в чистую победу.",
                 puzzles: [
                     {
                         difficulty: "Уровень 1: Легкий",
@@ -506,7 +610,7 @@
             }
         };
 
-        let currentHeroId = null;
+let currentHeroId = null;
         let isMuted = true;
         let lostTimer = null;
 
@@ -520,7 +624,7 @@
         const modal = document.getElementById("modal-container");
         const modalContent = document.getElementById("modal-content");
 
-        // Слушатели таргетов
+        // Слушатели таргетов MindAR
         [0, 1, 2].forEach(id => {
             const targetEl = document.getElementById(`target-${id}`);
             const videoEl = document.getElementById(`vid-${id}`);
@@ -529,11 +633,11 @@
                 if (lostTimer) clearTimeout(lostTimer);
                 
                 currentHeroId = id;
-                applyHeroTheme(HEROES[id].color);
+                applyHeroTheme(HEROES[id]);
 
                 hint.classList.add("hidden");
                 dock.style.display = "flex";
-                soundBtn.style.display = "flex";
+                soundBtn.style.display = "inline-flex";
 
                 videoEl.muted = isMuted;
                 videoEl.play().catch(() => {});
@@ -550,9 +654,11 @@
             });
         });
 
-        function applyHeroTheme(color) {
-            document.documentElement.style.setProperty('--accent-color', color);
-            soundBtn.style.borderColor = color;
+        // Динамическая смена цвета интерфейса под карточку
+        function applyHeroTheme(hero) {
+            document.documentElement.style.setProperty('--accent-color', hero.color);
+            document.documentElement.style.setProperty('--accent-glow', hero.colorGlow);
+            soundBtn.style.borderColor = hero.color;
         }
 
         soundBtn.addEventListener("click", () => {
@@ -560,12 +666,20 @@
             const vid = document.getElementById(`vid-${currentHeroId}`);
             isMuted = !isMuted;
             vid.muted = isMuted;
-            soundBtn.innerText = isMuted ? "ЗВУК: ВЫКЛ" : "ЗВУК: ВКЛ";
+            soundBtn.innerHTML = isMuted ? "<span>🔇</span> ЗВУК: ВЫКЛ" : "<span>🔊</span> ЗВУК: ВКЛ";
         });
 
+        // Открытие модального окна (с остановкой видео)
         function openModal(type) {
             if (currentHeroId === null) return;
             const hero = HEROES[currentHeroId];
+
+            // 1. Ставим видео на паузу
+            const activeVideo = document.getElementById(`vid-${currentHeroId}`);
+            if (activeVideo) activeVideo.pause();
+
+            // 2. Виброотклик при клике по кнопке
+            if (navigator.vibrate) navigator.vibrate(35);
 
             if (type === 'bio') {
                 modalContent.innerHTML = `
@@ -593,8 +707,14 @@
                     `).join('')}
                     <div class="skill-box">
                         <div style="font-size: 11px; color: var(--accent-color); font-weight: 700; text-transform: uppercase;">Ключевой навык:</div>
-                        <div style="font-size: 13px; font-weight: bold; margin-top: 2px;">${hero.skillName}</div>
-                        <div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">${hero.skillDesc}</div>
+                        <div style="font-size: 14px; font-weight: bold; margin-top: 3px;">${hero.skillName}</div>
+                        <div style="font-size: 12px; color: #aaa; margin-top: 5px; line-height: 1.4;">${hero.skillDesc}</div>
+                    </div>
+                    <div class="external-promo-box">
+                        <div style="font-size: 12px; font-weight: 600;">Хотите развить такие же навыки?</div>
+                        <a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn">
+                            🤖 Тренироваться с ботом Финчем
+                        </a>
                     </div>
                 `;
             }
@@ -618,7 +738,7 @@
                     <img class="diagram-img" src="${p.image}" alt="Шахматная диаграмма" onerror="this.style.display='none'">
                 </div>
                 
-                <div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin: 10px 0; padding: 10px; border-radius: 6px;"></div>
+                <div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin: 10px 0; padding: 10px; border-radius: 8px;"></div>
 
                 <div id="puzzle-options">
                     ${p.options.map((opt, i) => `
@@ -629,7 +749,7 @@
                 </div>
 
                 <div id="puzzle-next-container" style="display:none; margin-top: 10px;">
-                    <button class="dock-btn" style="width: 100%;" onclick="nextPuzzle()">Следующее задание</button>
+                    <button class="action-link-btn" style="border:none; cursor:pointer;" onclick="nextPuzzle()">Следующее задание →</button>
                 </div>
             `;
         }
@@ -643,7 +763,7 @@
             const nextContainer = document.getElementById("puzzle-next-container");
             const optionsContainer = document.getElementById("puzzle-options");
 
-            // Блокируем кнопки после клика
+            // Блокируем варианты ответов
             const buttons = optionsContainer.getElementsByTagName("button");
             for (let btn of buttons) {
                 btn.disabled = true;
@@ -655,23 +775,22 @@
 
             if (opt.correct) {
                 testScore++;
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                if (navigator.vibrate) navigator.vibrate([70, 50, 70]);
                 fb.style.background = "rgba(46, 204, 113, 0.2)";
                 fb.style.color = "#2ecc71";
                 fb.style.border = "1px solid #2ecc71";
-                fb.innerHTML = `ВЕРНО. ${opt.comment}`;
+                fb.innerHTML = `<b>ВЕРНО!</b> ${opt.comment}`;
             } else {
-                if (navigator.vibrate) navigator.vibrate(200);
+                if (navigator.vibrate) navigator.vibrate(180);
                 fb.style.background = "rgba(231, 76, 60, 0.2)";
                 fb.style.color = "#e74c3c";
                 fb.style.border = "1px solid #e74c3c";
-                fb.innerHTML = `НЕВЕРНО. ${opt.comment}`;
+                fb.innerHTML = `<b>НЕВЕРНО.</b> ${opt.comment}`;
             }
 
             nextContainer.style.display = "block";
         }
 
-        // Переход к следующему вопросу или финальному результату
         function nextPuzzle() {
             currentPuzzleIndex++;
             const hero = HEROES[currentHeroId];
@@ -683,37 +802,55 @@
             }
         }
 
-        // Итог прохождения теста
+        // Экран итогов с нативными ссылками на Lichess и бота Финча
         function renderTestResult() {
             const hero = HEROES[currentHeroId];
             let evaluation = "";
 
             if (testScore === 3) {
-                evaluation = "Идеальный результат. Вы мыслите на уровне чемпиона мира!";
+                evaluation = "Идеальный результат! Вы мыслите как гроссмейстер.";
             } else if (testScore === 2) {
-                evaluation = "Хороший результат. Стратегическое понимание на высоком уровне.";
-            } else if (testScore === 1) {
-                evaluation = "Базовый уровень пройден. Рекомендуется повторить позиционные принципы.";
+                evaluation = "Отличная игра! Стратегическое чутье на высоте.";
             } else {
-                evaluation = "Тест не пройден. Потренируйтесь и попробуйте снова.";
+                evaluation = "Есть куда расти! Рекомендуем закрепить базовые правила игры.";
             }
 
             modalContent.innerHTML = `
                 <div class="modal-title">Тест завершен</div>
                 <div class="modal-subtitle">${hero.name}</div>
                 
-                <div style="margin: 20px 0; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; text-align: center;">
-                    <div style="font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px;">Итоговый счет:</div>
-                    <div style="font-size: 32px; font-weight: 800; color: var(--accent-color); margin: 6px 0;">${testScore} из 3</div>
-                    <div style="font-size: 13px; color: #ddd; line-height: 1.4; margin-top: 10px;">${evaluation}</div>
+                <div style="margin: 16px 0; padding: 18px; background: rgba(255, 255, 255, 0.04); border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px;">Ваш результат:</div>
+                    <div style="font-size: 34px; font-weight: 800; color: var(--accent-color); margin: 6px 0;">${testScore} из 3</div>
+                    <div style="font-size: 13px; color: #ddd; line-height: 1.4;">${evaluation}</div>
                 </div>
 
-                <button class="dock-btn" style="width: 100%;" onclick="openModal('test')">Пройти тест заново</button>
+                <div class="external-promo-box">
+                    <div style="font-size: 12px; font-weight: 700; margin-bottom: 2px;">Обучение шахматам</div>
+                    <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Выберите ваш следующий шаг:</div>
+                    
+                    <a href="https://lichess.org/learn" target="_blank" class="action-link-btn secondary">
+                        ♙ Изучить основы на Lichess
+                    </a>
+                    
+                    <a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn">
+                        🤖 Шахматный бот «Тактикус Финч»
+                    </a>
+                </div>
+
+                <button class="action-link-btn secondary" style="width: 100%; margin-top: 10px; cursor: pointer;" onclick="openModal('test')">Пройти заново</button>
             `;
         }
 
+        // Закрытие модального окна (возобновление видео)
         function closeModal() {
             modal.classList.remove("active");
+            if (currentHeroId !== null) {
+                const activeVideo = document.getElementById(`vid-${currentHeroId}`);
+                if (activeVideo) {
+                    activeVideo.play().catch(() => {});
+                }
+            }
         }
     </script>
 </body>
