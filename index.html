@@ -41,20 +41,43 @@
         }
         #scanner-hint.hidden { opacity: 0; }
 
-        /* Контейнер прицела карточки */
-        .ar-reticle {
-            position: relative;
-            width: 220px;
-            height: 310px;
-            border: 1px solid rgba(0, 255, 204, 0.15);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-            overflow: hidden;
-            box-shadow: inset 0 0 30px rgba(0, 255, 204, 0.05);
-        }
+/* Контейнер прицела: занимает 72% ширины экрана и сохраняет пропорцию карточки */
+.ar-reticle {
+    position: relative;
+    width: 72vw;
+    max-width: 320px;
+    aspect-ratio: 1 / 1.54; /* Точные пропорции вашей AR-карточки */
+    border: 1px solid rgba(0, 255, 204, 0.15);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: inset 0 0 35px rgba(0, 255, 204, 0.06);
+}
+
+/* Уголки делаем крупнее под новый размер */
+.reticle-corner {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-color: var(--accent-color);
+    border-style: solid;
+    border-width: 0;
+    filter: drop-shadow(0 0 8px var(--accent-color));
+}
+.reticle-corner.top-left { top: 10px; left: 10px; border-top-width: 3.5px; border-left-width: 3.5px; border-top-left-radius: 8px; }
+.reticle-corner.top-right { top: 10px; right: 10px; border-top-width: 3.5px; border-right-width: 3.5px; border-top-right-radius: 8px; }
+.reticle-corner.bottom-left { bottom: 10px; left: 10px; border-bottom-width: 3.5px; border-left-width: 3.5px; border-bottom-left-radius: 8px; }
+.reticle-corner.bottom-right { bottom: 10px; right: 10px; border-bottom-width: 3.5px; border-right-width: 3.5px; border-bottom-right-radius: 8px; }
+
+/* Лазер проходит всю высоту рамки в процентах */
+@keyframes scanLaser {
+    0% { top: 2%; opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { top: 98%; opacity: 0.2; }
+}
 
         /* Угловые высокотехнологичные маркеры */
         .reticle-corner {
