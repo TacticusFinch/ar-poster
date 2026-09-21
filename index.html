@@ -543,7 +543,7 @@
 
     <!-- Сцена MindAR -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 8;" 
+        mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 5;" 
         color-space="sRGB" 
         renderer="colorManagement: true" 
         vr-mode-ui="enabled: false" 
@@ -602,17 +602,17 @@
                 skillDesc: "Методичное связывание сил оппонента с последующим лишением всякой контригры.",
                 puzzles: [
                     {
-                        difficulty: "Уровень 1: Легкий",
+                        difficulty: "Уровень 1: Тактика",
                         image: "./s1.png",
                         desc: "Ход белых. Черный король раскрыт. Найдите простейший путь к быстрому мату:",
                         options: [
                             { text: "1. Слон f7", correct: false, comment: "Черный король спасется на е7." },
-                            { text: "2. Ферзь f7", correct: true, comment: "Верно. Поле f7 оказалось роковым при поддержке слона." },
+                            { text: "2. Ферзь f7", correct: true, comment: "Верно! Поле f7 оказалось роковым при поддержке слона." },
                             { text: "3. Ферзь е4", correct: false, comment: "Пассивно. Упущен немедленный выигрыш." }
                         ]
                     },
                     {
-                        difficulty: "Уровень 2: Средний",
+                        difficulty: "Уровень 2: Тактика",
                         image: "./s2.png",
                         desc: "Ход черных. Найдите какой ход Стейница начинает 3-ходовую матовую комбинацию.",
                         options: [
@@ -622,13 +622,47 @@
                         ]
                     },
                     {
-                        difficulty: "Уровень 3: Сложный",
+                        difficulty: "Уровень 3: Тактика",
                         image: "./s3.png",
                         desc: "Гастингс, 1895 год. Ход белых. Найдите легендарный ход первого чемпиона мира:",
                         options: [
                             { text: "Ферзь е7 — лобовой удар", correct: false, comment: "Ошибка. Черные заберут ферзя и выиграют партию." },
                             { text: "Ладья с3 — подготовка тарана", correct: false, comment: "Слишком медленно, черные консолидируются." },
                             { text: "Пешка d5 — освобождающий ход", correct: true, comment: "Блестяще! Освобождение поля d4 для решающего перевода коня на e6." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 4: Факт биографии",
+                        desc: "Какую революционную мысль о короле Стейниц доказал всему шахматному миру?",
+                        options: [
+                            { text: "Король должен всю партию стоять в углу", correct: false, comment: "Наоборот, Стейниц опроверг этот догмат." },
+                            { text: "Король — сильная фигура, способная защищать себя сама", correct: true, comment: "Точно! До него короля считали беспомощной фигурой, требующей вечной опеки." },
+                            { text: "Короля нужно разменивать в середине игры", correct: false, comment: "Короля по правилам шахмат разменять невозможно." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 5: Факт биографии",
+                        desc: "Кем по профессии и призванию Стейниц работал долгие годы параллельно с игрой?",
+                        options: [
+                            { text: "Шахматным журналистом и редактором", correct: true, comment: "Верно! Он основал International Chess Magazine и вел знаменитые острые колонки." },
+                            { text: "Капитаном дальнего плавания", correct: false, comment: "Нет, Стейниц страдал от проблем со здоровьем и не плавал на кораблях." },
+                            { text: "Придворным ювелиром", correct: false, comment: "Стейниц жил исключительно интеллектуальным трудом." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 6: Правда или Ложь",
+                        desc: "Правда ли, что Стейниц стал первым в истории официальным чемпионом мира, победив Иоганна Цукерторта?",
+                        options: [
+                            { text: "Правда", correct: true, comment: "Верно! Матч 1886 года стал первым официальным состязанием за корону." },
+                            { text: "Ложь", correct: false, comment: "Это историческая правда: именно в 1886 году мир обрел первого официального чемпиона." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 7: Правда или Ложь",
+                        desc: "Правда ли, что Стейниц считал, что в дебюте нужно с первых ходов идти всеми фигурами на мат любой ценой?",
+                        options: [
+                            { text: "Правда", correct: false, comment: "Как раз наоборот! Стейниц боролся с безрассудными атаками и заложил научную базу позиционной игры." },
+                            { text: "Ложь", correct: true, comment: "Абсолютно верно. Он доказал, что атаковать можно лишь при накопленном позиционном перевесе." }
                         ]
                     }
                 ]
@@ -663,7 +697,7 @@
                 skillDesc: "Создание условий хаоса на доске, ведущих к ошибкам оппонента.",
                 puzzles: [
                     {
-                        difficulty: "Уровень 1: Легкий",
+                        difficulty: "Уровень 1: Тактика",
                         image: "./l1.png",
                         desc: "Ход белых. Заметьте тактический зевок черных и выиграйте материал:",
                         options: [
@@ -673,7 +707,7 @@
                         ]
                     },
                     {
-                        difficulty: "Уровень 2: Средний",
+                        difficulty: "Уровень 2: Тактика",
                         image: "./l2.png",
                         desc: "Ход белых. Ласкер создает скрытую ловушку в эндшпиле. Как заставить черных ошибиться?",
                         options: [
@@ -683,13 +717,47 @@
                         ]
                     },
                     {
-                        difficulty: "Уровень 3: Сложный",
+                        difficulty: "Уровень 3: Тактика",
                         image: "./l3.png",
                         desc: "Амстердам, 1889 год. Ход белых. Ласкер открывает классический штурм прикрытия короля:",
                         options: [
                             { text: "Конь e4 — атака на ферзя", correct: false, comment: "Не дает перевеса, черные укрепляют королевский фланг." },
                             { text: "Слон берет h7+! Жертва первого слона", correct: true, comment: "Блестяще! Ласкер жертвует обоих слонов и разрушает оборону соперника." },
                             { text: "Ферзь g4 — связка по диагонали", correct: false, comment: "Черные отвечают ходом g6, запирая позицию." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 4: Факт биографии",
+                        desc: "С каким великим физиком-теоретиком Ласкер был дружен и спорил о теории относительности?",
+                        options: [
+                            { text: "Исаак Ньютон", correct: false, comment: "Они жили в разные эпохи." },
+                            { text: "Альберт Эйнштейн", correct: true, comment: "Верно! Эйнштейн даже написал предисловие к посмертной биографии Ласкера." },
+                            { text: "Никола Тесла", correct: false, comment: "С Теслой Ласкер научных споров не вел." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 5: Факт биографии",
+                        desc: "Какую ученую степень имел Эмануил Ласкер помимо шахматных титулов?",
+                        options: [
+                            { text: "Доктор математических наук", correct: true, comment: "Верно! Его теорема в алгебре известна как теорема Ласкера — Нётер." },
+                            { text: "Магистр архитектуры", correct: false, comment: "Нет, Ласкер специализировался на высшей математике и философии." },
+                            { text: "Доктор медицины", correct: false, comment: "Медициной Ласкер профессионально не занимался." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 6: Правда или Ложь",
+                        desc: "Правда ли, что Ласкер удерживал звание чемпиона мира целых 27 лет подряд?",
+                        options: [
+                            { text: "Правда", correct: true, comment: "Именно так! С 1894 по 1921 год. Это абсолютный исторический рекорд." },
+                            { text: "Ложь", correct: false, comment: "Это чистая правда — 27 лет непрерывного чемпионства!" }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 7: Правда или Ложь",
+                        desc: "Правда ли, что Ласкер всегда выбирал только объективно сильнейшие ходы первой линии компьютера?",
+                        options: [
+                            { text: "Правда", correct: false, comment: "Неверно. Ласкер играл по человеку: выбирал ходы, неудобные конкретному сопернику." },
+                            { text: "Ложь", correct: true, comment: "Правильно! Ласкер был основоположником психологического стиля в шахматах." }
                         ]
                     }
                 ]
@@ -724,7 +792,7 @@
                 skillDesc: "Хирургически точная реализация минимального перевеса в чистую победу.",
                 puzzles: [
                     {
-                        difficulty: "Уровень 1: Легкий",
+                        difficulty: "Уровень 1: Тактика",
                         image: "./c1.png",
                         desc: "Ход черных (Капабланка). Заметьте связку фигур соперника и заберите материал:",
                         options: [
@@ -734,7 +802,7 @@
                         ]
                     },
                     {
-                        difficulty: "Уровень 2: Средний",
+                        difficulty: "Уровень 2: Тактика",
                         image: "./c2.png",
                         desc: "Ход черных. Капабланка находит кратчайший путь к реализации проходной пешки:",
                         options: [
@@ -744,13 +812,47 @@
                         ]
                     },
                     {
-                        difficulty: "Уровень 3: Сложный",
+                        difficulty: "Уровень 3: Тактика",
                         image: "./c3.png",
                         desc: "Москва, 1914 год. Ход черных. Капабланка наносит удар феноменальной геометрии:",
                         options: [
                             { text: "Ладья e1+ — размен ладей", correct: false, comment: "Приводит к равному эндшпилю без выигрыша." },
                             { text: "Ферзь b2! Вторжение ферзя под бой", correct: true, comment: "Блестяще! Слабость первой горизонтали белых приводит к неизбежному краху." },
                             { text: "Пешка a5 — движение на ферзевом фланге", correct: false, comment: "Слишком медленно. Белые успевают защититься." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 4: Факт биографии",
+                        desc: "На какой государственной службе состоял Капабланка, путешествуя по шахматным турнирам?",
+                        options: [
+                            { text: "Министр финансов", correct: false, comment: "Нет, финансами страны он не руководил." },
+                            { text: "Чрезвычайный дипломатический представитель Кубы", correct: true, comment: "Верно! Кубинское правительство назначило его дипломатом с правом свободного участия в турнирах." },
+                            { text: "Главный архитектор столицы", correct: false, comment: "Он не имел архитектурного образования." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 5: Факт биографии",
+                        desc: "Какой вариант шахмат изобрел Капабланка, считая классические шахматы слишком изученными?",
+                        options: [
+                            { text: "Шахматы на доске 10х8 с Канцлером и Архиепископом", correct: true, comment: "Верно! «Шахматы Капабланки» до сих пор популярны среди любителей нестандартной игры." },
+                            { text: "Шахматы втроем на треугольной доске", correct: false, comment: "Этот вариант появился задолго до него." },
+                            { text: "Шахматы без ферзей", correct: false, comment: "Капабланка не убирал фигуры, а добавлял новые." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 6: Правда или Ложь",
+                        desc: "Правда ли, что за 8 лет подряд (1916—1924) Капабланка не проиграл ни одной турнирной партии?",
+                        options: [
+                            { text: "Правда", correct: true, comment: "Истинная правда! За феноменальную непобедимость его прозвали «шахматным автоматом»." },
+                            { text: "Ложь", correct: false, comment: "Это исторический факт: 63 турнирные партии подряд без единого поражения." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 7: Правда или Ложь",
+                        desc: "Правда ли, что Капабланка с раннего детства проводил по 10 часов в день за изучением дебютных книг?",
+                        options: [
+                            { text: "Правда", correct: false, comment: "Совсем наоборот! Капабланка почти не открывал шахматных книг и полагался на природное чутье." },
+                            { text: "Ложь", correct: true, comment: "Верно. Он научился играть сам в 4 года, просто наблюдая за партиями отца, и книг почти не читал." }
                         ]
                     }
                 ]
@@ -772,16 +874,16 @@ let currentHeroId = null;
         const modalContent = document.getElementById("modal-content");
 
         // Слушатели таргетов MindAR
+        // Слушатели таргетов MindAR
         [0, 1, 2].forEach(id => {
             const targetEl = document.getElementById(`target-${id}`);
             const videoEl = document.getElementById(`vid-${id}`);
 
             targetEl.addEventListener("targetFound", () => {
-                if (lostTimer) clearTimeout(lostTimer);
-                
                 currentHeroId = id;
                 applyHeroTheme(HEROES[id]);
 
+                // Прячем подсказку и отображаем панель управления
                 hint.classList.add("hidden");
                 dock.style.display = "flex";
                 soundBtn.style.display = "inline-flex";
@@ -791,13 +893,12 @@ let currentHeroId = null;
             });
 
             targetEl.addEventListener("targetLost", () => {
-                lostTimer = setTimeout(() => {
-                    videoEl.pause();
-                    dock.style.display = "none";
-                    soundBtn.style.display = "none";
-                    hint.classList.remove("hidden");
-                    closeModal();
-                }, 1200);
+                // Видео останавливаем сразу при потере карточки из кадра
+                videoEl.pause();
+                
+                // ВАЖНО: кнопки dock и soundBtn НЕ скрываем, 
+                // чтобы можно было комфортно проходить тест или читать биографию,
+                // отложив карточку в сторону!
             });
         });
 
@@ -858,9 +959,10 @@ let currentHeroId = null;
                         <div style="font-size: 12px; color: #aaa; margin-top: 5px; line-height: 1.4;">${hero.skillDesc}</div>
                     </div>
                     <div class="external-promo-box">
-                        <div style="font-size: 12px; font-weight: 600;">Хотите развить такие же навыки?</div>
+                        <div style="font-size: 12px; font-weight: 600;">Хотите записаться на занятия?</div>
+                        <div style="font-size: 11px; color: #aaa; margin-top: 3px;">Узнайте расписание и подробности о школе:</div>
                         <a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn">
-                            🤖 Тренироваться с ботом Финчем
+                            🤖 Запись через бота Финча
                         </a>
                     </div>
                 `;
@@ -869,21 +971,26 @@ let currentHeroId = null;
             modal.classList.add("active");
         }
 
-        // Рендер конкретного вопроса теста
+        // Рендер конкретного вопроса теста (всего 7)
         function renderPuzzleQuestion() {
             const hero = HEROES[currentHeroId];
             const p = hero.puzzles[currentPuzzleIndex];
 
+            // Отображаем картинку только если она есть в вопросе (для тактики)
+            const diagramHtml = p.image 
+                ? `<div class="diagram-container">
+                     <img class="diagram-img" src="${p.image}" alt="Шахматная диаграмма" onerror="this.style.display='none'">
+                   </div>`
+                : '';
+
             modalContent.innerHTML = `
                 <div class="modal-title">Тест чемпиона</div>
-                <div class="modal-subtitle">${hero.name} — Задание ${currentPuzzleIndex + 1} из 3</div>
+                <div class="modal-subtitle">${hero.name} — Вопрос ${currentPuzzleIndex + 1} из ${hero.puzzles.length}</div>
                 
                 <div class="difficulty-badge">${p.difficulty}</div>
                 <div style="font-size: 13px; color: #ccc; line-height: 1.45; margin-bottom: 8px;">${p.desc}</div>
 
-                <div class="diagram-container">
-                    <img class="diagram-img" src="${p.image}" alt="Шахматная диаграмма" onerror="this.style.display='none'">
-                </div>
+                ${diagramHtml}
                 
                 <div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin: 10px 0; padding: 10px; border-radius: 8px;"></div>
 
@@ -896,7 +1003,9 @@ let currentHeroId = null;
                 </div>
 
                 <div id="puzzle-next-container" style="display:none; margin-top: 10px;">
-                    <button class="action-link-btn" style="border:none; cursor:pointer;" onclick="nextPuzzle()">Следующее задание →</button>
+                    <button class="action-link-btn" style="border:none; cursor:pointer;" onclick="nextPuzzle()">
+                        ${currentPuzzleIndex + 1 < hero.puzzles.length ? 'Следующий вопрос →' : 'Посмотреть результат 🏆'}
+                    </button>
                 </div>
             `;
         }
@@ -949,17 +1058,16 @@ let currentHeroId = null;
             }
         }
 
-        // Экран итогов с нативными ссылками на Lichess и бота Финча
         function renderTestResult() {
             const hero = HEROES[currentHeroId];
             let evaluation = "";
 
-            if (testScore === 3) {
-                evaluation = "Идеальный результат! Вы мыслите как гроссмейстер.";
-            } else if (testScore === 2) {
-                evaluation = "Отличная игра! Стратегическое чутье на высоте.";
+            if (testScore >= 6) {
+                evaluation = "Великолепно! Вы настоящий знаток истории и блестящий тактик.";
+            } else if (testScore >= 4) {
+                evaluation = "Хороший результат! Большинство ловушек и фактов вам покорились.";
             } else {
-                evaluation = "Есть куда расти! Рекомендуем закрепить базовые правила игры.";
+                evaluation = "Неплохая попытка! Изучите биографию еще раз и попробуйте улучшить счет.";
             }
 
             modalContent.innerHTML = `
@@ -968,20 +1076,20 @@ let currentHeroId = null;
                 
                 <div style="margin: 16px 0; padding: 18px; background: rgba(255, 255, 255, 0.04); border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
                     <div style="font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px;">Ваш результат:</div>
-                    <div style="font-size: 34px; font-weight: 800; color: var(--accent-color); margin: 6px 0;">${testScore} из 3</div>
+                    <div style="font-size: 34px; font-weight: 800; color: var(--accent-color); margin: 6px 0;">${testScore} из ${hero.puzzles.length}</div>
                     <div style="font-size: 13px; color: #ddd; line-height: 1.4;">${evaluation}</div>
                 </div>
 
                 <div class="external-promo-box">
-                    <div style="font-size: 12px; font-weight: 700; margin-bottom: 2px;">Обучение шахматам</div>
-                    <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Выберите ваш следующий шаг:</div>
-                    
-                    <a href="https://lichess.org/learn" target="_blank" class="action-link-btn secondary">
-                        ♙ Изучить основы на Lichess
-                    </a>
+                    <div style="font-size: 12px; font-weight: 700; margin-bottom: 2px;">Шахматная школа</div>
+                    <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Запись на занятия и информация:</div>
                     
                     <a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn">
-                        🤖 Шахматный бот «Тактикус Финч»
+                        🤖 Записаться на занятия (Бот Финч)
+                    </a>
+                    
+                    <a href="https://lichess.org/learn" target="_blank" class="action-link-btn secondary" style="margin-top: 6px;">
+                        ♙ Самостоятельное обучение на Lichess
                     </a>
                 </div>
 
