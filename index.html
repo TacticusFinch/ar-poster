@@ -41,60 +41,36 @@
         }
         #scanner-hint.hidden { opacity: 0; }
 
-/* Контейнер прицела: занимает 72% ширины экрана и сохраняет пропорцию карточки */
-.ar-reticle {
-    position: relative;
-    width: 72vw;
-    max-width: 320px;
-    aspect-ratio: 1 / 1.54; /* Точные пропорции вашей AR-карточки */
-    border: 1px solid rgba(0, 255, 204, 0.15);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
-    overflow: hidden;
-    box-shadow: inset 0 0 35px rgba(0, 255, 204, 0.06);
-}
+        /* Контейнер рамки */
+        .ar-reticle {
+            position: relative;
+            width: 72vw;
+            max-width: 320px;
+            aspect-ratio: 1 / 1.54;
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: inset 0 0 35px rgba(0, 255, 204, 0.06);
+        }
 
-/* Уголки делаем крупнее под новый размер */
-.reticle-corner {
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    border-color: var(--accent-color);
-    border-style: solid;
-    border-width: 0;
-    filter: drop-shadow(0 0 8px var(--accent-color));
-}
-.reticle-corner.top-left { top: 10px; left: 10px; border-top-width: 3.5px; border-left-width: 3.5px; border-top-left-radius: 8px; }
-.reticle-corner.top-right { top: 10px; right: 10px; border-top-width: 3.5px; border-right-width: 3.5px; border-top-right-radius: 8px; }
-.reticle-corner.bottom-left { bottom: 10px; left: 10px; border-bottom-width: 3.5px; border-left-width: 3.5px; border-bottom-left-radius: 8px; }
-.reticle-corner.bottom-right { bottom: 10px; right: 10px; border-bottom-width: 3.5px; border-right-width: 3.5px; border-bottom-right-radius: 8px; }
-
-/* Лазер проходит всю высоту рамки в процентах */
-@keyframes scanLaser {
-    0% { top: 2%; opacity: 0.2; }
-    50% { opacity: 1; }
-    100% { top: 98%; opacity: 0.2; }
-}
-
-        /* Угловые высокотехнологичные маркеры */
         .reticle-corner {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             border-color: var(--accent-color);
             border-style: solid;
             border-width: 0;
-            filter: drop-shadow(0 0 6px var(--accent-color));
+            filter: drop-shadow(0 0 8px var(--accent-color));
         }
-        .reticle-corner.top-left { top: 8px; left: 8px; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 6px; }
-        .reticle-corner.top-right { top: 8px; right: 8px; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 6px; }
-        .reticle-corner.bottom-left { bottom: 8px; left: 8px; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 6px; }
-        .reticle-corner.bottom-right { bottom: 8px; right: 8px; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 6px; }
+        .reticle-corner.top-left { top: 10px; left: 10px; border-top-width: 3.5px; border-left-width: 3.5px; border-top-left-radius: 8px; }
+        .reticle-corner.top-right { top: 10px; right: 10px; border-top-width: 3.5px; border-right-width: 3.5px; border-top-right-radius: 8px; }
+        .reticle-corner.bottom-left { bottom: 10px; left: 10px; border-bottom-width: 3.5px; border-left-width: 3.5px; border-bottom-left-radius: 8px; }
+        .reticle-corner.bottom-right { bottom: 10px; right: 10px; border-bottom-width: 3.5px; border-right-width: 3.5px; border-bottom-right-radius: 8px; }
 
-        /* Сканирующий световой луч */
         .laser-beam {
             position: absolute;
             top: 0;
@@ -106,19 +82,17 @@
             animation: scanLaser 2.2s ease-in-out infinite alternate;
         }
         @keyframes scanLaser {
-            0% { transform: translateY(10px); opacity: 0.3; }
+            0% { top: 2%; opacity: 0.2; }
             50% { opacity: 1; }
-            100% { transform: translateY(300px); opacity: 0.3; }
+            100% { top: 98%; opacity: 0.2; }
         }
 
-        /* Вращающиеся полукруги и орбиты */
         .hud-circle {
             position: absolute;
             border-radius: 50%;
             box-sizing: border-box;
         }
 
-        /* Внешнее пунктирное кольцо */
         .ring-outer {
             width: 110px;
             height: 110px;
@@ -128,7 +102,6 @@
             filter: drop-shadow(0 0 8px var(--accent-glow));
         }
 
-        /* Внутренние полукруги */
         .ring-inner {
             width: 80px;
             height: 80px;
@@ -138,16 +111,9 @@
             animation: rotateCCW 2.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
         }
 
-        @keyframes rotateCW {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes rotateCCW {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(-360deg); }
-        }
+        @keyframes rotateCW { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes rotateCCW { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
 
-        /* Пульсирующий шахматный символ */
         .hud-chess-core {
             font-size: 38px;
             color: var(--accent-color);
@@ -161,7 +127,6 @@
             50% { transform: scale(1.08); opacity: 1; }
         }
 
-        /* Текстовый блок статуса */
         .scanner-status {
             display: flex;
             flex-direction: column;
@@ -189,7 +154,7 @@
             font-size: 12px;
             color: #7a8b9e;
         }
-        /* Верхняя панель (HUD) */
+
         .top-hud {
             position: absolute;
             top: 16px;
@@ -222,15 +187,8 @@
             cursor: pointer;
             transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
         }
-        .hud-btn:active {
-            transform: scale(0.95);
-        }
+        .hud-btn:active { transform: scale(0.95); }
 
-        #bot-link-btn {
-            border-color: #00e5ff;
-        }
-
-        /* Нижнее эффектное меню */
         #interactive-dock {
             position: absolute;
             bottom: 24px;
@@ -269,9 +227,6 @@
             gap: 4px;
             transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .dock-btn span.icon {
-            font-size: 16px;
-        }
         .dock-btn:active {
             transform: scale(0.92);
             box-shadow: 0 2px 8px var(--accent-glow);
@@ -279,7 +234,6 @@
             color: #000;
         }
 
-        /* Модальные окна */
         .modal-overlay {
             position: absolute;
             inset: 0;
@@ -324,9 +278,7 @@
             border-radius: 8px;
             padding: 7px 12px;
             cursor: pointer;
-            transition: background 0.2s;
         }
-        .modal-close:active { background: rgba(255, 255, 255, 0.2); color: #fff; }
 
         .modal-title {
             font-size: 18px;
@@ -344,7 +296,6 @@
             margin-bottom: 14px;
         }
 
-        /* Вспомогательные блоки ссылок */
         .external-promo-box {
             margin-top: 15px;
             padding: 12px;
@@ -381,7 +332,6 @@
             box-shadow: none;
         }
 
-        /* Биография */
         .bio-section-title {
             font-size: 12px;
             font-weight: 700;
@@ -410,7 +360,6 @@
             border-radius: 0 8px 8px 0;
         }
 
-        /* Задачи / Тесты */
         .diagram-container {
             width: 100%;
             margin: 12px 0;
@@ -454,7 +403,6 @@
         }
         .puzzle-option-btn:active { background: rgba(255, 255, 255, 0.15); border-color: var(--accent-color); }
 
-        /* Статистика */
         .stat-row { margin-bottom: 12px; }
         .stat-header {
             display: flex;
@@ -484,7 +432,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
+        /* ================= HOTSEAT АРЕНА ================= */
         #hotseat-arena {
             position: absolute;
             inset: 0;
@@ -495,7 +443,7 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             overflow: hidden;
             user-select: none;
         }
-        #hotseat-arena.active { display: flex; }
+        #hotseat-arena.active { display: flex !important; }
 
         .hs-zone {
             flex: 1;
@@ -507,13 +455,11 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             position: relative;
         }
 
-        /* Верхняя зона игрока 2 — развернута на 180° к сопернику */
         .hs-zone.top-player {
             transform: rotate(180deg);
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        /* Центральный разделитель */
         .hs-divider {
             height: 32px;
             background: #0e1422;
@@ -542,7 +488,6 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             cursor: pointer;
         }
 
-        /* Верхняя/нижняя полоска состояния */
         .hs-header {
             display: flex;
             justify-content: space-between;
@@ -569,17 +514,15 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             transition: width 0.3s ease;
         }
 
-        /* Основная эргономичная зона раунда */
         .hs-content-row {
             flex: 1;
             display: flex;
             align-items: center;
             gap: 10px;
             margin: 4px 0;
-            min-height: 0; /* Важно для сжатия во flex */
+            min-height: 0;
         }
 
-        /* Крупная шахматная диаграмма слева */
         .hs-board-img {
             height: 100%;
             max-height: 165px;
@@ -591,7 +534,6 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             background: #111622;
         }
 
-        /* Правая колонка с заданием и кнопками */
         .hs-interactive-col {
             flex: 1;
             height: 100%;
@@ -635,7 +577,6 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             background: rgba(255, 255, 255, 0.25);
         }
 
-        /* Всплывающее окно победы */
         .hs-feedback-toast {
             position: absolute;
             inset: 0;
@@ -649,27 +590,22 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
             padding: 20px;
         }
         .hs-feedback-toast.active { display: flex; }
-             
     </style>
 </head>
 
 <body>
 
 <div id="scanner-hint">
-    <!-- Кибер-сканер -->
     <div class="ar-reticle">
         <div class="reticle-corner top-left"></div>
         <div class="reticle-corner top-right"></div>
         <div class="reticle-corner bottom-left"></div>
         <div class="reticle-corner bottom-right"></div>
-        
         <div class="laser-beam"></div>
-
         <div class="hud-circle ring-outer"></div>
         <div class="hud-circle ring-inner"></div>
         <div class="hud-chess-core">♚</div>
     </div>
-
     <div class="scanner-status">
         <div class="status-badge">AR СКАНЕР АКТИВЕН</div>
         <div class="status-title">НАВЕДИТЕ НА КАРТОЧКУ</div>
@@ -677,44 +613,34 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
     </div>
 </div>
 
-    <!-- Верхний HUD -->
-    <div class="top-hud">
-        <a id="bot-link-btn" class="hud-btn" href="https://max.ru/se14097294_bot" target="_blank">
-            <span>🤖</span> БОТ ФИНЧ
-        </a>
-        <button id="sound-toggle" class="hud-btn" style="display: none;">
-            <span>🔇</span> ЗВУК: ВЫКЛ
-        </button>
-    </div>
+<div class="top-hud">
+    <a id="bot-link-btn" class="hud-btn" href="https://max.ru/se14097294_bot" target="_blank">
+        <span>🤖</span> БОТ ФИНЧ
+    </a>
+    <button id="sound-toggle" class="hud-btn" style="display: none;">
+        <span>🔇</span> ЗВУК: ВЫКЛ
+    </button>
+</div>
 
-    <!-- Нижнее меню с иконками -->
-    <div id="interactive-dock">
-        <button class="dock-btn" onclick="openModal('bio')">
-            <span>Биография</span>
-        </button>
-        <button class="dock-btn" onclick="openModal('test')">
-            <span>Тест</span>
-        </button>
-        <button class="dock-btn" onclick="openModal('stats')">
-            <span>Характеристики</span>
-        </button>
-        <!-- НОВАЯ КНОПКА ДУЭЛИ -->
-        <button class="dock-btn" onclick="startHotseatDuel()" style="border-color: #ff0055; box-shadow: 0 0 15px rgba(255,0,85,0.4);">
-            <span style="color: #ff0055;">Интеллктуальная дуэль</span>
-        </button>
-    </div>
+<div id="interactive-dock">
+    <button class="dock-btn" onclick="openModal('bio')"><span>Биография</span></button>
+    <button class="dock-btn" onclick="openModal('test')"><span>Тест</span></button>
+    <button class="dock-btn" onclick="openModal('stats')"><span>Характеристики</span></button>
+    <button class="dock-btn" onclick="startHotseatDuel()" style="border-color: #ff0055; box-shadow: 0 0 15px rgba(255,0,85,0.4);">
+        <span style="color: #ff0055;">Интеллектуальная дуэль</span>
+    </button>
+</div>
 
-    <!-- Модальные окна -->
-    <div id="modal-container" class="modal-overlay">
-        <div class="modal-card">
-            <button class="modal-close" onclick="closeModal()">Закрыть ✕</button>
-            <div id="modal-content"></div>
-        </div>
+<div id="modal-container" class="modal-overlay">
+    <div class="modal-card">
+        <button class="modal-close" onclick="closeModal()">Закрыть ✕</button>
+        <div id="modal-content"></div>
     </div>
+</div>
 
-    <!-- Сцена MindAR -->
+    <!-- Сцена MindAR с ускоренным распознаванием -->
     <a-scene 
-        mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 5;" 
+        mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 2; missTolerance: 8; filterMinCF: 0.01; filterBeta: 10;" 
         color-space="sRGB" 
         renderer="colorManagement: true" 
         vr-mode-ui="enabled: false" 
@@ -884,7 +810,7 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
                         options: [
                             { text: "Ферзь съел h5 — поближе к королю", correct: false, comment: "Нет! Черные смогут отбить атаку ходом g6." },
                             { text: "Слон бьет h7 — жертва слона за пешку", correct: true, comment: "Да! И это только начало комбинации, через ход будет принесен в жертву еще один слон и атака будет неотразима." },
-                            { text: "Ладья f3 — подключение ладьи к битве ", correct: false, comment: "Ошибка. Черные все хорошо закрепят ходом g6." }
+                            { text: "Ладья f3 — подключение ладьи к битве", correct: false, comment: "Ошибка. Черные все хорошо закрепят ходом g6." }
                         ]
                     },
                     {
@@ -924,14 +850,14 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
                         ]
                     },
                     {
-        difficulty: "Уровень 7: Факт биографии",
-        desc: "Эмануил Ласкер был заядлым курильщиком и часто использовал свои дешёвые, едкие и сильно дымящие сигары как элемент психологического давления. Какая забавная история из-за этого вошла в шахматный фольклор?",
-        options: [
-            { text: "Соперник пожаловался арбитру на дым, но тот отказал, так как сигара не была зажжена", correct: true, comment: "Верно! Арон Нимцович подбежал к судье с жалобой, на что арбитр заметил, что Ласкер даже не прикурил. Нимцович ответил легендарной фразой: 'Да, но он угрожает прикурить, а угроза в шахматах сильнее её исполнения!'." },
-            { text: "Ласкер случайно прожёг пеплом своего ферзя прямо во время решающей партии", correct: false, comment: "Нет, хотя пепел часто падал на доску, фигуры оставались целы." },
-            { text: "Михаил Таль запретил Ласкеру курить во время их очного матча", correct: false, comment: "Они не могли встретиться за доской — Михаил Таль родился за 5 лет до ухода Ласкера из жизни." }
-        ]
-    }
+                        difficulty: "Уровень 7: Факт биографии",
+                        desc: "Эмануил Ласкер был заядлым курильщиком и часто использовал свои дешёвые, едкие и сильно дымящие сигары как элемент психологического давления. Какая забавная история из-за этого вошла в шахматный фольклор?",
+                        options: [
+                            { text: "Соперник пожаловался арбитру на дым, но тот отказал, так как сигара не была зажжена", correct: true, comment: "Верно! Арон Нимцович подбежал к судье с жалобой, на что арбитр заметил, что Ласкер даже не прикурил. Нимцович ответил легендарной фразой: 'Да, но он угрожает прикурить, а угроза в шахматах сильнее её исполнения!'." },
+                            { text: "Ласкер случайно прожёг пеплом своего ферзя прямо во время решающей партии", correct: false, comment: "Нет, хотя пепел часто падал на доску, фигуры оставались целы." },
+                            { text: "Михаил Таль запретил Ласкеру курить во время их очного матча", correct: false, comment: "Они не могли встретиться за доской — Михаил Таль родился за 5 лет до ухода Ласкера из жизни." }
+                        ]
+                    }
                 ]
             },
             2: {
@@ -963,271 +889,257 @@ ss /* ================= HOTSEAT АРЕНА (SIDE-BY-SIDE) ================= */
                 skillName: "Кристальный эндшпиль",
                 skillDesc: "Хирургически точная реализация минимального перевеса в чистую победу.",
                 puzzles: [
-    {
-        difficulty: "Уровень 1: Тактика",
-        image: "./c1.png",
-        desc: "Осип Бернштейн — Капабланка (Москва, 1914 г.). Ход черных. Белые только что забрали ладью на c3 и уверены, что позиция движется к ничьей. Однако Капабланка наносит сокрушительный удар невероятной геометрии, сразу заставляющий белых сдаться. Как сыграли черные?",
-        options: [
-            { text: "Ферзь b1 — шах по первой горизонтали", correct: false, comment: "Неточно. Белые защищаются ходом Ферзь f1, и позиция остается равной." },
-            { text: "Ферзь b2 — вторжение с двойным ударом", correct: true, comment: "Потрясающе! Белый ферзь e2 перегружен: если взять черного ферзя, последует мат Ладья d1#. Защитить ладью c3 и спастись от мата одновременно невозможно." },
-            { text: "Ферзь b5 — хитрое отвлечение", correct: false, comment: "Не работает, достаточно не брать ферзя, а спокойно отойти на c2." }
-        ]
-    },
-    {
-        difficulty: "Уровень 2: Факт биографии",
-        desc: "На какой государственной службе состоял Капабланка, путешествуя по шахматным турнирам?",
-        options: [
-            { text: "Министр финансов", correct: false, comment: "Нет, финансами страны он не руководил." },
-            { text: "Чрезвычайный дипломатический представитель Кубы", correct: true, comment: "Верно! Кубинское правительство назначило его дипломатом с правом свободного участия в турнирах." },
-            { text: "Главный архитектор столицы", correct: false, comment: "Он не имел архитектурного образования." }
-        ]
-    },
-    {
-        difficulty: "Уровень 3: Тактика",
-        image: "./c2.png",
-        desc: "Капабланка — Видмар (Лондон, 1922 г.). Ход белых. Несмотря на железобетонную стену из черных фигур, Капабланка находит возможность взломать защиту. Каким ходом?",
-        options: [
-            { text: "Конь f берет e5! Тактический прорыв в центре", correct: true, comment: "Верно! Белые уничтожают стратегически важную пешку. На съедение последует d6, вилка! ." },
-            { text: "Слон g5 — развивающий ход", correct: false, comment: "Слишком скромно и долго. У черных все под защитой." },
-            { text: "Пешка c3 ест пешку b4 — ослабление защиты", correct: false, comment: "Черные не против, они создадут мощный форпорт на c5." }
-        ]
-    },
-    {
-        difficulty: "Уровень 4: Факт биографии",
-        desc: "Какой вариант шахмат изобрел Капабланка, считая классические шахматы слишком изученными?",
-        options: [
-            { text: "Шахматы на доске 10х8 с Канцлером и Архиепископом", correct: true, comment: "Верно! «Шахматы Капабланки» до сих пор популярны среди любителей нестандартной игры." },
-            { text: "Шахматы втроем на треугольной доске", correct: false, comment: "Этот вариант появился задолго до него." },
-            { text: "Шахматы без королей", correct: false, comment: "Капабланка не убирал фигуры, а добавлял новые." }
-        ]
-    },
-    {
-        difficulty: "Уровень 5: Тактика",
-        image: "./c3.png",
-        desc: "Яновский — Капабланка (Нью-Йорк, 1916 г.). Ход черных. Капабланка начинает глубокий позиционный маневр по улучшению позиции своих фигур. Какой ход сделал будущий чемпион?",
-        options: [
-            { text: "Ладья c8 — поддержка пешки c7", correct: false, comment: "Это запирает фигуры черных и отдает инициативу белым." },
-            { text: "Пешка b4! — позиционная жертва материала", correct: true, comment: "Гениально! Капабланка отдает пешку, чтобы улучшить своего белопольного слона и сделать из него суперзвезду на е4." },
-            { text: "Пешка h5 — пешка, словно маленький таран идет атаковать коня", correct: false, comment: "Слишком долго. Белые легко и быстро перестроятся." }
-        ]
-    },
-    {
-        difficulty: "Уровень 6: Правда или Ложь",
-        desc: "Правда ли, что за 8 лет подряд (1916—1924) Капабланка не проиграл ни одной турнирной партии?",
-        options: [
-            { text: "Правда", correct: true, comment: "Истинная правда! За феноменальную непобедимость его прозвали «шахматным автоматом»." },
-            { text: "Ложь", correct: false, comment: "Это исторический факт: 63 турнирные партии подряд без единого поражения." }
-        ]
-    },
-    {
-        difficulty: "Уровень 7: Правда или Ложь",
-        desc: "Правда ли, что Капабланка с раннего детства проводил по 10 часов в день за изучением дебютных книг?",
-        options: [
-            { text: "Правда", correct: false, comment: "Совсем наоборот! Капабланка почти не открывал шахматных книг и полагался на природное чутье." },
-            { text: "Ложь", correct: true, comment: "Верно. Он научился играть сам в 4 года, просто наблюдая за партиями отца, и книг почти не читал." }
-        ]
-    }
-]
-
+                    {
+                        difficulty: "Уровень 1: Тактика",
+                        image: "./c1.png",
+                        desc: "Осип Бернштейн — Капабланка (Москва, 1914 г.). Ход черных. Белые только что забрали ладью на c3 и уверены, что позиция движется к ничьей. Однако Капабланка наносит сокрушительный удар невероятной геометрии, сразу заставляющий белых сдаться. Как сыграли черные?",
+                        options: [
+                            { text: "Ферзь b1 — шах по первой горизонтали", correct: false, comment: "Неточно. Белые защищаются ходом Ферзь f1, и позиция остается равной." },
+                            { text: "Ферзь b2 — вторжение с двойным ударом", correct: true, comment: "Потрясающе! Белый ферзь e2 перегружен: если взять черного ферзя, последует мат Ладья d1#. Защитить ладью c3 и спастись от мата одновременно невозможно." },
+                            { text: "Ферзь b5 — хитрое отвлечение", correct: false, comment: "Не работает, достаточно не брать ферзя, а спокойно отойти на c2." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 2: Факт биографии",
+                        desc: "На какой государственной службе состоял Капабланка, путешествуя по шахматным турнирам?",
+                        options: [
+                            { text: "Министр финансов", correct: false, comment: "Нет, финансами страны он не руководил." },
+                            { text: "Чрезвычайный дипломатический представитель Кубы", correct: true, comment: "Верно! Кубинское правительство назначило его дипломатом с правом свободного участия в турнирах." },
+                            { text: "Главный архитектор столицы", correct: false, comment: "Он не имел архитектурного образования." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 3: Тактика",
+                        image: "./c2.png",
+                        desc: "Капабланка — Видмар (Лондон, 1922 г.). Ход белых. Несмотря на железобетонную стену из черных фигур, Капабланка находит возможность взломать защиту. Каким ходом?",
+                        options: [
+                            { text: "Конь f берет e5! Тактический прорыв в центре", correct: true, comment: "Верно! Белые уничтожают стратегически важную пешку. На съедение последует d6, вилка! ." },
+                            { text: "Слон g5 — развивающий ход", correct: false, comment: "Слишком скромно и долго. У черных все под защитой." },
+                            { text: "Пешка c3 ест пешку b4 — ослабление защиты", correct: false, comment: "Черные не против, они создадут мощный форпорт на c5." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 4: Факт биографии",
+                        desc: "Какой вариант шахмат изобрел Капабланка, считая классические шахматы слишком изученными?",
+                        options: [
+                            { text: "Шахматы на доске 10х8 с Канцлером и Архиепископом", correct: true, comment: "Верно! «Шахматы Капабланки» до сих пор популярны среди любителей нестандартной игры." },
+                            { text: "Шахматы втроем на треугольной доске", correct: false, comment: "Этот вариант появился задолго до него." },
+                            { text: "Шахматы без королей", correct: false, comment: "Капабланка не убирал фигуры, а добавлял новые." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 5: Тактика",
+                        image: "./c3.png",
+                        desc: "Яновский — Капабланка (Нью-Йорк, 1916 г.). Ход черных. Капабланка начинает глубокий позиционный маневр по улучшению позиции своих фигур. Какой ход сделал будущий чемпион?",
+                        options: [
+                            { text: "Ладья c8 — поддержка пешки c7", correct: false, comment: "Это запирает фигуры черных и отдает инициативу белым." },
+                            { text: "Пешка b4! — позиционная жертва материала", correct: true, comment: "Гениально! Капабланка отдает пешку, чтобы улучшить своего белопольного слона и сделать из него суперзвезду на е4." },
+                            { text: "Пешка h5 — пешка, словно маленький таран идет атаковать коня", correct: false, comment: "Слишком долго. Белые легко и быстро перестроятся." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 6: Правда или Ложь",
+                        desc: "Правда ли, что за 8 лет подряд (1916—1924) Капабланка не проиграл ни одной турнирной партии?",
+                        options: [
+                            { text: "Правда", correct: true, comment: "Истинная правда! За феноменальную непобедимость его прозвали «шахматным автоматом»." },
+                            { text: "Ложь", correct: false, comment: "Это исторический факт: 63 турнирные партии подряд без единого поражения." }
+                        ]
+                    },
+                    {
+                        difficulty: "Уровень 7: Правда или Ложь",
+                        desc: "Правда ли, что Капабланка с раннего детства проводил по 10 часов в день за изучением дебютных книг?",
+                        options: [
+                            { text: "Правда", correct: false, comment: "Совсем наоборот! Капабланка почти не открывал шахматных книг и полагался на природное чутье." },
+                            { text: "Ложь", correct: true, comment: "Верно. Он научился играть сам в 4 года, просто наблюдая за партиями отца, и книг почти не читал." }
+                        ]
+                    }
+                ]
             }
         };
 
-let currentHeroId = null;
-        let isMuted = true;
-        let lostTimer = null;
+    let currentHeroId = null;
+let isMuted = true;
 
-        // Переменные состояния интерактивного теста
-        let currentPuzzleIndex = 0;
-        let testScore = 0;
+let currentPuzzleIndex = 0;
+let testScore = 0;
 
-        const hint = document.getElementById("scanner-hint");
-        const dock = document.getElementById("interactive-dock");
-        const soundBtn = document.getElementById("sound-toggle");
-        const modal = document.getElementById("modal-container");
-        const modalContent = document.getElementById("modal-content");
+const hint = document.getElementById("scanner-hint");
+const dock = document.getElementById("interactive-dock");
+const soundBtn = document.getElementById("sound-toggle");
+const modal = document.getElementById("modal-container");
+const modalContent = document.getElementById("modal-content");
 
-        // Слушатели таргетов MindAR
-        // Слушатели таргетов MindAR
-        [0, 1, 2].forEach(id => {
-            const targetEl = document.getElementById(`target-${id}`);
-            const videoEl = document.getElementById(`vid-${id}`);
+// Слушатели таргетов MindAR
+[0, 1, 2].forEach(id => {
+const targetEl = document.getElementById(target-${id});
+const videoEl = document.getElementById(vid-${id});
 
-            targetEl.addEventListener("targetFound", () => {
-                currentHeroId = id;
-                applyHeroTheme(HEROES[id]);
+targetEl.addEventListener("targetFound", () => {
+currentHeroId = id;
+applyHeroTheme(HEROES[id]);
 
-                // Прячем подсказку и отображаем панель управления
-                hint.classList.add("hidden");
-                dock.style.display = "flex";
-                soundBtn.style.display = "inline-flex";
+hint.classList.add("hidden");
+dock.style.display = "flex";
+soundBtn.style.display = "inline-flex";
 
-                videoEl.muted = isMuted;
-                videoEl.play().catch(() => {});
-            });
+videoEl.muted = isMuted;
+videoEl.play().catch(() => {});
+});
 
-            targetEl.addEventListener("targetLost", () => {
-                // Видео останавливаем сразу при потере карточки из кадра
-                videoEl.pause();
-                
-                // ВАЖНО: кнопки dock и soundBtn НЕ скрываем, 
-                // чтобы можно было комфортно проходить тест или читать биографию,
-                // отложив карточку в сторону!
-            });
-        });
+targetEl.addEventListener("targetLost", () => {
+videoEl.pause();
+// Меню остается активным для чтения и прохождения викторин
+});
+});
 
-        // Динамическая смена цвета интерфейса под карточку
-        function applyHeroTheme(hero) {
-            document.documentElement.style.setProperty('--accent-color', hero.color);
-            document.documentElement.style.setProperty('--accent-glow', hero.colorGlow);
-            soundBtn.style.borderColor = hero.color;
-        }
+function applyHeroTheme(hero) {
+document.documentElement.style.setProperty('--accent-color', hero.color);
+document.documentElement.style.setProperty('--accent-glow', hero.colorGlow);
+soundBtn.style.borderColor = hero.color;
+}
 
-        soundBtn.addEventListener("click", () => {
-            if (currentHeroId === null) return;
-            const vid = document.getElementById(`vid-${currentHeroId}`);
-            isMuted = !isMuted;
-            vid.muted = isMuted;
-            soundBtn.innerHTML = isMuted ? "<span>🔇</span> ЗВУК: ВЫКЛ" : "<span>🔊</span> ЗВУК: ВКЛ";
-        });
+soundBtn.addEventListener("click", () => {
+if (currentHeroId === null) return;
+const vid = document.getElementById(vid-${currentHeroId});
+isMuted = !isMuted;
+vid.muted = isMuted;
+soundBtn.innerHTML = isMuted ? "<span>🔇</span> ЗВУК: ВЫКЛ" : "<span>🔊</span> ЗВУК: ВКЛ";
+});
 
-        // Открытие модального окна (с остановкой видео)
-        function openModal(type) {
-            if (currentHeroId === null) return;
-            const hero = HEROES[currentHeroId];
+function openModal(type) {
+const heroId = currentHeroId !== null ? currentHeroId : 0;
+const hero = HEROES[heroId];
 
-            // 1. Ставим видео на паузу
-            const activeVideo = document.getElementById(`vid-${currentHeroId}`);
-            if (activeVideo) activeVideo.pause();
+const activeVideo = document.getElementById(vid-${heroId});
+if (activeVideo) activeVideo.pause();
 
-            // 2. Виброотклик при клике по кнопке
-            if (navigator.vibrate) navigator.vibrate(35);
+if (navigator.vibrate) navigator.vibrate(35);
 
-            if (type === 'bio') {
-                modalContent.innerHTML = `
-                    <div class="modal-title">${hero.name}</div>
-                    <div class="modal-subtitle">${hero.title}</div>
-                    <div class="modal-quote">${hero.quote}</div>
-                    ${hero.bio.map(sec => `
-                        <div class="bio-section-title">${sec.title}</div>
-                        <div class="bio-paragraph">${sec.text}</div>
-                    `).join('')}
-                `;
-            } else if (type === 'test') {
-                currentPuzzleIndex = 0;
-                testScore = 0;
-                renderPuzzleQuestion();
-            } else if (type === 'stats') {
-                modalContent.innerHTML = `
-                    <div class="modal-title">Характеристики</div>
-                    <div class="modal-subtitle">${hero.name}</div>
-                    ${hero.stats.map(s => `
-                        <div class="stat-row">
-                            <div class="stat-header"><span>${s.name}</span><span>${s.val}%</span></div>
-                            <div class="stat-track"><div class="stat-fill" style="width: ${s.val}%"></div></div>
-                        </div>
-                    `).join('')}
-                    <div class="skill-box">
-                        <div style="font-size: 11px; color: var(--accent-color); font-weight: 700; text-transform: uppercase;">Ключевой навык:</div>
-                        <div style="font-size: 14px; font-weight: bold; margin-top: 3px;">${hero.skillName}</div>
-                        <div style="font-size: 12px; color: #aaa; margin-top: 5px; line-height: 1.4;">${hero.skillDesc}</div>
-                    </div>
-                    <div class="external-promo-box">
-                        <div style="font-size: 12px; font-weight: 600;">Хотите записаться на занятия?</div>
-                        <div style="font-size: 11px; color: #aaa; margin-top: 3px;">Узнайте расписание и подробности о школе:</div>
-                        <a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn">
-                            🤖 Тактикус Финч
-                        </a>
-                        <a href="https://tacticusfinch.ru/" target="_blank" class="action-link-btn">
-                            Официальный сайт шахматной школы
-                        </a>
-                    </div>
-                `;
-            }
+if (type === 'bio') {
+modalContent.innerHTML = `
+<div class="modal-title">${hero.name}</div>
+<div class="modal-subtitle">${hero.title}</div>
+<div class="modal-quote">${hero.quote}</div>
+${hero.bio.map(sec => `
+<div class="bio-section-title">${sec.title}</div>
+<div class="bio-paragraph">${sec.text}</div>
+`).join('')}
+`;
+} else if (type === 'test') {
+currentPuzzleIndex = 0;
+testScore = 0;
+renderPuzzleQuestion();
+} else if (type === 'stats') {
+modalContent.innerHTML = `
+<div class="modal-title">Характеристики</div>
+<div class="modal-subtitle">${hero.name}</div>
+${hero.stats.map(s => `
+<div class="stat-row">
+<div class="stat-header"><span>${s.name}</span><span>${s.val}%</span></div>
+<div class="stat-track"><div class="stat-fill" style="width: ${s.val}%"></div></div>
+</div>
+`).join('')}
+<div class="skill-box">
+<div style="font-size: 11px; color: var(--accent-color); font-weight: 700; text-transform: uppercase;">Ключевой навык:</div>
+<div style="font-size: 14px; font-weight: bold; margin-top: 3px;">${hero.skillName}</div>
+<div style="font-size: 12px; color: #aaa; margin-top: 5px; line-height: 1.4;">${hero.skillDesc}</div>
+</div>
+<div class="external-promo-box">
+<div style="font-size: 12px; font-weight: 600;">Хотите записаться на занятия?</div>
+<div style="font-size: 11px; color: #aaa; margin-top: 3px;">Узнайте расписание и подробности о школе:</div>
+<a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn">
+🤖 Тактикус Финч
+</a>
+<a href="https://tacticusfinch.ru/" target="_blank" class="action-link-btn">
+Официальный сайт шахматной школы
+</a>
+</div>
+`;
+}
 
-            modal.classList.add("active");
-        }
+modal.classList.add("active");
+}
 
-        // Рендер конкретного вопроса теста (всего 7)
-        function renderPuzzleQuestion() {
-            const hero = HEROES[currentHeroId];
-            const p = hero.puzzles[currentPuzzleIndex];
+function renderPuzzleQuestion() {
+const heroId = currentHeroId !== null ? currentHeroId : 0;
+const hero = HEROES[heroId];
+const p = hero.puzzles[currentPuzzleIndex];
 
-            // Отображаем картинку только если она есть в вопросе (для тактики)
-            const diagramHtml = p.image 
-                ? `<div class="diagram-container">
-                     <img class="diagram-img" src="${p.image}" alt="Шахматная диаграмма" onerror="this.style.display='none'">
-                   </div>`
-                : '';
+const diagramHtml = p.image
+? `<div class="diagram-container">
+<img class="diagram-img" src="${p.image}" alt="Шахматная диаграмма" onerror="this.style.display='none'">
+</div>`
+: '';
 
-            modalContent.innerHTML = `
-                <div class="modal-title">Тест чемпиона</div>
-                <div class="modal-subtitle">${hero.name} — Вопрос ${currentPuzzleIndex + 1} из ${hero.puzzles.length}</div>
-                
-                <div class="difficulty-badge">${p.difficulty}</div>
-                <div style="font-size: 13px; color: #ccc; line-height: 1.45; margin-bottom: 8px;">${p.desc}</div>
+modalContent.innerHTML = `
+<div class="modal-title">Тест чемпиона</div>
+<div class="modal-subtitle">${hero.name} — Вопрос ${currentPuzzleIndex + 1} из ${hero.puzzles.length}</div>
 
-                ${diagramHtml}
-                
-                <div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin: 10px 0; padding: 10px; border-radius: 8px;"></div>
+<div class="difficulty-badge">${p.difficulty}</div>
+<div style="font-size: 13px; color: #ccc; line-height: 1.45; margin-bottom: 8px;">${p.desc}</div>
 
-                <div id="puzzle-options">
-                    ${p.options.map((opt, i) => `
-                        <button class="puzzle-option-btn" onclick="checkAnswer(${i})">
-                            ${opt.text}
-                        </button>
-                    `).join('')}
-                </div>
+${diagramHtml}
 
-                <div id="puzzle-next-container" style="display:none; margin-top: 10px;">
-                    <button class="action-link-btn" style="border:none; cursor:pointer;" onclick="nextPuzzle()">
-                        ${currentPuzzleIndex + 1 < hero.puzzles.length ? 'Следующий вопрос →' : 'Посмотреть результат 🏆'}
-                    </button>
-                </div>
-            `;
-        }
+<div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin: 10px 0; padding: 10px; border-radius: 8px;"></div>
 
-        // Проверка ответа
-        function checkAnswer(index) {
-            const hero = HEROES[currentHeroId];
-            const p = hero.puzzles[currentPuzzleIndex];
-            const opt = p.options[index];
-            const fb = document.getElementById("puzzle-feedback");
-            const nextContainer = document.getElementById("puzzle-next-container");
-            const optionsContainer = document.getElementById("puzzle-options");
+<div id="puzzle-options">
+${p.options.map((opt, i) => `
+<button class="puzzle-option-btn" onclick="checkAnswer(${i})">
+${opt.text}
+</button>
+`).join('')}
+</div>
 
-            // Блокируем варианты ответов
-            const buttons = optionsContainer.getElementsByTagName("button");
-            for (let btn of buttons) {
-                btn.disabled = true;
-                btn.style.opacity = "0.6";
-                btn.style.cursor = "default";
-            }
+<div id="puzzle-next-container" style="display:none; margin-top: 10px;">
+<button class="action-link-btn" style="border:none; cursor:pointer;" onclick="nextPuzzle()">
+${currentPuzzleIndex + 1 < hero.puzzles.length ? 'Следующий вопрос →' : 'Посмотреть результат 🏆'}
+</button>
+</div>
+`;
+}
 
-            fb.style.display = "block";
+function checkAnswer(index) {
+const heroId = currentHeroId !== null ? currentHeroId : 0;
+const hero = HEROES[heroId];
+const p = hero.puzzles[currentPuzzleIndex];
+const opt = p.options[index];
+const fb = document.getElementById("puzzle-feedback");
+const nextContainer = document.getElementById("puzzle-next-container");
+const optionsContainer = document.getElementById("puzzle-options");
 
-            if (opt.correct) {
-                testScore++;
-                if (navigator.vibrate) navigator.vibrate([70, 50, 70]);
-                fb.style.background = "rgba(46, 204, 113, 0.2)";
-                fb.style.color = "#2ecc71";
-                fb.style.border = "1px solid #2ecc71";
-                fb.innerHTML = `<b>ВЕРНО!</b> ${opt.comment}`;
-            } else {
-                if (navigator.vibrate) navigator.vibrate(180);
-                fb.style.background = "rgba(231, 76, 60, 0.2)";
-                fb.style.color = "#e74c3c";
-                fb.style.border = "1px solid #e74c3c";
-                fb.innerHTML = `<b>НЕВЕРНО.</b> ${opt.comment}`;
-            }
+const buttons = optionsContainer.getElementsByTagName("button");
+for (let btn of buttons) {
+btn.disabled = true;
+btn.style.opacity = "0.6";
+btn.style.cursor = "default";
+}
 
-            nextContainer.style.display = "block";
-        }
+fb.style.display = "block";
 
-        function nextPuzzle() {
-            currentPuzzleIndex++;
-            const hero = HEROES[currentHeroId];
+if (opt.correct) {
+testScore++;
+if (navigator.vibrate) navigator.vibrate([70, 50, 70]);
+fb.style.background = "rgba(46, 204, 113, 0.2)";
+fb.style.color = "#2ecc71";
+fb.style.border = "1px solid #2ecc71";
+fb.innerHTML = <b>ВЕРНО!</b> ${opt.comment};
+} else {
+if (navigator.vibrate) navigator.vibrate(180);
+fb.style.background = "rgba(231, 76, 60, 0.2)";
+fb.style.color = "#e74c3c";
+fb.style.border = "1px solid #e74c3c";
+fb.innerHTML = <b>НЕВЕРНО.</b> ${opt.comment};
+}
 
-            if (currentPuzzleIndex < hero.puzzles.length) {
+nextContainer.style.display = "block";
+}
+
+function nextPuzzle() {
+currentPuzzleIndex++;
+const heroId = currentHeroId !== null ? currentHeroId : 0;
+const hero = HEROES[heroId];
+
+if (currentPuzzleIndex < hero.puzzles.length) {
                 renderPuzzleQuestion();
             } else {
                 renderTestResult();
@@ -1235,7 +1147,8 @@ let currentHeroId = null;
         }
 
         function renderTestResult() {
-            const hero = HEROES[currentHeroId];
+            const heroId = currentHeroId !== null ? currentHeroId : 0;
+            const hero = HEROES[heroId];
             let evaluation = "";
 
             if (testScore >= 6) {
@@ -1273,7 +1186,6 @@ let currentHeroId = null;
             `;
         }
 
-        // Закрытие модального окна (возобновление видео)
         function closeModal() {
             modal.classList.remove("active");
             if (currentHeroId !== null) {
@@ -1284,7 +1196,7 @@ let currentHeroId = null;
             }
         }
 
-// ================= ЛОГИКА ДУЭЛИ (БОЙ ДО ПОЛНОЙ ПОБЕДЫ) =================
+        // ================= ЛОГИКА ДУЭЛИ =================
         let duelState = {
             active: false,
             p1Hero: null,
@@ -1293,17 +1205,18 @@ let currentHeroId = null;
             p2Hp: 100,
             roundIndex: 0,
             roundLocked: false,
-            deck: [] // динамическая колода задач
+            deck: []
         };
 
         function startHotseatDuel() {
-            if (currentHeroId === null) return;
+            // Если карточка временно потерялась, берем текущего или первого по умолчанию (Стейниц)
+            const heroId = currentHeroId !== null ? currentHeroId : 0;
 
-            const activeVideo = document.getElementById(`vid-${currentHeroId}`);
+            const activeVideo = document.getElementById(`vid-${heroId}`);
             if (activeVideo) activeVideo.pause();
 
-            const p1 = HEROES[currentHeroId];
-            const otherIds = Object.keys(HEROES).map(Number).filter(id => id !== currentHeroId);
+            const p1 = HEROES[heroId];
+            const otherIds = Object.keys(HEROES).map(Number).filter(id => id !== heroId);
             const p2Id = otherIds[Math.floor(Math.random() * otherIds.length)];
             const p2 = HEROES[p2Id];
 
@@ -1314,7 +1227,6 @@ let currentHeroId = null;
             duelState.roundIndex = 0;
             duelState.roundLocked = false;
 
-            // Формируем колоду: приоритет тактическим задачам
             fillDuelDeck();
 
             document.getElementById("p1-name").innerText = p1.name;
@@ -1332,7 +1244,6 @@ let currentHeroId = null;
             loadNextDuelRound();
         }
 
-        // Заполнение и перемешивание колоды
         function fillDuelDeck() {
             duelState.deck = [
                 ...duelState.p1Hero.puzzles,
@@ -1346,9 +1257,7 @@ let currentHeroId = null;
             document.getElementById("p2-hp-num").innerText = `${duelState.p2Hp}%`;
             document.getElementById("p2-hp-bar").style.width = `${duelState.p2Hp}%`;
         }
-
-        function loadNextDuelRound() {
-            // БОЙ ИДЕТ ТОЛЬКО ДО 0% HP! Никаких лимитов раундов!
+    function loadNextDuelRound() {
             if (duelState.p1Hp <= 0 || duelState.p2Hp <= 0) {
                 endDuel();
                 return;
@@ -1357,7 +1266,6 @@ let currentHeroId = null;
             duelState.roundLocked = false;
             duelState.roundIndex++;
 
-            // Если задачи закончились, а победитель не выявлен — перемешиваем заново
             if (duelState.deck.length === 0) {
                 fillDuelDeck();
             }
@@ -1376,7 +1284,6 @@ let currentHeroId = null;
                 if (hasImage) {
                     imgEl.src = q.image;
                     imgEl.style.display = "block";
-                    // Компактный подсказчик для экономии места
                     promptEl.innerText = "🎯 НАЙДИТЕ ЛУЧШИЙ ХОД:";
                     promptEl.style.color = "var(--accent-color)";
                 } else {
@@ -1385,7 +1292,6 @@ let currentHeroId = null;
                     promptEl.style.color = "#eee";
                 }
 
-                // Рендерим варианты ответов
                 optContainer.innerHTML = q.options.map((opt, i) => `
                     <button class="hs-opt-btn" onclick="handleDuelTap('${player}', ${i})">
                         ${opt.text}
@@ -1403,7 +1309,6 @@ let currentHeroId = null;
 
             if (navigator.vibrate) navigator.vibrate(isCorrect ? 70 : 180);
 
-            // Урон за попадание: -25%, штраф за ошибку (зевок): -15%
             if (player === 'p1') {
                 if (isCorrect) {
                     duelState.p2Hp = Math.max(0, duelState.p2Hp - 25);
@@ -1428,7 +1333,6 @@ let currentHeroId = null;
 
             updateHpBars();
 
-            // Переход к следующему раунду
             setTimeout(() => {
                 loadNextDuelRound();
             }, 1200);
@@ -1464,13 +1368,11 @@ let currentHeroId = null;
                 if (vid) vid.play().catch(() => {});
             }
         }
+</script>
 
-    
-    </script>
-
-<!-- АРЕНА ДУЭЛИ ДЛЯ ДВУХ ИГРОКОВ (ЭРГОНОМИЧНЫЙ ЛЕЙАУТ) -->
+<!-- АРЕНА ДУЭЛИ ДЛЯ ДВУХ ИГРОКОВ -->
 <div id="hotseat-arena">
-    <!-- Половина Игрока 2 (развернута вверх ногами) -->
+    <!-- Зона Игрока 2 (сверху, развернута) -->
     <div id="zone-p2" class="hs-zone top-player">
         <div>
             <div class="hs-header">
@@ -1491,13 +1393,13 @@ let currentHeroId = null;
         </div>
     </div>
 
-    <!-- Центральный разделитель -->
+    <!-- Разделительная полоса -->
     <div class="hs-divider">
         <div id="hs-round-info" class="hs-round-badge">БОЙ ДО ПОБЕДНОГО МАТА</div>
         <button class="hs-exit-btn" onclick="exitDuel()">СДАТЬСЯ ✕</button>
     </div>
 
-    <!-- Половина Игрока 1 (нормальная ориентация) -->
+    <!-- Зона Игрока 1 (снизу) -->
     <div id="zone-p1" class="hs-zone">
         <div class="hs-content-row">
             <img id="p1-board-img" class="hs-board-img" src="" alt="Доска" style="display: none;">
@@ -1518,7 +1420,7 @@ let currentHeroId = null;
         </div>
     </div>
 
-    <!-- Экран завершения боя -->
+    <!-- Окно победы -->
     <div id="hs-gameover" class="hs-feedback-toast">
         <div id="hs-winner-title" style="font-size: 26px; font-weight: 900; margin-bottom: 6px;">ШАХ И МАТ!</div>
         <div id="hs-winner-desc" style="font-size: 13px; color: #ccc; margin-bottom: 20px;"></div>
@@ -1526,6 +1428,6 @@ let currentHeroId = null;
         <button class="action-link-btn secondary" style="max-width: 220px; margin-top: 8px; cursor: pointer;" onclick="exitDuel()">В меню</button>
     </div>
 </div>
-    
+
 </body>
 </html>
