@@ -483,6 +483,146 @@
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
+
+/* ================= HOTSEAT БОЕВАЯ АРЕНА ================= */
+        #hotseat-arena {
+            position: absolute;
+            inset: 0;
+            background: #06090e;
+            z-index: 250;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+        #hotseat-arena.active { display: flex; }
+
+        /* Игровые зоны */
+        .hs-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 80%);
+        }
+
+        /* Верхняя зона игрока 2 — развернута на 180 градусов */
+        .hs-zone.top-player {
+            transform: rotate(180deg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Центральная разделительная полоса */
+        .hs-divider {
+            height: 38px;
+            background: #0f1523;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 10;
+        }
+        .hs-round-badge {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        .hs-exit-btn {
+            background: rgba(255, 50, 50, 0.2);
+            border: 1px solid #ff4d6d;
+            color: #ff4d6d;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* Элементы внутри половины игрока */
+        .hs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hs-hero-name {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .hs-hp-val {
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .hs-hp-track {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .hs-hp-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .hs-question {
+            font-size: 12px;
+            font-weight: 600;
+            color: #eee;
+            line-height: 1.35;
+            text-align: center;
+            margin: 6px 0;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hs-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+        }
+        .hs-opt-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: transform 0.1s;
+        }
+        .hs-opt-btn:active {
+            transform: scale(0.97);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Всплывающие уведомления попадания */
+        .hs-feedback-toast {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 20;
+            text-align: center;
+            padding: 16px;
+        }
+        .hs-feedback-toast.active { display: flex; }
+        
     </style>
 </head>
 
@@ -530,6 +670,10 @@
         </button>
         <button class="dock-btn" onclick="openModal('stats')">
             <span>Характеристики</span>
+        </button>
+        <!-- НОВАЯ КНОПКА ДУЭЛИ -->
+        <button class="dock-btn" onclick="startHotseatDuel()" style="border-color: #ff0055; box-shadow: 0 0 15px rgba(255,0,85,0.4);">
+            <span style="color: #ff0055;">⚔️ Дуэль</span>
         </button>
     </div>
 
@@ -1112,6 +1256,222 @@ let currentHeroId = null;
                 }
             }
         }
+
+// ================= ЛОГИКА ДУЭЛИ (HOTSEAT) =================
+        let duelState = {
+            active: false,
+            p1Hero: null,
+            p2Hero: null,
+            p1Hp: 100,
+            p2Hp: 100,
+            currentRound: 0,
+            maxRounds: 5,
+            roundLocked: false,
+            duelQuestions: []
+        };
+
+        function startHotseatDuel() {
+            if (currentHeroId === null) return;
+
+            // Приостанавливаем AR видео
+            const activeVideo = document.getElementById(`vid-${currentHeroId}`);
+            if (activeVideo) activeVideo.pause();
+
+            // Игрок 1 — сканированная карточка
+            const p1 = HEROES[currentHeroId];
+
+            // Игрок 2 — случайный другой гроссмейстер из базы
+            const otherIds = Object.keys(HEROES).map(Number).filter(id => id !== currentHeroId);
+            const p2Id = otherIds[Math.floor(Math.random() * otherIds.length)];
+            const p2 = HEROES[p2Id];
+
+            duelState.p1Hero = p1;
+            duelState.p2Hero = p2;
+            duelState.p1Hp = 100;
+            duelState.p2Hp = 100;
+            duelState.currentRound = 0;
+            duelState.roundLocked = false;
+
+            // Собираем вопросы без картинок (чистый блиц-текст, удобный для сплит-скрина)
+            duelState.duelQuestions = [
+                ...p1.puzzles.filter(p => !p.image),
+                ...p2.puzzles.filter(p => !p.image)
+            ].sort(() => Math.random() - 0.5);
+
+            // Инициализация цветов и имен
+            document.getElementById("p1-name").innerText = p1.name;
+            document.getElementById("p1-name").style.color = p1.color;
+            document.getElementById("p1-hp-bar").style.background = p1.color;
+
+            document.getElementById("p2-name").innerText = p2.name;
+            document.getElementById("p2-name").style.color = p2.color;
+            document.getElementById("p2-hp-bar").style.background = p2.color;
+
+            document.getElementById("hs-gameover").classList.remove("active");
+            document.getElementById("hotseat-arena").classList.add("active");
+
+            updateHpBars();
+            loadNextDuelRound();
+        }
+
+        function updateHpBars() {
+            document.getElementById("p1-hp-num").innerText = `${duelState.p1Hp}%`;
+            document.getElementById("p1-hp-bar").style.width = `${duelState.p1Hp}%`;
+            document.getElementById("p2-hp-num").innerText = `${duelState.p2Hp}%`;
+            document.getElementById("p2-hp-bar").style.width = `${duelState.p2Hp}%`;
+        }
+
+        function loadNextDuelRound() {
+            if (duelState.p1Hp <= 0 || duelState.p2Hp <= 0 || duelState.currentRound >= duelState.maxRounds) {
+                endDuel();
+                return;
+            }
+
+            duelState.roundLocked = false;
+            duelState.currentRound++;
+            document.getElementById("hs-round-info").innerText = `РАУНД ${duelState.currentRound}/${duelState.maxRounds}`;
+
+            const q = duelState.duelQuestions[(duelState.currentRound - 1) % duelState.duelQuestions.length];
+
+            // Рендер вопроса для обоих игроков
+            document.getElementById("p1-question").innerText = q.desc;
+            document.getElementById("p2-question").innerText = q.desc;
+
+            // Рендер кнопок ответов
+            ['p1', 'p2'].forEach(player => {
+                const optContainer = document.getElementById(`${player}-options`);
+                optContainer.innerHTML = q.options.map((opt, i) => `
+                    <button class="hs-opt-btn" onclick="handleDuelTap('${player}', ${i})">
+                        ${opt.text}
+                    </button>
+                `).join('');
+            });
+        }
+
+        function handleDuelTap(player, optIndex) {
+            // Если раунд уже завершен нажатием — игнорируем
+            if (duelState.roundLocked) return;
+            duelState.roundLocked = true;
+
+            const q = duelState.duelQuestions[(duelState.currentRound - 1) % duelState.duelQuestions.length];
+            const isCorrect = q.options[optIndex].correct;
+
+            if (navigator.vibrate) navigator.vibrate(isCorrect ? 80 : 200);
+
+            if (player === 'p1') {
+                if (isCorrect) {
+                    duelState.p2Hp = Math.max(0, duelState.p2Hp - 25);
+                    flashQuestionText('p1', 'ТОЧНЫЙ УДАР! -25%', '#2ecc71');
+                    flashQuestionText('p2', 'ПРОПУЩЕН УДАР! -25%', '#e74c3c');
+                } else {
+                    duelState.p1Hp = Math.max(0, duelState.p1Hp - 15);
+                    flashQuestionText('p1', 'ЗЕВОК! ОШИБКА -15%', '#e74c3c');
+                    flashQuestionText('p2', 'СОПЕРНИК ОШИБСЯ!', '#2ecc71');
+                }
+            } else {
+                if (isCorrect) {
+                    duelState.p1Hp = Math.max(0, duelState.p1Hp - 25);
+                    flashQuestionText('p2', 'ТОЧНЫЙ УДАР! -25%', '#2ecc71');
+                    flashQuestionText('p1', 'ПРОПУЩЕН УДАР! -25%', '#e74c3c');
+                } else {
+                    duelState.p2Hp = Math.max(0, duelState.p2Hp - 15);
+                    flashQuestionText('p2', 'ЗЕВОК! ОШИБКА -15%', '#e74c3c');
+                    flashQuestionText('p1', 'СОПЕРНИК ОШИБСЯ!', '#2ecc71');
+                }
+            }
+
+            updateHpBars();
+
+            // Пауза 1.5 секунды перед следующим раундом, чтобы увидеть результат
+            setTimeout(() => {
+                loadNextDuelRound();
+            }, 1400);
+        }
+
+        function flashQuestionText(player, text, color) {
+            const el = document.getElementById(`${player}-question`);
+            el.innerHTML = `<b style="color: ${color}; font-size: 14px;">${text}</b>`;
+        }
+
+        function endDuel() {
+            const goModal = document.getElementById("hs-gameover");
+            const title = document.getElementById("hs-winner-title");
+            const desc = document.getElementById("hs-winner-desc");
+
+            let winner = null;
+            if (duelState.p1Hp > duelState.p2Hp) winner = duelState.p1Hero;
+            else if (duelState.p2Hp > duelState.p1Hp) winner = duelState.p2Hero;
+
+            if (winner) {
+                title.innerText = "ШАХ И МАТ!";
+                title.style.color = winner.color;
+                desc.innerHTML = `Победу одержал <b>${winner.name}</b>!<br>Король соперника повержен.`;
+            } else {
+                title.innerText = "ПАТ / НИЧЬЯ!";
+                title.style.color = "#fff";
+                desc.innerText = "Равная гроссмейстерская борьба! Победителя выявить не удалось.";
+            }
+
+            goModal.classList.add("active");
+        }
+
+        function exitDuel() {
+            document.getElementById("hotseat-arena").classList.remove("active");
+            if (currentHeroId !== null) {
+                const vid = document.getElementById(`vid-${currentHeroId}`);
+                if (vid) vid.play().catch(() => {});
+            }
+        }
+
+    
     </script>
+
+<!-- АРЕНА ДУЭЛИ ДЛЯ ДВУХ ИГРОКОВ (HOTSEAT) -->
+<div id="hotseat-arena">
+    <!-- Половина Игрока 2 (развернута вверх ногами) -->
+    <div id="zone-p2" class="hs-zone top-player">
+        <div>
+            <div class="hs-header">
+                <span id="p2-name" class="hs-hero-name">Игрок 2</span>
+                <span id="p2-hp-num" class="hs-hp-val">100%</span>
+            </div>
+            <div class="hs-hp-track">
+                <div id="p2-hp-bar" class="hs-hp-fill" style="width: 100%;"></div>
+            </div>
+        </div>
+        <div id="p2-question" class="hs-question">Приготовьтесь к бою...</div>
+        <div id="p2-options" class="hs-options"></div>
+    </div>
+
+    <!-- Центральный разделитель -->
+    <div class="hs-divider">
+        <div id="hs-round-info" class="hs-round-badge">РАУНД 1/5</div>
+        <button class="hs-exit-btn" onclick="exitDuel()">СДАТЬСЯ ✕</button>
+    </div>
+
+    <!-- Половина Игрока 1 (нормальная ориентация) -->
+    <div id="zone-p1" class="hs-zone">
+        <div id="p1-question" class="hs-question">Приготовьтесь к бою...</div>
+        <div id="p1-options" class="hs-options"></div>
+        <div>
+            <div class="hs-hp-track">
+                <div id="p1-hp-bar" class="hs-hp-fill" style="width: 100%;"></div>
+            </div>
+            <div class="hs-header" style="margin-top: 4px;">
+                <span id="p1-name" class="hs-hero-name">Игрок 1</span>
+                <span id="p1-hp-num" class="hs-hp-val">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран завершения боя -->
+    <div id="hs-gameover" class="hs-feedback-toast">
+        <div id="hs-winner-title" style="font-size: 24px; font-weight: 900; margin-bottom: 8px;">ШАХ И МАТ!</div>
+        <div id="hs-winner-desc" style="font-size: 13px; color: #ccc; margin-bottom: 20px;"></div>
+        <button class="action-link-btn" style="max-width: 200px; cursor: pointer;" onclick="startHotseatDuel()">Реванш 🔄</button>
+        <button class="action-link-btn secondary" style="max-width: 200px; margin-top: 8px; cursor: pointer;" onclick="exitDuel()">В меню</button>
+    </div>
+</div>
+    
 </body>
 </html>
