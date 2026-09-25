@@ -456,6 +456,158 @@ body {
 </a-scene>
 
   <script>
+
+// ================= ЗВУКОВОЙ ДВИЖОК WEB AUDIO API =================
+class SoundController {
+  constructor() {
+    this.ctx = null;
+    this.enabled = false;
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioContext();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    this.enabled = true;
+  }
+
+  toggle() {
+    this.enabled = !this.enabled;
+    if (this.enabled && (!this.ctx || this.ctx.state === 'suspended')) {
+      this.init();
+    }
+    return this.enabled;
+  }
+
+  // 1. Стук деревянной шахматной фигуры
+  playMove() {
+    if (!this.enabled || !this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.08);
+
+    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.08);
+  }
+
+  // 2. Захват карточки камерой (AR Lock-on)
+  playTargetFound(isCyber = false) {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+
+    if (isCyber) {
+      // Роботизированный глитч для Стокфиша
+      for (let i = 0; i < 3; i++) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440 + i * 330, now + i * 0.05);
+        gain.gain.setValueAtTime(0.15, now + i * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + (i + 1) * 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + i * 0.05);
+        osc.stop(now + (i + 1) * 0.05);
+      }
+      return;
+    }
+
+    // Голографический двухтональный звон
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now); // D5
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+    osc2.frequency.setValueAtTime(880, now);
+    osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.18); // D6
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.35);
+    osc2.stop(now + 0.35);
+  }
+
+  // 3. Правильный ход / Победный аккорд
+  playCorrect() {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+      gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.3);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + idx * 0.06);
+      osc.stop(now + idx * 0.06 + 0.3);
+    });
+  }
+
+  // 4. Зевок / Ошибка
+  playWrong() {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }
+
+  // 5. Шах и мат
+  playCheckmate() {
+    if (!this.enabled || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const freqs = [220, 277.18, 329.63, 440];
+    freqs.forEach(f => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, now);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.2);
+    });
+  }
+}
+
+const sfx = new SoundController();
+
+    
 const HEROES = {
   0: {
     name: "Вильгельм Стейниц",
@@ -1365,7 +1517,8 @@ Object.keys(HEROES).forEach(key => {
   targetEl.addEventListener("targetFound", () => {
     currentHeroId = id;
     applyHeroTheme(HEROES[id]);
-
+ // Озвучка появления (проверяем, не Стокфиш ли это)
+    sfx.playTargetFound(id === 6);
     hint.classList.add("hidden");
     dock.style.display = "flex";
     soundBtn.style.display = "inline-flex";
@@ -1387,15 +1540,21 @@ function applyHeroTheme(hero) {
 }
 
 soundBtn.addEventListener("click", () => {
-  if (currentHeroId === null) return;
-  const vid = document.getElementById(`vid-${currentHeroId}`);
-  isMuted = !isMuted;
-  vid.muted = isMuted;
-  soundBtn.innerHTML = isMuted ? "<span>🔇</span> ЗВУК: ВЫКЛ" : "<span>🔊</span> ЗВУК: ВКЛ";
+  const isEnabled = sfx.toggle();
+  isMuted = !isEnabled;
+  
+  if (currentHeroId !== null) {
+    const vid = document.getElementById(`vid-${currentHeroId}`);
+    if (vid) vid.muted = isMuted;
+  }
+  
+  soundBtn.innerHTML = isEnabled ? "<span>🔊</span> ЗВУК: ВКЛ" : "<span>🔇</span> ЗВУК: ВЫКЛ";
+  if (isEnabled) sfx.playMove();
 });
 
 // Модальные окна
 function openModal(type) {
+  sfx.playMove();
   if (currentHeroId === null) return;
   const hero = HEROES[currentHeroId];
 
@@ -1499,6 +1658,7 @@ function checkAnswer(index) {
   fb.style.display = "block";
 
   if (opt.correct) {
+    sfx.playCorrect();
     testScore++;
     if (navigator.vibrate) navigator.vibrate([70, 50, 70]);
     fb.style.background = "rgba(46, 204, 113, 0.2)";
@@ -1506,6 +1666,7 @@ function checkAnswer(index) {
     fb.style.border = "1px solid #2ecc71";
     fb.innerHTML = `<b>ВЕРНО!</b> ${opt.comment}`;
   } else {
+    sfx.playWrong();
     if (navigator.vibrate) navigator.vibrate(180);
     fb.style.background = "rgba(231, 76, 60, 0.2)";
     fb.style.color = "#e74c3c";
@@ -1560,6 +1721,7 @@ function renderTestResult() {
 }
 
 function closeModal() {
+  sfx.playMove();
   modal.classList.remove("active");
   if (currentHeroId !== null) {
     const activeVideo = document.getElementById(`vid-${currentHeroId}`);
@@ -1682,10 +1844,12 @@ function handleDuelTap(player, optIndex) {
 
   if (player === 'p1') {
     if (isCorrect) {
+      sfx.playCorrect();
       duelState.p2Hp = Math.max(0, duelState.p2Hp - 25);
       flashPrompt('p1', '⚡ ТОЧНЫЙ ХОД! (-25%)', '#2ecc71');
       flashPrompt('p2', '💥 ПРОПУЩЕН УДАР! (-25%)', '#e74c3c');
     } else {
+      sfx.playWrong();
       duelState.p1Hp = Math.max(0, duelState.p1Hp - 15);
       flashPrompt('p1', '❌ ЗЕВОК! ОШИБКА (-15%)', '#e74c3c');
       flashPrompt('p2', '🛡️ СОПЕРНИК ОШИБСЯ!', '#2ecc71');
@@ -1718,8 +1882,10 @@ function endDuel() {
   const goModal = document.getElementById("hs-gameover");
   const title = document.getElementById("hs-winner-title");
   const desc = document.getElementById("hs-winner-desc");
-
   let winner = null;
+
+   sfx.playCheckmate();
+  
   if (duelState.p1Hp <= 0 && duelState.p2Hp > 0) winner = duelState.p2Hero;
   else if (duelState.p2Hp <= 0 && duelState.p1Hp > 0) winner = duelState.p1Hero;
 
