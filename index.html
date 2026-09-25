@@ -504,83 +504,94 @@ class SoundController {
   }
 
   // 2. Захват карточки камерой (AR Lock-on)
-// Премиальный звук: механический затвор + накачка плазмы (AR Lock-on)
-  playTargetFound(isCyber = false) {
+// Сочный двухфазный механический щелчок затвора зеркального фотоаппарата
+  playTargetFound() {
     if (!this.enabled || !this.ctx) return;
     const now = this.ctx.currentTime;
 
-    // === СЛОЙ 1: Хлесткий щелчок механического затвора (Shutter Click) ===
-    const clickOsc = this.ctx.createOscillator();
-    const clickGain = this.ctx.createGain();
-    clickOsc.type = 'triangle';
-    clickOsc.frequency.setValueAtTime(1600, now);
-    clickOsc.frequency.exponentialRampToValueAtTime(80, now + 0.035);
+    // Вспомогательная функция синтеза шума шторки через буфер
+    const createShutterNoise = (startTime, duration, gainVal, cutoffFreq) => {
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
 
-    clickGain.gain.setValueAtTime(0.4, now);
-    clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
 
-    clickOsc.connect(clickGain);
-    clickGain.connect(this.ctx.destination);
-    clickOsc.start(now);
-    clickOsc.stop(now + 0.035);
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(cutoffFreq, startTime);
+      filter.Q.setValueAtTime(1.8, startTime);
 
-    // === СЛОЙ 2: Зарядка плазмагана (Восходящий энергетический свип) ===
-    const plasmaOsc = this.ctx.createOscillator();
-    const plasmaGain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(gainVal, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
-    plasmaOsc.type = isCyber ? 'sawtooth' : 'sine';
-    // Быстрый взлет частоты: заряд энергии
-    plasmaOsc.frequency.setValueAtTime(180, now + 0.015);
-    plasmaOsc.frequency.exponentialRampToValueAtTime(isCyber ? 2400 : 1320, now + 0.18);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
 
-    // Фильтр добавляет плотности и убирает резкость
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, now);
-    filter.frequency.exponentialRampToValueAtTime(3200, now + 0.18);
+      noise.start(startTime);
+      noise.stop(startTime + duration);
+    };
 
-    plasmaGain.gain.setValueAtTime(0.01, now);
-    plasmaGain.gain.linearRampToValueAtTime(0.28, now + 0.12);
-    plasmaGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    // ФАЗА 1: Подъем зеркала (0.00с)
+    // 1. Механический металлический клик
+    const click1 = this.ctx.createOscillator();
+    const click1Gain = this.ctx.createGain();
+    click1.type = 'triangle';
+    click1.frequency.setValueAtTime(2400, now);
+    click1.frequency.exponentialRampToValueAtTime(120, now + 0.025);
 
-    plasmaOsc.connect(filter);
-    filter.connect(plasmaGain);
-    plasmaGain.connect(this.ctx.destination);
+    click1Gain.gain.setValueAtTime(0.45, now);
+    click1Gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
 
-    plasmaOsc.start(now + 0.015);
-    plasmaOsc.stop(now + 0.28);
+    click1.connect(click1Gain);
+    click1Gain.connect(this.ctx.destination);
+    click1.start(now);
+    click1.stop(now + 0.025);
 
-    // === СЛОЙ 3: Суб-басовый панч (Ощущение массы и объема) ===
-    const subOsc = this.ctx.createOscillator();
-    const subGain = this.ctx.createGain();
-    subOsc.type = 'sine';
-    subOsc.frequency.setValueAtTime(95, now + 0.02);
-    subOsc.frequency.exponentialRampToValueAtTime(38, now + 0.22);
+    // 2. Шорох движения лепестков затвора
+    createShutterNoise(now + 0.005, 0.04, 0.28, 4200);
 
-    subGain.gain.setValueAtTime(0.35, now + 0.02);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    // ФАЗА 2: Возврат зеркала и захлопывание затвора (спустя 0.045с)
+    const t2 = now + 0.045;
 
-    subOsc.connect(subGain);
-    subGain.connect(this.ctx.destination);
+    // 1. Второй более плотный щелчок
+    const click2 = this.ctx.createOscillator();
+    const click2Gain = this.ctx.createGain();
+    click2.type = 'triangle';
+    click2.frequency.setValueAtTime(1800, t2);
+    click2.frequency.exponentialRampToValueAtTime(90, t2 + 0.035);
 
-    subOsc.start(now + 0.02);
-    subOsc.stop(now + 0.22);
+    click2Gain.gain.setValueAtTime(0.5, t2);
+    click2Gain.gain.exponentialRampToValueAtTime(0.001, t2 + 0.035);
 
-    // === СЛОЙ 4: Хрустальный бип фиксации цели (Lock-on confirm) ===
-    const lockOsc = this.ctx.createOscillator();
-    const lockGain = this.ctx.createGain();
-    lockOsc.type = 'sine';
-    lockOsc.frequency.setValueAtTime(1760, now + 0.16); // нота A6
+    click2.connect(click2Gain);
+    click2Gain.connect(this.ctx.destination);
+    click2.start(t2);
+    click2.stop(t2 + 0.035);
 
-    lockGain.gain.setValueAtTime(0.001, now + 0.16);
-    lockGain.gain.linearRampToValueAtTime(0.12, now + 0.18);
-    lockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+    // 2. Глухой резонанс корпуса камеры (приятный тактильный "thump")
+    const bodyThump = this.ctx.createOscillator();
+    const bodyGain = this.ctx.createGain();
+    bodyThump.type = 'sine';
+    bodyThump.frequency.setValueAtTime(160, t2);
+    bodyThump.frequency.exponentialRampToValueAtTime(45, t2 + 0.07);
 
-    lockOsc.connect(lockGain);
-    lockGain.connect(this.ctx.destination);
+    bodyGain.gain.setValueAtTime(0.4, t2);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, t2 + 0.07);
 
-    lockOsc.start(now + 0.16);
-    lockOsc.stop(now + 0.38);
+    bodyThump.connect(bodyGain);
+    bodyGain.connect(this.ctx.destination);
+    bodyThump.start(t2);
+    bodyThump.stop(t2 + 0.07);
+
+    // 3. Финальный срез затухания
+    createShutterNoise(t2 + 0.01, 0.05, 0.22, 2800);
   }
 
   // 3. Правильный ход / Победный аккорд
