@@ -133,6 +133,37 @@ body {
 .status-title { font-size: 15px; font-weight: 800; letter-spacing: 1px; color: #fff; }
 .status-sub { font-size: 12px; color: #7a8b9e; }
 
+  /* Прогресс загрузки AR */
+.load-progress-box {
+  width: 220px;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.load-bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 255, 204, 0.2);
+}
+.load-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-color);
+  transition: width 0.2s ease;
+}
+.load-subtext {
+  font-size: 10px;
+  color: #8a99ad;
+  text-align: center;
+  line-height: 1.3;
+}
+  
 /* HUD и кнопки */
 .top-hud {
   position: absolute; top: 16px; left: 16px; right: 16px;
@@ -303,9 +334,21 @@ body {
     <div class="hud-chess-core">♚</div>
   </div>
   <div class="scanner-status">
-    <div class="status-badge">AR СКАНЕР АКТИВЕН</div>
-    <div class="status-title">НАВЕДИТЕ НА КАРТОЧКУ</div>
-    <div class="status-sub">Стейниц • Ласкер • Капабланка • Таль • Ботвинник • Фишер • Карлсен • Каруана • Накамура • Гукеш • Энигма • Стокфиш</div>
+    <div id="loading-badge" class="status-badge" style="border-color: #f1c40f; color: #f1c40f;">ЗАГРУЗКА БАЗЫ AR...</div>
+    <div id="loading-title" class="status-title">ИНИЦИАЛИЗАЦИЯ 12 ГЕРОЕВ</div>
+    
+    <!-- Полоса прогресса и предупреждение -->
+    <div id="load-progress-container" class="load-progress-box">
+      <div class="load-bar-track">
+        <div id="load-bar-fill" class="load-bar-fill"></div>
+      </div>
+      <div id="load-percent" style="font-size: 11px; font-weight: 800;">0%</div>
+      <div class="load-subtext">Идет подготовка базы данных чемпионов.<br>Пожалуйста, не закрывайте страницу.</div>
+    </div>
+
+    <div id="ready-status-sub" class="status-sub" style="display: none; margin-top: 8px;">
+      12 легенд готовы • Наведите камеру на карту
+    </div>
   </div>
 </div>
 
@@ -1228,6 +1271,77 @@ const HEROES = {
 
   
 };
+
+    // === ПРЕДЗАГРУЗКА CARDS.MIND С ИНДИКАТОРОМ ПРОГРЕССА ===
+document.addEventListener("DOMContentLoaded", () => {
+  const sceneEl = document.querySelector('a-scene');
+  const barFill = document.getElementById('load-bar-fill');
+  const percentText = document.getElementById('load-percent');
+  const loadBox = document.getElementById('load-progress-container');
+  const badge = document.getElementById('loading-badge');
+  const title = document.getElementById('loading-title');
+  const readySub = document.getElementById('ready-status-sub');
+
+  const mindFilePath = './cards.mind';
+
+  fetch(mindFilePath)
+    .then(response => {
+      if (!response.ok) throw new Error("Ошибка загрузки файла таргетов");
+      
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 10 * 1024 * 1024; // ~10MB фолбэк
+      let loaded = 0;
+
+      const reader = response.body.getReader();
+      return new ReadableStream({
+        start(controller) {
+          function push() {
+            reader.read().then(({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+              loaded += value.byteLength;
+              const percent = Math.min(100, Math.round((loaded / total) * 100));
+              barFill.style.width = percent + '%';
+              percentText.innerText = `${percent}%`;
+              controller.enqueue(value);
+              push();
+            });
+          }
+          push();
+        }
+      });
+    })
+    .then(stream => new Response(stream))
+    .then(response => response.blob())
+    .then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Передаем готовый скомпилированный путь в сцену
+      sceneEl.setAttribute('mindar-image', `imageTargetSrc: ${blobUrl}; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 5;`);
+
+      // Обновляем статус: база скачана, идет запуск камеры и WebGL
+      percentText.innerText = "Компиляция нейросетью...";
+      
+      sceneEl.addEventListener("arReady", () => {
+        loadBox.style.display = "none";
+        readySub.style.display = "block";
+        badge.innerText = "AR СКАНЕР АКТИВЕН";
+        badge.style.borderColor = "var(--accent-color)";
+        badge.style.color = "var(--accent-color)";
+        title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
+      });
+    })
+    .catch(err => {
+      console.warn("Фолбэк предзагрузки:", err);
+      // Если локальный fetch блокируется политикой CORS при тестировании без сервера
+      loadBox.style.display = "none";
+      readySub.style.display = "block";
+      badge.innerText = "AR СКАНЕР АКТИВЕН";
+      title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
+    });
+});
 
     let currentHeroId = null;
 let isMuted = true;
