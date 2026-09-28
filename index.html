@@ -382,7 +382,7 @@ body {
 
 <!-- MindAR сцена -->
 <a-scene
-  mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 5;"
+  mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 3;"
   color-space="sRGB"
   renderer="colorManagement: true"
   vr-mode-ui="enabled: false"
@@ -1571,31 +1571,38 @@ ALL_TARGET_IDS.forEach(id => {
   if (!targetEl) return;
 
   targetEl.addEventListener("targetFound", () => {
-    // Звук затвора камеры
     sfx.playTargetFound();
 
     hint.classList.add("hidden");
+    dock.style.display = "flex";
     soundBtn.style.display = "inline-flex";
 
     if (id === SCHOOL_TARGET_ID) {
-      // === ПОКАЗАТЬ ШКОЛУ ===
       currentHeroId = null;
       showSchoolUI();
     } else {
-      // === ПОКАЗАТЬ ЧЕМПИОНА ===
       currentHeroId = id;
       applyHeroTheme(HEROES[id]);
       showChampionUI();
     }
 
     if (videoEl) {
+      // Восстанавливаем звук согласно состоянию переключателя
       videoEl.muted = isMuted;
+      videoEl.volume = 1.0;
       videoEl.play().catch(() => {});
     }
   });
 
   targetEl.addEventListener("targetLost", () => {
-    if (videoEl) videoEl.pause();
+    if (videoEl) {
+      // 1. Моментально обрубаем звук в буфере
+      videoEl.muted = true;
+      videoEl.volume = 0;
+      
+      // 2. Ставим на паузу
+      videoEl.pause();
+    }
   });
 });
 
