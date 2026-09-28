@@ -401,6 +401,7 @@ body {
     <video id="vid-9" src="./caruana.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
     <video id="vid-10" src="./nakamura.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
     <video id="vid-11" src="./gukesh.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-12" src="./school.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
   </a-assets>
 
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -455,7 +456,7 @@ body {
 
 <!-- Общая рубашка для всех карт (Индекс 12) -->
   <a-entity id="target-12" mindar-image-target="targetIndex: 12">
-    <a-video id="vid-12" src="./school.mp4" width="1" height="1.54" position="0 0 0" loop="true" playsinline webkit-playsinline></a-video>
+    <a-video src="#vid-12" width="1" height="1.54" position="0 0 0"></a-video>
   </a-entity>
 
   
@@ -1617,10 +1618,10 @@ soundBtn.addEventListener("click", () => {
   const isEnabled = sfx.toggle();
   isMuted = !isEnabled;
   
-  if (currentHeroId !== null) {
-    const vid = document.getElementById(`vid-${currentHeroId}`);
-    if (vid) vid.muted = isMuted;
-  }
+  // Управляем звуком активного чемпиона либо рубашки (id: 12)
+  const activeTargetId = currentHeroId !== null ? currentHeroId : SCHOOL_TARGET_ID;
+  const vid = document.getElementById(`vid-${activeTargetId}`);
+  if (vid) vid.muted = isMuted;
   
   soundBtn.innerHTML = isEnabled ? "<span>🔊</span> ЗВУК: ВКЛ" : "<span>🔇</span> ЗВУК: ВЫКЛ";
   if (isEnabled) sfx.playMove();
@@ -1690,13 +1691,13 @@ function showSchoolUI() {
   dock.style.display = "flex";
   dock.innerHTML = `
     <a class="dock-btn" href="https://tacticusfinch.ru/" target="_blank" onclick="sfx.playMove()">
-      <span>🌐 Сайт школы</span>
+      <span>Сайт школы</span>
     </a>
     <a class="dock-btn" href="https://max.ru/se14097294_bot" target="_blank" onclick="sfx.playMove()" style="border-color: #00ffcc; box-shadow: 0 0 15px rgba(0,255,204,0.4);">
-      <span style="color: #00ffcc;">🤖 Запись (Бот)</span>
+      <span style="color: #00ffcc;">Запись (Бот)</span>
     </a>
     <button class="dock-btn" onclick="openSchoolModal()">
-      <span>📋 Реквизиты</span>
+      <span>Реквизиты</span>
     </button>
   `;
 }
