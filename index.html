@@ -452,6 +452,12 @@ body {
   <a-entity id="target-11" mindar-image-target="targetIndex: 11">
     <a-video src="#vid-11" width="1" height="1.54" position="0 0 0"></a-video>
   </a-entity>
+
+<!-- Общая рубашка для всех карт (Индекс 12) -->
+  <a-entity id="target-12" mindar-image-target="targetIndex: 12">
+    <a-video id="vid-12" src="./school.mp4" width="1" height="1.54" position="0 0 0" loop="true" playsinline webkit-playsinline></a-video>
+  </a-entity>
+
   
 </a-scene>
 
@@ -1553,26 +1559,43 @@ const modal = document.getElementById("modal-container");
 const modalContent = document.getElementById("modal-content");
 
 // Слушатели таргетов MindAR
-Object.keys(HEROES).forEach(key => {
-  const id = Number(key);
+// Индекс общей рубашки школы
+const SCHOOL_TARGET_ID = 12;
+
+// Слушатели для всех 13 таргетов (0-11 чемпионы, 12 школа)
+const ALL_TARGET_IDS = [...Object.keys(HEROES).map(Number), SCHOOL_TARGET_ID];
+
+ALL_TARGET_IDS.forEach(id => {
   const targetEl = document.getElementById(`target-${id}`);
   const videoEl = document.getElementById(`vid-${id}`);
+  if (!targetEl) return;
 
   targetEl.addEventListener("targetFound", () => {
-    currentHeroId = id;
-    applyHeroTheme(HEROES[id]);
- // Озвучка появления (проверяем, не Стокфиш ли это)
-    sfx.playTargetFound(id === 6);
+    // Звук затвора камеры
+    sfx.playTargetFound();
+
     hint.classList.add("hidden");
-    dock.style.display = "flex";
     soundBtn.style.display = "inline-flex";
 
-    videoEl.muted = isMuted;
-    videoEl.play().catch(() => {});
+    if (id === SCHOOL_TARGET_ID) {
+      // === ПОКАЗАТЬ ШКОЛУ ===
+      currentHeroId = null;
+      showSchoolUI();
+    } else {
+      // === ПОКАЗАТЬ ЧЕМПИОНА ===
+      currentHeroId = id;
+      applyHeroTheme(HEROES[id]);
+      showChampionUI();
+    }
+
+    if (videoEl) {
+      videoEl.muted = isMuted;
+      videoEl.play().catch(() => {});
+    }
   });
 
   targetEl.addEventListener("targetLost", () => {
-    videoEl.pause();
+    if (videoEl) videoEl.pause();
   });
 });
 
@@ -1651,6 +1674,71 @@ function openModal(type) {
 
   modal.classList.add("active");
 }
+
+// Меню для обратной стороны (Школа)
+function showSchoolUI() {
+  document.documentElement.style.setProperty('--accent-color', '#00e5ff');
+  document.documentElement.style.setProperty('--accent-glow', 'rgba(0, 229, 255, 0.4)');
+
+  dock.style.display = "flex";
+  dock.innerHTML = `
+    <a class="dock-btn" href="https://tacticusfinch.ru/" target="_blank" onclick="sfx.playMove()">
+      <span>🌐 Сайт школы</span>
+    </a>
+    <a class="dock-btn" href="https://max.ru/se14097294_bot" target="_blank" onclick="sfx.playMove()" style="border-color: #00ffcc; box-shadow: 0 0 15px rgba(0,255,204,0.4);">
+      <span style="color: #00ffcc;">🤖 Запись (Бот)</span>
+    </a>
+    <button class="dock-btn" onclick="openSchoolModal()">
+      <span>📋 Реквизиты</span>
+    </button>
+  `;
+}
+
+// Возврат стандартного меню чемпионов
+function showChampionUI() {
+  dock.style.display = "flex";
+  dock.innerHTML = `
+    <button class="dock-btn" onclick="openModal('bio')"><span>Биография</span></button>
+    <button class="dock-btn" onclick="openModal('test')"><span>Тест</span></button>
+    <button class="dock-btn" onclick="openModal('stats')"><span>Характеристики</span></button>
+    <button class="dock-btn" onclick="startHotseatDuel()" style="border-color: #ff0055; box-shadow: 0 0 15px rgba(255,0,85,0.4);">
+      <span style="color: #ff0055;">Дуэль</span>
+    </button>
+  `;
+}
+
+// Окно реквизитов школы
+function openSchoolModal() {
+  sfx.playMove();
+  const vid12 = document.getElementById('vid-12');
+  if (vid12) vid12.pause();
+
+  modalContent.innerHTML = `
+    <div class="modal-title">Тактикус Финч</div>
+    <div class="modal-subtitle">Шахматная школа нового поколения</div>
+    
+    <div class="skill-box" style="margin-top: 10px;">
+      <div style="font-size: 12px; line-height: 1.6; color: #ddd;">
+        <b>Обучение:</b> Индивидуально и в мини-группах<br>
+        <b>Цель:</b> Логика, концентрация и турнирный рост<br>
+        <b>Формат:</b> Онлайн по всему миру + очные клубы
+      </div>
+    </div>
+
+    <div class="bio-section-title">Контакты</div>
+    <div class="bio-paragraph" style="font-size: 12px; color: #aaa;">
+      Официальный сайт: <a href="https://tacticusfinch.ru/" target="_blank" style="color: var(--accent-color);">tacticusfinch.ru</a><br>
+      Бот записи в Telegram: @se14097294_bot
+    </div>
+
+    <a href="https://max.ru/se14097294_bot" target="_blank" class="action-link-btn" style="margin-top: 14px;">
+      Записаться на пробный урок
+    </a>
+  `;
+  modal.classList.add("active");
+}
+
+    
 
 function renderPuzzleQuestion() {
   const hero = HEROES[currentHeroId];
