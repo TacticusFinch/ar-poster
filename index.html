@@ -1677,16 +1677,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const readySub = document.getElementById('ready-status-sub');
 
   // Визуальный прогресс-бар, чтобы пользователь видел отклик интерфейса
-  let progress = 15;
+  let progress = 10;
   const progressTimer = setInterval(() => {
-    progress += Math.floor(Math.random() * 10) + 5;
-    if (progress > 88) {
-      progress = 88;
-      clearInterval(progressTimer);
+    if (progress < 75) {
+      // Быстрый набор до 75% (скачивание)
+      progress += Math.floor(Math.random() * 8) + 6;
+    } else if (progress < 95) {
+      // Плавное замедление вместо мертвого стопора
+      progress += 1;
+      
+      // Меняем подпись, чтобы объяснить пользователю задержку
+      if (progress === 80) percentText.innerText = "Подключение камеры...";
+      if (progress === 90) percentText.innerText = "Запуск сенсоров...";
     }
+
     barFill.style.width = progress + '%';
-    percentText.innerText = progress + '%';
-  }, 120);
+    if (progress < 80) {
+      percentText.innerText = progress + '%';
+    }
+  }, 100);
 
   // Когда MindAR закончил внутреннюю компиляцию и включил камеру
   sceneEl.addEventListener("arReady", () => {
