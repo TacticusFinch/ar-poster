@@ -382,9 +382,9 @@ body {
 
 <!-- MindAR сцена -->
 <a-scene
-  mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 3;"
+  mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;"
   color-space="sRGB"
-  renderer="colorManagement: true"
+  renderer="colorManagement: true; precision: medium;"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
@@ -1666,7 +1666,7 @@ const HEROES = {
   
 };
 
-    // === ПРЕДЗАГРУЗКА CARDS.MIND С ИНДИКАТОРОМ ПРОГРЕССА ===
+    // ВСТАВИТЬ ВМЕСТО НЕГО:
 document.addEventListener("DOMContentLoaded", () => {
   const sceneEl = document.querySelector('a-scene');
   const barFill = document.getElementById('load-bar-fill');
@@ -1676,65 +1676,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const title = document.getElementById('loading-title');
   const readySub = document.getElementById('ready-status-sub');
 
-  const mindFilePath = './cards.mind';
+  // Визуальный прогресс-бар, чтобы пользователь видел отклик интерфейса
+  let progress = 15;
+  const progressTimer = setInterval(() => {
+    progress += Math.floor(Math.random() * 10) + 5;
+    if (progress > 88) {
+      progress = 88;
+      clearInterval(progressTimer);
+    }
+    barFill.style.width = progress + '%';
+    percentText.innerText = progress + '%';
+  }, 120);
 
-  fetch(mindFilePath)
-    .then(response => {
-      if (!response.ok) throw new Error("Ошибка загрузки файла таргетов");
-      
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : 10 * 1024 * 1024; // ~10MB фолбэк
-      let loaded = 0;
+  // Когда MindAR закончил внутреннюю компиляцию и включил камеру
+  sceneEl.addEventListener("arReady", () => {
+    clearInterval(progressTimer);
+    barFill.style.width = '100%';
+    percentText.innerText = '100%';
 
-      const reader = response.body.getReader();
-      return new ReadableStream({
-        start(controller) {
-          function push() {
-            reader.read().then(({ done, value }) => {
-              if (done) {
-                controller.close();
-                return;
-              }
-              loaded += value.byteLength;
-              const percent = Math.min(100, Math.round((loaded / total) * 100));
-              barFill.style.width = percent + '%';
-              percentText.innerText = `${percent}%`;
-              controller.enqueue(value);
-              push();
-            });
-          }
-          push();
-        }
-      });
-    })
-    .then(stream => new Response(stream))
-    .then(response => response.blob())
-    .then(blob => {
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Передаем готовый скомпилированный путь в сцену
-      sceneEl.setAttribute('mindar-image', `imageTargetSrc: ${blobUrl}; maxTrack: 1; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001; missTolerance: 5;`);
-
-      // Обновляем статус: база скачана, идет запуск камеры и WebGL
-      percentText.innerText = "Компиляция нейросетью...";
-      
-      sceneEl.addEventListener("arReady", () => {
-        loadBox.style.display = "none";
-        readySub.style.display = "block";
-        badge.innerText = "AR СКАНЕР АКТИВЕН";
-        badge.style.borderColor = "var(--accent-color)";
-        badge.style.color = "var(--accent-color)";
-        title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
-      });
-    })
-    .catch(err => {
-      console.warn("Фолбэк предзагрузки:", err);
-      // Если локальный fetch блокируется политикой CORS при тестировании без сервера
+    setTimeout(() => {
       loadBox.style.display = "none";
       readySub.style.display = "block";
       badge.innerText = "AR СКАНЕР АКТИВЕН";
+      badge.style.borderColor = "var(--accent-color)";
+      badge.style.color = "var(--accent-color)";
       title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
-    });
+    }, 250);
+  });
+
+  // Обработка возможного отказа доступа к камере
+  sceneEl.addEventListener("arError", () => {
+    clearInterval(progressTimer);
+    badge.innerText = "ОШИБКА КАМЕРЫ";
+    badge.style.borderColor = "#ff4d6d";
+    badge.style.color = "#ff4d6d";
+    title.innerText = "РАЗРЕШИТЕ ДОСТУП К КАМЕРЕ";
+    percentText.innerText = "Браузер заблокировал видеопоток";
+  });
 });
 
     let currentHeroId = null;
