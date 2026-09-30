@@ -1735,10 +1735,16 @@ const SCHOOL_TARGET_ID = 15;
 // Слушатели для всех 13 таргетов (0-11 чемпионы, 12 школа)
 const ALL_TARGET_IDS = [...Object.keys(HEROES).map(Number), SCHOOL_TARGET_ID];
 
+document.querySelectorAll('a-scene a-video').forEach(aVid => {
+  aVid.setAttribute('visible', 'false');
+});
+
 ALL_TARGET_IDS.forEach(id => {
   const targetEl = document.getElementById(`target-${id}`);
   const videoEl = document.getElementById(`vid-${id}`);
   if (!targetEl) return;
+
+  const aVideo = targetEl.querySelector('a-video');
 
   targetEl.addEventListener("targetFound", () => {
     sfx.playTargetFound();
@@ -1757,20 +1763,33 @@ ALL_TARGET_IDS.forEach(id => {
     }
 
     if (videoEl) {
-      // Восстанавливаем звук согласно состоянию переключателя
       videoEl.muted = isMuted;
       videoEl.volume = 1.0;
+      
+      // Показываем видео только тогда, когда первый кадр уже готов к показу
+      const showVideoFrame = () => {
+        if (aVideo) aVideo.setAttribute('visible', 'true');
+      };
+
+      if (videoEl.readyState >= 2) {
+        showVideoFrame();
+      } else {
+        videoEl.addEventListener('playing', showVideoFrame, { once: true });
+      }
+
       videoEl.play().catch(() => {});
     }
   });
 
   targetEl.addEventListener("targetLost", () => {
+    if (aVideo) {
+      // Сразу прячем плоскость при потере карты из вида
+      aVideo.setAttribute('visible', 'false');
+    }
+
     if (videoEl) {
-      // 1. Моментально обрубаем звук в буфере
       videoEl.muted = true;
       videoEl.volume = 0;
-      
-      // 2. Ставим на паузу
       videoEl.pause();
     }
   });
