@@ -2435,20 +2435,50 @@ function speakHeroVoice(text) {
   utter.lang = "ru-RU";
   utter.rate = 1.0;
 
-  // Тонкости голоса для разных чемпионов
+  // Получаем список доступных голосов в системе
+  const voices = window.speechSynthesis.getVoices();
+  
+  // Ищем русскоязычные голоса
+  const ruVoices = voices.filter(v => v.lang.includes("ru") || v.lang.includes("RU"));
+
+  // Пытаемся найти мужской голос (популярные имена в Windows/Google/Apple)
+  const maleVoice = ruVoices.find(v => 
+    v.name.toLowerCase().includes("dmitry") || 
+    v.name.toLowerCase().includes("pavel") || 
+    v.name.toLowerCase().includes("yuri") || 
+    v.name.toLowerCase().includes("male") ||
+    v.name.toLowerCase().includes("man")
+  );
+
+  if (maleVoice) {
+    utter.voice = maleVoice;
+  } else if (ruVoices.length > 0) {
+    // Если мужской не найден по имени, берем первый доступный русский
+    utter.voice = ruVoices[0];
+  }
+
+  // Настройки тембра (Pitch) под характер
   if (currentHeroId === 6) {
-    // Stockfish звучит низким монотонным басом
+    // Stockfish (низкий робо-бас)
     utter.pitch = 0.2;
     utter.rate = 1.1;
   } else if (currentHeroId === 10 || currentHeroId === 11) {
-    // Накамура / Гукеш звучат быстрее и моложе
-    utter.pitch = 1.1;
-    utter.rate = 1.15;
-  } else {
+    // Молодые гроссмейстеры (Накамура, Гукеш)
     utter.pitch = 0.95;
+    utter.rate = 1.1;
+  } else {
+    // Взрослые чемпионы (Таль, Ботвинник, Стейниц) — занижаем тон для солидности
+    utter.pitch = 0.75; 
   }
 
   window.speechSynthesis.speak(utter);
+}
+
+// Браузеры загружают голоса асинхронно, поэтому нужно пнуть их инициализацию при старте:
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
 }
 
 
