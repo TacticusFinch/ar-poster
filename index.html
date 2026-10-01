@@ -318,7 +318,7 @@ body {
 .hs-feedback-toast.active { display: flex; }
 
 
-/* AR-Битва двух карточек */
+ss /* AR-Битва двух игроков (Hotseat поверх камеры) */
 #ar-battle-hud {
   position: absolute;
   inset: 0;
@@ -327,107 +327,92 @@ body {
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px;
   box-sizing: border-box;
 }
-#ar-battle-hud.active {
+#ar-battle-hud.active { display: flex; }
+
+.battle-player-zone {
+  pointer-events: auto;
+  padding: 14px 16px;
+  background: rgba(8, 12, 20, 0.88);
+  backdrop-filter: blur(12px);
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.8);
 }
 
-.battle-top-bar {
-  background: rgba(10, 14, 24, 0.85);
-  border: 1px solid var(--accent-color);
-  border-radius: 16px;
-  padding: 12px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+/* Верхний игрок перевернут на 180 градусов */
+.battle-player-zone.top-player {
+  transform: rotate(180deg);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+.battle-player-zone.bottom-player {
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.battle-hero-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
 }
-
-.battle-fighter {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.battle-fighter.right { text-align: right; }
-
-.fighter-name { font-size: 11px; font-weight: 800; text-transform: uppercase; }
-.fighter-hp-bar {
-  width: 100%;
+.battle-hero-name { font-size: 13px; font-weight: 800; text-transform: uppercase; }
+.battle-hp-text { font-size: 13px; font-weight: 800; }
+.battle-hp-track {
   height: 8px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   overflow: hidden;
 }
-.fighter-hp-fill {
-  height: 100%;
-  transition: width 0.3s ease;
-}
+.battle-hp-fill { height: 100%; transition: width 0.3s ease; }
 
-.vs-badge {
-  font-size: 14px;
-  font-weight: 900;
-  color: #ff0055;
-  text-shadow: 0 0 10px rgba(255, 0, 85, 0.6);
-}
-
-.battle-action-dock {
-  pointer-events: auto;
-  background: rgba(10, 14, 24, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 18px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  backdrop-filter: blur(12px);
-}
-
-.battle-action-title {
-  font-size: 11px;
-  font-weight: 800;
-  text-align: center;
-  color: #aaa;
-  text-transform: uppercase;
-}
-
-.battle-action-buttons {
+.battle-action-row {
   display: flex;
   gap: 8px;
 }
-
-.battle-act-btn {
+.battle-tact-btn {
   flex: 1;
   padding: 10px 4px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   color: #fff;
+  border-radius: 10px;
   font-size: 10px;
   font-weight: 800;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: transform 0.1s, background 0.2s;
+  gap: 2px;
+  transition: all 0.2s ease;
 }
-.battle-act-btn:active {
-  transform: scale(0.95);
-  background: var(--accent-color);
-  color: #000;
+.battle-tact-btn:active { transform: scale(0.95); }
+.battle-tact-btn.selected {
+  background: #f1c40f !important;
+  color: #000 !important;
+  border-color: #f1c40f !important;
+  box-shadow: 0 0 12px rgba(241, 196, 15, 0.6);
 }
 
-.battle-log-toast {
-  text-align: center;
+/* Центральное табло раунда */
+.battle-center-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  pointer-events: none;
+}
+.battle-round-toast {
+  background: rgba(4, 6, 12, 0.95);
+  border: 1.5px solid var(--accent-color);
+  padding: 8px 18px;
+  border-radius: 20px;
+  color: #fff;
   font-size: 12px;
-  font-weight: 700;
-  min-height: 20px;
-  line-height: 1.3;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 0 20px var(--accent-glow);
+  max-width: 80%;
 }
 
 
@@ -2362,9 +2347,8 @@ function exitDuel() {
 }
 
 
-// ================= ЛОГИКА AR-СРАЖЕНИЯ 2 КАРТ =================
+// ================= ЛОГИКА СИНХРОННОГО PVP БОЯ 2 ИГРОКОВ =================
 
-// Назначим чемпионам их козырные стили
 const STYLES = {
   ATTACK: 'attack',   // Бьет Counter
   DEFEND: 'defend',   // Бьет Attack
@@ -2389,152 +2373,190 @@ const HERO_AFFINITY = {
   14: STYLES.DEFEND   // Смыслов
 };
 
-// Хранилище активных в кадре карточек
 const visibleTargets = new Set();
-
 let battleActive = false;
-let battleData = {
-  h1: null,
-  h2: null,
-  hp1: 100,
-  hp2: 100
+
+let pvpState = {
+  p1HeroId: null,
+  p2HeroId: null,
+  p1Hp: 100,
+  p2Hp: 100,
+  p1Choice: null,
+  p2Choice: null,
+  roundLocked: false
 };
 
-// Перехватываем стандартные targetFound/targetLost для учета двух карт
+// Отслеживание двух карт в кадре
 ALL_TARGET_IDS.forEach(id => {
   const targetEl = document.getElementById(`target-${id}`);
   if (!targetEl || id === SCHOOL_TARGET_ID) return;
 
   targetEl.addEventListener("targetFound", () => {
     visibleTargets.add(id);
-    checkTwoCardsBattle();
+    if (visibleTargets.size >= 2 && !battleActive) {
+      const [id1, id2] = Array.from(visibleTargets);
+      startPvPBattle(id1, id2);
+    }
   });
 
   targetEl.addEventListener("targetLost", () => {
     visibleTargets.delete(id);
     if (visibleTargets.size < 2 && battleActive) {
-      stopCardBattle("Один из чемпионов потерян из вида камеры!");
+      stopPvPBattle("Один из чемпионов пропал из поля зрения камеры!");
     }
   });
 });
 
-function checkTwoCardsBattle() {
-  if (visibleTargets.size >= 2 && !battleActive) {
-    const [id1, id2] = Array.from(visibleTargets);
-    startCardBattle(id1, id2);
-  }
-}
-
-function startCardBattle(id1, id2) {
+function startPvPBattle(id1, id2) {
   battleActive = true;
-  battleData = {
-    h1: id1,
-    h2: id2,
-    hp1: 100,
-    hp2: 100
+  pvpState = {
+    p1HeroId: id1,
+    p2HeroId: id2,
+    p1Hp: 100,
+    p2Hp: 100,
+    p1Choice: null,
+    p2Choice: null,
+    roundLocked: false
   };
 
-  // Прячем стандартный dock одиночной карты
   dock.style.display = "none";
 
-  // Ставим на паузу видео, чтобы не отвлекать от боя
+  // Ставим видео на паузу
   const v1 = document.getElementById(`vid-${id1}`);
   const v2 = document.getElementById(`vid-${id2}`);
   if (v1) v1.pause();
   if (v2) v2.pause();
 
-  const hero1 = HEROES[id1];
-  const hero2 = HEROES[id2];
+  const h1 = HEROES[id1];
+  const h2 = HEROES[id2];
 
-  document.getElementById("bf-name-1").innerText = hero1.name;
-  document.getElementById("bf-name-1").style.color = hero1.color;
-  document.getElementById("bf-hp-1").style.background = hero1.color;
-  document.getElementById("bf-hp-1").style.width = "100%";
+  // Настройка Игрока 1 (снизу)
+  document.getElementById("bf-name-1").innerText = h1.name;
+  document.getElementById("bf-name-1").style.color = h1.color;
+  document.getElementById("bf-hp-1").style.background = h1.color;
 
-  document.getElementById("bf-name-2").innerText = hero2.name;
-  document.getElementById("bf-name-2").style.color = hero2.color;
-  document.getElementById("bf-hp-2").style.background = hero2.color;
-  document.getElementById("bf-hp-2").style.width = "100%";
+  // Настройка Игрока 2 (сверху)
+  document.getElementById("bf-name-2").innerText = h2.name;
+  document.getElementById("bf-name-2").style.color = h2.color;
+  document.getElementById("bf-hp-2").style.background = h2.color;
 
-  document.getElementById("battle-log").innerText = "БИТВА НАЧАЛАСЬ! Выберите тактику хода:";
+  updatePvPHp();
+  resetChoicesUI();
+
+  document.getElementById("battle-log").innerText = "ОБА ИГРОКА: ВЫБЕРИТЕ ТАКТИКУ!";
   document.getElementById("ar-battle-hud").classList.add("active");
 
   sfx.playTargetFound();
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  if (navigator.vibrate) navigator.vibrate([100, 60, 100]);
 }
 
-function executeBattleTurn(playerAction) {
-  if (!battleActive) return;
+// Обработка клика игрока
+function playerChoose(playerNum, action, btnEl) {
+  if (pvpState.roundLocked) return;
 
-  const h1 = HEROES[battleData.h1];
-  const h2 = HEROES[battleData.h2];
+  sfx.playMove();
 
-  // AI оппонента (Карта 2) случайно выбирает тактику, но с шансом 50% использует свой родной стиль
-  const actions = [STYLES.ATTACK, STYLES.DEFEND, STYLES.COUNTER];
-  let aiAction = actions[Math.floor(Math.random() * actions.length)];
-  if (Math.random() < 0.5) {
-    aiAction = HERO_AFFINITY[battleData.h2] || aiAction;
+  if (playerNum === 1) {
+    pvpState.p1Choice = action;
+    highlightButton("p1-btns", btnEl);
+  } else {
+    pvpState.p2Choice = action;
+    highlightButton("p2-btns", btnEl);
   }
 
-  let log = "";
-  let baseDamage = 25;
+  // Если оба нажали — вскрываем раунд!
+  if (pvpState.p1Choice && pvpState.p2Choice) {
+    pvpState.roundLocked = true;
+    resolveRound();
+  }
+}
 
-  // Логика победы (Камень-Ножницы-Бумага)
-  if (playerAction === aiAction) {
-    log = `🤝 Ничья в раунде! Оба применили одинаковую тактику.`;
+function highlightButton(containerId, activeBtn) {
+  const btns = document.querySelectorAll(`#${containerId} .battle-tact-btn`);
+  btns.forEach(b => b.classList.remove("selected"));
+  activeBtn.classList.add("selected");
+}
+
+function resetChoicesUI() {
+  pvpState.p1Choice = null;
+  pvpState.p2Choice = null;
+  pvpState.roundLocked = false;
+  document.querySelectorAll(".battle-tact-btn").forEach(b => b.classList.remove("selected"));
+}
+
+function updatePvPHp() {
+  document.getElementById("bf-hp-1").style.width = `${pvpState.p1Hp}%`;
+  document.getElementById("bf-hp-val-1").innerText = `${pvpState.p1Hp}%`;
+  document.getElementById("bf-hp-2").style.width = `${pvpState.p2Hp}%`;
+  document.getElementById("bf-hp-val-2").innerText = `${pvpState.p2Hp}%`;
+}
+
+function resolveRound() {
+  const h1 = HEROES[pvpState.p1HeroId];
+  const h2 = HEROES[pvpState.p2HeroId];
+  const a1 = pvpState.p1Choice;
+  const a2 = pvpState.p2Choice;
+
+  let log = "";
+  const baseDamage = 25;
+
+  if (a1 === a2) {
+    log = `🤝 РАВНОВЕСИЕ! Оба выбрали одинаковый ход.`;
   } else if (
-    (playerAction === STYLES.ATTACK && aiAction === STYLES.COUNTER) ||
-    (playerAction === STYLES.DEFEND && aiAction === STYLES.ATTACK) ||
-    (playerAction === STYLES.COUNTER && aiAction === STYLES.DEFEND)
+    (a1 === STYLES.ATTACK && a2 === STYLES.COUNTER) ||
+    (a1 === STYLES.DEFEND && a2 === STYLES.ATTACK) ||
+    (a1 === STYLES.COUNTER && a2 === STYLES.DEFEND)
   ) {
-    // Игрок победил в размене
+    // Игрок 1 победил раунд
     let dmg = baseDamage;
-    if (HERO_AFFINITY[battleData.h1] === playerAction) {
-      dmg = Math.round(dmg * 1.5); // Критический урон
-      log = `💥 КРИТИЧЕСКИЙ УДАР! ${h1.name} наносит ${dmg}% урона!`;
+    if (HERO_AFFINITY[pvpState.p1HeroId] === a1) {
+      dmg = 35; // Крит
+      log = `💥 ${h1.name} наносит КРИТ (${dmg}%)!`;
     } else {
-      log = `⚡ ${h1.name} переигрывает позицию! (-${dmg}%)`;
+      log = `⚡ ${h1.name} переигрывает соперника (-${dmg}%)!`;
     }
-    battleData.hp2 = Math.max(0, battleData.hp2 - dmg);
+    pvpState.p2Hp = Math.max(0, pvpState.p2Hp - dmg);
     sfx.playCorrect();
     if (navigator.vibrate) navigator.vibrate(70);
   } else {
-    // AI победил в размене
+    // Игрок 2 победил раунд
     let dmg = baseDamage;
-    if (HERO_AFFINITY[battleData.h2] === aiAction) {
-      dmg = Math.round(dmg * 1.5);
-      log = `🩸 ОШИБКА! ${h2.name} ловит на зевке коронным стилем (-${dmg}%)!`;
+    if (HERO_AFFINITY[pvpState.p2HeroId] === a2) {
+      dmg = 35; // Крит
+      log = `💥 ${h2.name} наносит КРИТ (${dmg}%)!`;
     } else {
-      log = `❌ ${h2.name} перехватил инициативу! (-${dmg}%)`;
+      log = `⚡ ${h2.name} переигрывает соперника (-${dmg}%)!`;
     }
-    battleData.hp1 = Math.max(0, battleData.hp1 - dmg);
+    pvpState.p1Hp = Math.max(0, pvpState.p1Hp - dmg);
     sfx.playWrong();
-    if (navigator.vibrate) navigator.vibrate(180);
+    if (navigator.vibrate) navigator.vibrate(70);
   }
 
-  // Обновление полосок HP
-  document.getElementById("bf-hp-1").style.width = `${battleData.hp1}%`;
-  document.getElementById("bf-hp-2").style.width = `${battleData.hp2}%`;
-  document.getElementById("battle-log").innerText = log;
+  updatePvPHp();
+  document.getElementById("battle-log").innerHTML = log;
 
-  // Проверка финала
-  if (battleData.hp1 <= 0 || battleData.hp2 <= 0) {
+  // Проверка конца матча
+  if (pvpState.p1Hp <= 0 || pvpState.p2Hp <= 0) {
     sfx.playCheckmate();
-    const winner = battleData.hp1 > 0 ? h1.name : h2.name;
-    document.getElementById("battle-log").innerHTML = `🏆 <b>ШАХ И МАТ!</b> Победил <b>${winner}</b>!`;
+    const winner = pvpState.p1Hp > 0 ? h1.name : h2.name;
+    document.getElementById("battle-log").innerHTML = `🏆 <b>ШАХ И МАТ! Победил ${winner}!</b>`;
     setTimeout(() => {
-      stopCardBattle();
-    }, 4000);
+      stopPvPBattle();
+    }, 4500);
+  } else {
+    // Следующий раунд через 1.5 секунды
+    setTimeout(() => {
+      resetChoicesUI();
+      document.getElementById("battle-log").innerText = "НОВЫЙ ХОД! Выберите тактику:";
+    }, 1500);
   }
 }
 
-function stopCardBattle(reasonMsg) {
+function stopPvPBattle(reasonMsg) {
   battleActive = false;
   document.getElementById("ar-battle-hud").classList.remove("active");
-  if (reasonMsg) {
-    alert(reasonMsg);
-  }
-  // Возвращаем одиночный UI, если в кадре осталась хоть одна карта
+  if (reasonMsg) alert(reasonMsg);
+
   if (visibleTargets.size === 1) {
     const remainingId = Array.from(visibleTargets)[0];
     currentHeroId = remainingId;
@@ -2542,10 +2564,6 @@ function stopCardBattle(reasonMsg) {
     showChampionUI();
   }
 }
-
-
-
-
 
     
 </script>
@@ -2607,36 +2625,42 @@ function stopCardBattle(reasonMsg) {
   </div>
 </div>
 
-<!-- HUD Сражения двух карточек -->
+<!-- HUD Сражения двух игроков -->
 <div id="ar-battle-hud">
-  <div class="battle-top-bar">
-    <div class="battle-fighter">
-      <span id="bf-name-1" class="fighter-name">Чемпион 1</span>
-      <div class="fighter-hp-bar">
-        <div id="bf-hp-1" class="fighter-hp-fill" style="width: 100%; background: #00ffcc;"></div>
-      </div>
+  <!-- Игрок 2 (Сверху, повернут лицом к сопернику) -->
+  <div class="battle-player-zone top-player" id="zone-p2">
+    <div class="battle-hero-header">
+      <span id="bf-name-2" class="battle-hero-name">Игрок 2</span>
+      <span id="bf-hp-val-2" class="battle-hp-text">100%</span>
     </div>
-    <div class="vs-badge">VS</div>
-    <div class="battle-fighter right">
-      <span id="bf-name-2" class="fighter-name">Чемпион 2</span>
-      <div class="fighter-hp-bar">
-        <div id="bf-hp-2" class="fighter-hp-fill" style="width: 100%; background: #ff0055;"></div>
-      </div>
+    <div class="battle-hp-track">
+      <div id="bf-hp-2" class="battle-hp-fill" style="width: 100%;"></div>
+    </div>
+    <div class="battle-action-row" id="p2-btns">
+      <button class="battle-tact-btn" onclick="playerChoose(2, 'attack', this)"><span>⚔️</span>АТАКА</button>
+      <button class="battle-tact-btn" onclick="playerChoose(2, 'defend', this)"><span>🛡️</span>ЗАЩИТА</button>
+      <button class="battle-tact-btn" onclick="playerChoose(2, 'counter', this)"><span>⚡</span>КОНТРУДАР</button>
     </div>
   </div>
 
-  <div class="battle-action-dock">
-    <div id="battle-log" class="battle-log-toast">Выберите тактику на этот ход:</div>
-    <div class="battle-action-buttons">
-      <button class="battle-act-btn" onclick="executeBattleTurn('attack')">
-        <span style="font-size: 18px;">⚔️</span> АТАКА
-      </button>
-      <button class="battle-act-btn" onclick="executeBattleTurn('defend')">
-        <span style="font-size: 18px;">🛡️</span> ЗАЩИТА
-      </button>
-      <button class="battle-act-btn" onclick="executeBattleTurn('counter')">
-        <span style="font-size: 18px;">⚡</span> КОНТРУДАР
-      </button>
+  <!-- Центр: Результат столкновения -->
+  <div class="battle-center-divider">
+    <div id="battle-log" class="battle-round-toast">Оба игрока выбирают тактику!</div>
+  </div>
+
+  <!-- Игрок 1 (Снизу, лицом к вам) -->
+  <div class="battle-player-zone bottom-player" id="zone-p1">
+    <div class="battle-action-row" id="p1-btns">
+      <button class="battle-tact-btn" onclick="playerChoose(1, 'attack', this)"><span>⚔️</span>АТАКА</button>
+      <button class="battle-tact-btn" onclick="playerChoose(1, 'defend', this)"><span>🛡️</span>ЗАЩИТА</button>
+      <button class="battle-tact-btn" onclick="playerChoose(1, 'counter', this)"><span>⚡</span>КОНТРУДАР</button>
+    </div>
+    <div class="battle-hp-track">
+      <div id="bf-hp-1" class="battle-hp-fill" style="width: 100%;"></div>
+    </div>
+    <div class="battle-hero-header">
+      <span id="bf-name-1" class="battle-hero-name">Игрок 1</span>
+      <span id="bf-hp-val-1" class="battle-hp-text">100%</span>
     </div>
   </div>
 </div>
