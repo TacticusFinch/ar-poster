@@ -2367,7 +2367,13 @@ async function sendChatMessage() {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     // Озвучиваем ответ вслух
-    speakHeroVoice(reply);
+if (data.audio) {
+  const heroAudio = new Audio(data.audio);
+  heroAudio.play().catch(e => console.log("Ошибка звука:", e));
+} else {
+  // Фолбэк на старый голос, если аудио вдруг не пришло
+  speakHeroVoice(data.reply);
+}
 
   } catch (err) {
     const loader = document.getElementById("ai-thinking-indicator");
