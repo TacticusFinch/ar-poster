@@ -2352,13 +2352,14 @@ async function sendChatMessage() {
 
     if (!response.ok) throw new Error("Ошибка связи с сервером");
 
-    const data = await response.json();
+const data = await response.json();
     const reply = data.reply;
 
-    // Удаляем индикатор загрузки и выводим ответ чемпиона
+    // Убираем индикатор "обдумывает..."
     const loader = document.getElementById("ai-thinking-indicator");
     if (loader) loader.remove();
 
+    // Выводим текст в чат
     chatBox.innerHTML += `
       <div style="color: ${hero.color}; margin-top: 10px;">
         <b>${hero.name}:</b> ${reply}
@@ -2366,14 +2367,19 @@ async function sendChatMessage() {
     `;
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // Озвучиваем ответ вслух
-if (data.audio) {
-  const heroAudio = new Audio(data.audio);
-  heroAudio.play().catch(e => console.log("Ошибка звука:", e));
-} else {
-  // Фолбэк на старый голос, если аудио вдруг не пришло
-  speakHeroVoice(data.reply);
-}
+    // ================= НАДЕЖНАЯ ОЗВУЧКА =================
+    // 1. Пробуем воспроизвести нейрозвук с сервера
+    if (data.audio) {
+      const heroAudio = new Audio(data.audio);
+      heroAudio.play().catch(() => {
+        // Если браузер заблокировал MP3 — говорим голосом браузера
+        speakHeroVoice(reply);
+      });
+    } else {
+      // 2. Если Microsoft заблокировал IP сервера — браузер тут же озвучивает сам!
+      speakHeroVoice(reply);
+    }
+
 
   } catch (err) {
     const loader = document.getElementById("ai-thinking-indicator");
