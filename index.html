@@ -2353,32 +2353,10 @@ async function sendChatMessage() {
     if (!response.ok) throw new Error("Ошибка связи с сервером");
 
 const data = await response.json();
-    const reply = data.reply;
+chatBox.innerHTML += `<div><b>${hero.name}:</b> ${data.reply}</div>`;
 
-    // Убираем индикатор "обдумывает..."
-    const loader = document.getElementById("ai-thinking-indicator");
-    if (loader) loader.remove();
-
-    // Выводим текст в чат
-    chatBox.innerHTML += `
-      <div style="color: ${hero.color}; margin-top: 10px;">
-        <b>${hero.name}:</b> ${reply}
-      </div>
-    `;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    // ================= НАДЕЖНАЯ ОЗВУЧКА =================
-    // 1. Пробуем воспроизвести нейрозвук с сервера
-    if (data.audio) {
-      const heroAudio = new Audio(data.audio);
-      heroAudio.play().catch(() => {
-        // Если браузер заблокировал MP3 — говорим голосом браузера
-        speakHeroVoice(reply);
-      });
-    } else {
-      // 2. Если Microsoft заблокировал IP сервера — браузер тут же озвучивает сам!
-      speakHeroVoice(reply);
-    }
+// Моментально запускаем голос прямо на телефоне (задержка 0.01 сек!)
+speakHeroVoice(data.reply);
 
 
   } catch (err) {
