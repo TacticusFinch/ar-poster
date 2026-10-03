@@ -2324,10 +2324,13 @@ async function sendChatMessage() {
   input.value = "";
   sfx.playMove();
 
-  // Добавляем реплику пользователя в чат
+  // Хак для Safari/iOS: создаем инстанс плеера в момент пользовательского клика
+  const heroAudio = new Audio();
+
+  // Добавляем реплику пользователя и индикатор ожидания
   chatBox.innerHTML += `
     <div style="color: #fff; margin-top: 8px; text-align: right;">
-      <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 8px; display: inline-block;">
+      <span style="background: rgba(255, 255, 255, 0.1); padding: 5px 10px; border-radius: 8px; display: inline-block;">
         <b>Вы:</b> ${text}
       </span>
     </div>
@@ -2352,12 +2355,37 @@ async function sendChatMessage() {
 
     if (!response.ok) throw new Error("Ошибка связи с сервером");
 
-const data = await response.json();
-chatBox.innerHTML += `<div><b>${hero.name}:</b> ${data.reply}</div>`;
+    const data = await response.json();
+    const reply = data.reply;
 
-// Моментально запускаем голос прямо на телефоне (задержка 0.01 сек!)
-speakHeroVoice(data.reply);
+    // Убираем индикатор ожидания
+    const loader = document.getElementById("ai-thinking-indicator");
+    if (loader) loader.remove();
 
+    // Плашка времени (если сервер прислал benchmark)
+    const timeBadge = data.benchmark?.total_sec 
+      ? `<div style="font-size: 9px; color: #7a8b9e; margin-top: 2px;">⚡ Голос готов за ${data.benchmark.total_sec} сек.</div>`
+      : '';
+
+    // Выводим ответ чемпиона
+    chatBox.innerHTML += `
+      <div style="color: ${hero.color}; margin-top: 10px;">
+        <b>${hero.name}:</b> ${reply}
+        ${timeBadge}
+      </div>
+    `;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Воспроизведение звука: если пришел студийный Дмитрий — играем его, иначе браузерный синтезатор
+    if (data.audio) {
+      heroAudio.src = data.audio;
+      heroAudio.play().catch(err => {
+        console.warn("Автовоспроизведение MP3 не удалось, включаем синтезатор:", err);
+        speakHeroVoice(reply);
+      });
+    } else {
+      speakHeroVoice(reply);
+    }
 
   } catch (err) {
     const loader = document.getElementById("ai-thinking-indicator");
@@ -2368,6 +2396,7 @@ speakHeroVoice(data.reply);
         ⚠️ Не удалось связаться с сервером Amvera. Проверьте статус приложения в панели.
       </div>
     `;
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 }
 
