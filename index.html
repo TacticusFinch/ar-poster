@@ -330,73 +330,53 @@ body {
 .passport-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
   margin: 14px 0;
 }
+
+/* Слот карточки */
 .passport-slot {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  padding: 8px 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 6px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 70px;
-  transition: all 0.3s ease;
+  justify-content: flex-start;
+  transition: all 0.25s ease;
   position: relative;
+  overflow: hidden;
 }
+
+/* Тонкая подсветка нижней полоски или всей карточки цветом чемпиона */
 .passport-slot.unlocked {
-  border-style: solid;
-  border-color: var(--slot-color, #00ffcc);
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%);
-  box-shadow: 0 0 12px var(--slot-glow, rgba(0,255,204,0.3));
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #0d121d;
 }
+
 .passport-slot.locked {
   filter: grayscale(1);
   opacity: 0.35;
 }
-.passport-icon { font-size: 22px; margin-bottom: 4px; }
-.passport-hero-name {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: #fff;
-  line-height: 1.1;
-}
-.passport-badge-test {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  font-size: 8px;
-  background: #2ecc71;
-  color: #000;
-  border-radius: 50%;
-  width: 14px;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
 
-/* Портрет-медальон чемпиона */
 .passport-avatar-wrap {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  margin-bottom: 6px;
-  box-shadow: 0 0 10px var(--slot-glow, rgba(0,255,204,0.4));
-  border: 2px solid var(--slot-color, #00ffcc);
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
   overflow: hidden;
-  background: #111622;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 6px;
+  /* Убрали border и box-shadow круга */
+  border: none;
+  box-shadow: none;
 }
 
+/* Черно-белое фото внутри */
 .passport-avatar-img {
   width: 100%;
   height: 100%;
@@ -404,25 +384,42 @@ body {
   display: block;
 }
 
-/* Fallback-монограмма, если картинка не загрузилась */
-.passport-monogram {
-  font-size: 14px;
-  font-weight: 900;
-  color: var(--slot-color, #00ffcc);
+/* Имя чемпиона под фото */
+.passport-hero-name {
+  font-size: 10px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #fff;
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
-/* Заблокированная карточка */
-.passport-slot.locked .passport-avatar-wrap {
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: none;
-  background: rgba(255, 255, 255, 0.03);
-}
+/* Замочек для закрытых слотов */
 .passport-lock-icon {
-  font-size: 18px;
-  filter: grayscale(1);
-  opacity: 0.4;
+  font-size: 20px;
+  opacity: 0.35;
+}
+
+/* Значок сдачи экзамена в углу фото */
+.passport-badge-test {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  font-size: 9px;
+  background: #2ecc71;
+  color: #000;
+  border-radius: 4px;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  z-index: 5;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
 }
 
 /* Всплывающее уведомление о новой открытой карте */
