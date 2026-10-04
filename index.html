@@ -459,7 +459,7 @@ body {
   </a>
   <!-- Кнопка Паспорта -->
   <button id="passport-btn" class="hud-btn" onclick="openPassportModal()">
-    <span>📜</span> Коллекция <span id="passport-counter">(0/15)</span>
+    <span></span> Коллекция <span id="passport-counter">(0/15)</span>
   </button>
   <button id="sound-toggle" class="hud-btn" style="display: none;">
     <span>🔇</span> ЗВУК: ВЫКЛ
@@ -2181,7 +2181,7 @@ function renderTestResult() {
   } else {
     // Тест не сдан — карточка НЕ добавляется в коллекцию
     sfx.playWrong();
-    evaluation = `❌ <b>Экзамен не сдан.</b><br>Для добавления легенды в Паспорт нужно набрать минимум <b>${passThreshold} из ${hero.puzzles.length}</b>.<br>Изучите биографию чемпиона и попробуйте снова!`;
+    evaluation = `❌ <b>Экзамен не сдан.</b><br>Для добавления легенды в Коллекцию нужно набрать минимум <b>${passThreshold} из ${hero.puzzles.length}</b>.<br>Изучите биографию чемпиона и попробуйте снова!`;
   }
 
   const resultColor = isPassed ? "var(--accent-color)" : "#ff4d6d";
