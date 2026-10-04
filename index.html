@@ -1895,7 +1895,6 @@ ALL_TARGET_IDS.forEach(id => {
       currentHeroId = id;
       applyHeroTheme(HEROES[id]);
       showChampionUI();
-      registerCardDiscovery(id);
     }
 
     if (videoEl) {
@@ -2078,6 +2077,12 @@ function renderPuzzleQuestion() {
   const hero = HEROES[currentHeroId];
   const p = hero.puzzles[currentPuzzleIndex];
 
+  // Перемешиваем варианты случайным образом при каждом показе
+  if (!p._shuffledOptions) {
+    p._shuffledOptions = [...p.options].sort(() => Math.random() - 0.5);
+  }
+  const currentOptions = p._shuffledOptions;
+
   const diagramHtml = p.image
     ? `<div class="diagram-container">
         <img class="diagram-img" src="${p.image}" alt="Шахматная диаграмма" onerror="this.style.display='none'">
@@ -2085,14 +2090,14 @@ function renderPuzzleQuestion() {
     : '';
 
   modalContent.innerHTML = `
-    <div class="modal-title">Тест чемпиона</div>
+    <div class="modal-title">Экзамен чемпиона</div>
     <div class="modal-subtitle">${hero.name} — Вопрос ${currentPuzzleIndex + 1} из ${hero.puzzles.length}</div>
     <div class="difficulty-badge">${p.difficulty}</div>
     <div style="font-size: 13px; color: #ccc; line-height: 1.45; margin-bottom: 8px;">${p.desc}</div>
     ${diagramHtml}
     <div id="puzzle-feedback" style="display:none; font-size: 12px; line-height: 1.4; margin: 10px 0; padding: 10px; border-radius: 8px;"></div>
     <div id="puzzle-options">
-      ${p.options.map((opt, i) => `
+      ${currentOptions.map((opt, i) => `
         <button class="puzzle-option-btn" onclick="checkAnswer(${i})">
           ${opt.text}
         </button>
@@ -2155,29 +2160,48 @@ function nextPuzzle() {
 
 function renderTestResult() {
   const hero = HEROES[currentHeroId];
-  // Если набрано больше половины верных ответов — засчитываем тест в паспорт
-  if (testScore >= Math.ceil(hero.puzzles.length / 2)) {
-    registerTestPassed(currentHeroId);
-  }
+  
+  // Порог сдачи теста: минимум 80% правильных ответов
+  // (для 7 вопросов это 6 баллов, для 3 вопросов — 3 балла)
+  const passThreshold = Math.ceil(hero.puzzles.length * 0.8);
+  const isPassed = testScore >= passThreshold;
+
   let evaluation = "";
-  if (testScore >= 6) {
-    evaluation = "Великолепно! Вы настоящий знаток истории и блестящий тактик.";
-  } else if (testScore >= 4) {
-    evaluation = "Хороший результат! Большинство ловушек и фактов вам покорились.";
-  } else if (testScore >= 3) {
-    evaluation = "Неплохо! Не забудь прочитать биографию.";
+
+  if (isPassed) {
+    // Карточка и сдача теста засчитываются в паспорт ТОЛЬКО ПРИ ПОБЕДЕ!
+    registerCardDiscovery(currentHeroId);
+    registerTestPassed(currentHeroId);
+
+    if (testScore === hero.puzzles.length) {
+      evaluation = `🏆 <b>Абсолютный триумф!</b><br>${hero.name} безоговорочно признал ваше мастерство и добавлен в Паспорт Гроссмейстера!`;
+    } else {
+      evaluation = `🎉 <b>Экзамен успешно сдан!</b><br>Отличная тактика и знание истории. ${hero.name} открыт в вашем Паспорте!`;
+    }
   } else {
-    evaluation = "Неплохая попытка! Изучите биографию еще раз и попробуйте улучшить счет.";
+    // Тест не сдан — карточка НЕ добавляется в коллекцию
+    sfx.playWrong();
+    evaluation = `❌ <b>Экзамен не сдан.</b><br>Для добавления легенды в Паспорт нужно набрать минимум <b>${passThreshold} из ${hero.puzzles.length}</b>.<br>Изучите биографию чемпиона и попробуйте снова!`;
   }
 
+  const resultColor = isPassed ? "var(--accent-color)" : "#ff4d6d";
+
   modalContent.innerHTML = `
-    <div class="modal-title">Тест завершен</div>
+    <div class="modal-title">${isPassed ? 'Экзамен пройден!' : 'Экзамен не сдан'}</div>
     <div class="modal-subtitle">${hero.name}</div>
-    <div style="margin: 16px 0; padding: 18px; background: rgba(255, 255, 255, 0.04); border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.08);">
+    <div style="margin: 16px 0; padding: 18px; background: rgba(255, 255, 255, 0.04); border-radius: 12px; text-align: center; border: 1.5px solid ${resultColor}; box-shadow: 0 0 15px ${isPassed ? 'var(--accent-glow)' : 'rgba(255, 77, 109, 0.2)'};">
       <div style="font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px;">Ваш результат:</div>
-      <div style="font-size: 34px; font-weight: 800; color: var(--accent-color); margin: 6px 0;">${testScore} из ${hero.puzzles.length}</div>
-      <div style="font-size: 13px; color: #ddd; line-height: 1.4;">${evaluation}</div>
+      <div style="font-size: 34px; font-weight: 800; color: ${resultColor}; margin: 6px 0;">${testScore} из ${hero.puzzles.length}</div>
+      <div style="font-size: 13px; color: #ddd; line-height: 1.45;">${evaluation}</div>
     </div>
+
+    ${!isPassed ? `
+      <!-- Кнопка быстрой отправки в биографию для подготовки -->
+      <button class="action-link-btn" style="background: rgba(255,255,255,0.08); border: 1px solid var(--accent-color); color: #fff; margin-bottom: 8px;" onclick="openModal('bio')">
+        📖 Изучить биографию ${hero.name.split(' ')[0]}
+      </button>
+    ` : ''}
+
     <div class="external-promo-box">
       <div style="font-size: 12px; font-weight: 700; margin-bottom: 2px;">Шахматная школа</div>
       <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">Запись на занятия и информация:</div>
@@ -2188,7 +2212,10 @@ function renderTestResult() {
         Изучить базовые механики
       </a>
     </div>
-    <button class="action-link-btn secondary" style="width: 100%; margin-top: 10px; cursor: pointer;" onclick="openModal('test')">Пройти заново</button>
+
+    <button class="action-link-btn secondary" style="width: 100%; margin-top: 10px; cursor: pointer;" onclick="openModal('test')">
+      ${isPassed ? 'Пройти еще раз' : 'Попробовать снова 🔄'}
+    </button>
   `;
 }
 
