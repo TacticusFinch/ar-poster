@@ -2147,7 +2147,10 @@ function renderPuzzleQuestion() {
 function checkAnswer(index) {
   const hero = HEROES[currentHeroId];
   const p = hero.puzzles[currentPuzzleIndex];
-  const opt = p.options[index];
+  
+  // Берем вариант именно из перемешанного списка:
+  const opt = (p._shuffledOptions || p.options)[index];
+  
   const fb = document.getElementById("puzzle-feedback");
   const nextContainer = document.getElementById("puzzle-next-container");
   const optionsContainer = document.getElementById("puzzle-options");
@@ -2211,7 +2214,7 @@ function renderTestResult() {
     if (testScore === hero.puzzles.length) {
       evaluation = `🏆 <b>Абсолютный триумф!</b><br>${hero.name} безоговорочно признал ваше мастерство и добавлен в Паспорт Гроссмейстера!`;
     } else {
-      evaluation = `🎉 <b>Экзамен успешно сдан!</b><br>Отличная тактика и знание истории. ${hero.name} открыт в вашем Паспорте!`;
+      evaluation = `🎉 <b>Экзамен успешно сдан!</b><br>Отличная тактика и знание истории. ${hero.name} открыт в вашей Коллекции!`;
     }
   } else {
     // Тест не сдан — карточка НЕ добавляется в коллекцию
