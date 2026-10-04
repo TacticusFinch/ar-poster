@@ -2349,7 +2349,8 @@ async function sendChatMessage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         system_prompt: systemPrompt,
-        user_message: text
+        user_message: text,
+        hero_id: currentHeroId !== null ? currentHeroId : 0
       })
     });
 
