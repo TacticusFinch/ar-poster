@@ -326,100 +326,111 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(241, 196, 15, 0.3);
 }
 
-/* Сетка карточек в паспорте */
+/* Компактная сетка на 4 колонки (идеально для 15 карт: 4+4+4+3) */
 .passport-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 14px 0;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 12px 0;
 }
 
-/* Слот карточки */
+/* Карточка чемпиона */
 .passport-slot {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 5px 3px 6px 3px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  transition: all 0.25s ease;
+  transition: transform 0.15s ease, border-color 0.2s ease;
   position: relative;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* Тонкая подсветка нижней полоски или всей карточки цветом чемпиона */
 .passport-slot.unlocked {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: #0d121d;
+  background: #0f1420;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.passport-slot.unlocked:active {
+  transform: scale(0.96);
 }
 
 .passport-slot.locked {
   filter: grayscale(1);
-  opacity: 0.35;
+  opacity: 0.28;
 }
 
+/* Фиксированный компактный размер под картинки 100x100px */
 .passport-avatar-wrap {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
   overflow: hidden;
   background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 6px;
-  /* Убрали border и box-shadow круга */
-  border: none;
-  box-shadow: none;
+  margin-bottom: 4px;
 }
 
-/* Черно-белое фото внутри */
+/* Фото с аппаратным сглаживанием резкости */
 .passport-avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Заставляет браузер аккуратно интерполировать пиксели при уменьшении */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
 }
 
-/* Имя чемпиона под фото */
+/* Имя чемпиона под иконкой */
 .passport-hero-name {
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
-  color: #fff;
-  line-height: 1.2;
-  margin-top: 2px;
+  color: #ddd;
+  line-height: 1.1;
+  width: 100%;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
 }
 
-/* Замочек для закрытых слотов */
-.passport-lock-icon {
-  font-size: 20px;
-  opacity: 0.35;
-}
-
-/* Значок сдачи экзамена в углу фото */
+/* Миниатюрная аккуратная галочка сданного теста */
 .passport-badge-test {
   position: absolute;
-  top: 9px;
-  right: 9px;
-  font-size: 9px;
+  top: 3px;
+  right: 3px;
+  font-size: 7px;
   background: #2ecc71;
   color: #000;
-  border-radius: 4px;
-  padding: 2px 5px;
+  border-radius: 50%;
+  width: 13px;
+  height: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   z-index: 5;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+/* Замок для закрытых слотов */
+.passport-lock-icon {
+  font-size: 16px;
+  opacity: 0.4;
+}
+
+.passport-monogram {
+  font-size: 11px;
+  font-weight: 800;
+  color: #666;
 }
 
 /* Всплывающее уведомление о новой открытой карте */
@@ -2824,9 +2835,9 @@ function openPassportModal() {
     // Инициалы для запасного варианта (например, "В.С." или "М.Т.")
     const initials = hero.name.split(' ').map(n => n[0]).join('');
 
-    if (isUnlocked) {
+if (isUnlocked) {
       gridHtml += `
-        <div class="passport-slot unlocked" style="--slot-color: ${hero.color}; --slot-glow: ${hero.colorGlow};">
+        <div class="passport-slot unlocked">
           ${testDone ? '<span class="passport-badge-test" title="Экзамен сдан">✓</span>' : ''}
           <div class="passport-avatar-wrap">
             ${hero.avatar ? `
@@ -2841,17 +2852,16 @@ function openPassportModal() {
         </div>
       `;
     } else {
-      // Закрытый слот: силуэт замка
+      // Закрытый слот
       gridHtml += `
         <div class="passport-slot locked">
           <div class="passport-avatar-wrap">
             <span class="passport-lock-icon">🔒</span>
           </div>
-          <div class="passport-hero-name" style="opacity: 0.4;">№ ${i + 1}</div>
+          <div class="passport-hero-name">№ ${i + 1}</div>
         </div>
       `;
     }
-  }
 
   modalContent.innerHTML = `
     <div class="modal-title" style="color: #f1c40f;">Моя коллекция</div>
