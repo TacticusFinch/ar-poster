@@ -381,6 +381,50 @@ body {
   font-weight: 900;
 }
 
+/* Портрет-медальон чемпиона */
+.passport-avatar-wrap {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-bottom: 6px;
+  box-shadow: 0 0 10px var(--slot-glow, rgba(0,255,204,0.4));
+  border: 2px solid var(--slot-color, #00ffcc);
+  overflow: hidden;
+  background: #111622;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passport-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Fallback-монограмма, если картинка не загрузилась */
+.passport-monogram {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--slot-color, #00ffcc);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Заблокированная карточка */
+.passport-slot.locked .passport-avatar-wrap {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.03);
+}
+.passport-lock-icon {
+  font-size: 18px;
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
 /* Всплывающее уведомление о новой открытой карте */
 #unlock-toast {
   position: absolute;
@@ -813,6 +857,7 @@ const sfx = new SoundController();
 const HEROES = {
   0: {
     name: "Вильгельм Стейниц",
+    avatar: "./avatars/steinitz.png",
     title: "I Чемпион мира по шахматам (1886—1894)",
     color: "#00ffcc",
     colorGlow: "rgba(0, 255, 204, 0.4)",
@@ -908,6 +953,7 @@ const HEROES = {
   },
   1: {
     name: "Эмануил Ласкер",
+    avatar: "./avatars/lasker.png",
     title: "II Чемпион мира по шахматам (1894—1921)",
     color: "#ff4d6d",
     colorGlow: "rgba(255, 77, 109, 0.4)",
@@ -1004,6 +1050,7 @@ const HEROES = {
   },
   2: {
     name: "Хосе Рауль Капабланка",
+    avatar: "./avatars/capablanca.png",
     title: "III Чемпион мира по шахматам (1921—1927)",
     color: "#f1c40f",
     colorGlow: "rgba(241, 196, 15, 0.4)",
@@ -1100,6 +1147,7 @@ const HEROES = {
   
   3: {
     name: "Магнус Карлсен",
+    avatar: "./avatars/carlsen.png",
     title: "XVI Чемпион мира по шахматам (2013—2023)",
     color: "#3a86ff",
     colorGlow: "rgba(58, 134, 255, 0.4)",
@@ -1158,6 +1206,7 @@ const HEROES = {
   },
   4: {
     name: "Рэй Энигма",
+    avatar: "./avatars/enigma.png",
     title: "Человек в маске • Шахматный иллюзионист",
     color: "#9b5de5",
     colorGlow: "rgba(155, 93, 229, 0.4)",
@@ -1216,6 +1265,7 @@ const HEROES = {
   },
   5: {
     name: "Михаил Таль",
+    avatar: "./avatars/tal.png",
     title: "VIII Чемпион мира по шахматам (1960—1961)",
     color: "#ff8500",
     colorGlow: "rgba(255, 133, 0, 0.4)",
@@ -1275,6 +1325,7 @@ const HEROES = {
   
   6: {
     name: "Stockfish",
+    avatar: "./avatars/stockfish.png",
     title: "Абсолютный алгоритм • Сильнейший движок (Рейтинг 3600+)",
     color: "#00ff88",
     colorGlow: "rgba(0, 255, 136, 0.4)",
@@ -1334,6 +1385,7 @@ const HEROES = {
   
   7: {
     name: "Михаил Ботвинник",
+    avatar: "./avatars/botvinnik.png",
     title: "VI Чемпион мира по шахматам (1948—1963)",
     color: "#4cc9f0",
     colorGlow: "rgba(76, 201, 240, 0.4)",
@@ -1392,6 +1444,7 @@ const HEROES = {
   },
   8: {
     name: "Роберт Джеймс Фишер",
+    avatar: "./avatars/fischer.png",
     title: "XI Чемпион мира по шахматам (1972—1975)",
     color: "#f72585",
     colorGlow: "rgba(247, 37, 133, 0.4)",
@@ -1450,6 +1503,7 @@ const HEROES = {
   },
   9: {
     name: "Фабиано Каруана",
+    avatar: "./avatars/caruana.png",
     title: "Вице-чемпион мира • Шахматный калькулятор (2844)",
     color: "#7209b7",
     colorGlow: "rgba(114, 9, 183, 0.4)",
@@ -1508,6 +1562,7 @@ const HEROES = {
   },
   10: {
     name: "Хикару Накамура",
+    avatar: "./avatars/nakamura.png",
     title: "Король блица и стриминга • 5-кратный чемпион США",
     color: "#ffb703",
     colorGlow: "rgba(255, 183, 3, 0.4)",
@@ -1566,6 +1621,7 @@ const HEROES = {
   },
   11: {
     name: "Гукеш Доммараджу",
+    avatar: "./avatars/gukesh.png",
     title: "Триумфатор Турнира претендентов 2024",
     color: "#06d6a0",
     colorGlow: "rgba(6, 214, 160, 0.4)",
@@ -1625,6 +1681,7 @@ const HEROES = {
 
 12: {
     name: "Акиба Рубинштейн",
+    avatar: "./avatars/rubinstein.png",
     title: "Некоронованный король • Маэстро эндшпиля",
     color: "#e0aaff",
     colorGlow: "rgba(224, 170, 255, 0.4)",
@@ -1684,6 +1741,7 @@ const HEROES = {
 
   13: {
     name: "Тигран Петросян",
+    avatar: "./avatars/petrosyan.png",
     title: "IX Чемпион мира по шахматам (1963—1969)",
     color: "#48cae4",
     colorGlow: "rgba(72, 202, 228, 0.4)",
@@ -1743,6 +1801,7 @@ const HEROES = {
 
   14: {
     name: "Василий Смыслов",
+    avatar: "./avatars/smyslov.png",
     title: "VII Чемпион мира по шахматам (1957—1958)",
     color: "#52b788",
     colorGlow: "rgba(82, 183, 136, 0.4)",
@@ -2764,20 +2823,34 @@ function openPassportModal() {
     const hero = HEROES[i];
     const isUnlocked = data.unlocked.includes(i);
     const testDone = data.testsPassed.includes(i);
+    
+    // Инициалы для запасного варианта (например, "В.С." или "М.Т.")
+    const initials = hero.name.split(' ').map(n => n[0]).join('');
 
     if (isUnlocked) {
       gridHtml += `
         <div class="passport-slot unlocked" style="--slot-color: ${hero.color}; --slot-glow: ${hero.colorGlow};">
-          ${testDone ? '<span class="passport-badge-test" title="Тест сдан">✓</span>' : ''}
-          <div class="passport-icon" style="color: ${hero.color};">${HERO_ICONS[i] || '♚'}</div>
-          <div class="passport-hero-name">${hero.name.split(' ')[1] || hero.name}</div>
+          ${testDone ? '<span class="passport-badge-test" title="Экзамен сдан">✓</span>' : ''}
+          <div class="passport-avatar-wrap">
+            ${hero.avatar ? `
+              <img class="passport-avatar-img" src="${hero.avatar}" alt="${hero.name}" 
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="passport-monogram" style="display:none;">${initials}</div>
+            ` : `
+              <div class="passport-monogram">${initials}</div>
+            `}
+          </div>
+          <div class="passport-hero-name">${hero.name.split(' ').pop()}</div>
         </div>
       `;
     } else {
+      // Закрытый слот: силуэт замка
       gridHtml += `
         <div class="passport-slot locked">
-          <div class="passport-icon">🔒</div>
-          <div class="passport-hero-name">???</div>
+          <div class="passport-avatar-wrap">
+            <span class="passport-lock-icon">🔒</span>
+          </div>
+          <div class="passport-hero-name" style="opacity: 0.4;">№ ${i + 1}</div>
         </div>
       `;
     }
