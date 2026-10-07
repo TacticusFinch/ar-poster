@@ -2098,6 +2098,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       filterBeta: 0.01
     });
 
+    // 4. ЯВНО ПРИНУДИТЕЛЬНО ЗАПУСКАЕМ СИСТЕМУ
+    const arSystem = sceneEl.systems["mindar-image-system"];
+    if (arSystem) {
+      await arSystem.start(); // Запуск видеопотока и компилятора точек
+    }
+
   } catch (err) {
     console.error("Критическая ошибка:", err);
     badge.innerText = "ОШИБКА ЗАГРУЗКИ";
