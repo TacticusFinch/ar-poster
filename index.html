@@ -545,24 +545,24 @@ body {
   device-orientation-permission-ui="enabled: false">
 
   <a-assets timeout="4000">
-    <video id="vid-0" src="./steinitz.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-1" src="./lasker.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-2" src="./capablanca.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-3" src="./carlsen.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-4" src="./enigma.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-5" src="./tal.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-6" src="./stockfish.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-7" src="./botvinnik.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-8" src="./fischer.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-9" src="./caruana.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-10" src="./nakamura.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-11" src="./gukesh.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-12" src="./rubinstein.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-13" src="./petrosyan.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-14" src="./smyslov.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-15" src="./kasparov.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-16" src="./liren.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
-    <video id="vid-17" src="./school.mp4" loop="true" playsinline webkit-playsinline muted preload="auto"></video>
+    <video id="vid-0" src="./steinitz.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-1" src="./lasker.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-2" src="./capablanca.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-3" src="./carlsen.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-4" src="./enigma.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-5" src="./tal.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-6" src="./stockfish.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-7" src="./botvinnik.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-8" src="./fischer.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-9" src="./caruana.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-10" src="./nakamura.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-11" src="./gukesh.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-12" src="./rubinstein.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-13" src="./petrosyan.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-14" src="./smyslov.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-15" src="./kasparov.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-16" src="./liren.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-17" src="./school.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
 
   </a-assets>
 
@@ -2042,47 +2042,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (percent !== null) barFill.style.width = percent + '%';
   };
 
-  try {
-    setStatus("Скачивание базы (.gz)...", 10);
-    const response = await fetch('./cards.mind.gz');
-    if (!response.ok) throw new Error(`HTTP ${response.status}: cards.mind.gz не найден`);
+try {
+    setStatus("Загрузка базы AR...", 30);
 
-    const contentLength = +response.headers.get('Content-Length');
-    const reader = response.body.getReader();
-    let receivedLength = 0;
-    let chunks = [];
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      receivedLength += value.length;
-
-      if (contentLength) {
-        const percent = Math.min(85, Math.round((receivedLength / contentLength) * 85));
-        const mb = (receivedLength / (1024 * 1024)).toFixed(1);
-        const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
-        barFill.style.width = percent + '%';
-        percentText.innerText = `Скачано: ${mb} из ${totalMb} МБ (${percent}%)`;
-      }
-    }
-
-    setStatus("Распаковка Gzip...", 90);
-    const compressedBlob = new Blob(chunks);
-    const decompressedStream = compressedBlob.stream().pipeThrough(new DecompressionStream('gzip'));
-    const mindBlob = await new Response(decompressedStream).blob();
-    const mindBlobUrl = URL.createObjectURL(mindBlob);
-
-    setStatus("Ожидание 3D сцены...", 95);
-    // Ждем, пока сцена A-Frame закончит внутреннюю сборку
+    // Ждем, пока A-Frame сцена завершит базовую сборку
     if (!sceneEl.hasLoaded) {
       await new Promise(res => sceneEl.addEventListener('loaded', res, { once: true }));
     }
 
-    setStatus("Запуск AR-сенсоров...", 98);
+    setStatus("Запуск AR-сенсоров...", 70);
 
-    // Передаем Blob URL в систему
-    sceneEl.setAttribute('mindar-image', `imageTargetSrc: ${mindBlobUrl}; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;`);
+    // Передаем обычный файл cards.mind напрямую
+    sceneEl.setAttribute('mindar-image', 'imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;');
 
     // Запускаем систему с таймаутом безопасности
     const arSystem = sceneEl.systems["mindar-image-system"];
@@ -2180,8 +2151,8 @@ targetEl.addEventListener("targetFound", () => {
 
      if (aVideo) aVideo.setAttribute('visible', 'true');
 
-     if (videoEl) {
-       videoEl.muted = isMuted;
+  if (videoEl) {
+       videoEl.muted = true; // Браузер гарантированно разрешит воспроизведение только без звука
        const playPromise = videoEl.play();
        if (playPromise !== undefined) {
          playPromise.catch(err => {
