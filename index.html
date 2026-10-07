@@ -538,7 +538,7 @@ body {
 
 <!-- MindAR сцена -->
 <a-scene
-  mindar-image="autoStart: false; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;"
+  mindar-image="imageTargetSrc: ./cards.mind; autoStart: false; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;"
   color-space="sRGB"
   renderer="colorManagement: true; precision: medium;"
   vr-mode-ui="enabled: false"
@@ -2036,42 +2036,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   const title = document.getElementById('loading-title');
   const readySub = document.getElementById('ready-status-sub');
 
-  const setStatus = (stepName, percent = null) => {
-    console.log(`[AR Status]: ${stepName}`);
-    percentText.innerText = stepName;
-    if (percent !== null) barFill.style.width = percent + '%';
-  };
+  try {
+    percentText.innerText = "Инициализация движка...";
+    barFill.style.width = "40%";
 
-try {
-    setStatus("Загрузка базы AR...", 30);
-
-    // Ждем, пока A-Frame сцена завершит базовую сборку
     if (!sceneEl.hasLoaded) {
       await new Promise(res => sceneEl.addEventListener('loaded', res, { once: true }));
     }
 
-    setStatus("Запуск AR-сенсоров...", 70);
+    percentText.innerText = "Запуск камеры и поиск целей...";
+    barFill.style.width = "75%";
 
-    // Передаем обычный файл cards.mind напрямую
-    sceneEl.setAttribute('mindar-image', 'imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;');
-
-    // Запускаем систему с таймаутом безопасности
     const arSystem = sceneEl.systems["mindar-image-system"];
     if (!arSystem) {
-      throw new Error("MindAR система не зарегистрирована в A-Frame");
+      throw new Error("MindAR система не найдена");
     }
 
-    // Запуск камеры с контролем зависания (таймаут 15 секунд)
-    await Promise.race([
-      arSystem.start(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Превышено время ожидания камеры (Таймаут)")), 20000)
-      )
-    ]);
+    await arSystem.start();
 
-setStatus("Готово!", 100);
+    barFill.style.width = "100%";
+    percentText.innerText = "Готово!";
 
-    // СРАЗУ переключаем интерфейс, так как система УЖЕ готова:
     setTimeout(() => {
       loadBox.style.display = "none";
       readySub.style.display = "block";
@@ -2082,12 +2067,12 @@ setStatus("Готово!", 100);
     }, 200);
 
   } catch (err) {
-    console.error("Критический сбой инициализации:", err);
+    console.error("Ошибка инициализации AR:", err);
     badge.innerText = "ОШИБКА";
     badge.style.borderColor = "#ff4d6d";
     badge.style.color = "#ff4d6d";
-    title.innerText = "СБОЙ ИНИЦИАЛИЗАЦИИ";
-    percentText.innerText = err.message || "Неизвестная ошибка";
+    title.innerText = "СБОЙ ЗАПУСКА";
+    percentText.innerText = err.message || "Ошибка камеры или файла таргетов";
     barFill.style.background = "#ff4d6d";
   }
 
@@ -2130,24 +2115,22 @@ document.querySelectorAll('a-scene a-video').forEach(aVid => {
 // === Разогрев видео при первом касании экрана ===
 let videosWarmedUp = false;
 
-function warmUpAllVideos() {
-  if (videosWarmedUp) return;
-  videosWarmedUp = true;
+// Замените warmUpAllVideos на точечный запуск:
+function playTargetVideo(id) {
+  const vid = document.getElementById(`vid-${id}`);
+  if (!vid) return;
 
-  ALL_TARGET_IDS.forEach(id => {
-    const vid = document.getElementById(`vid-${id}`);
-    if (vid) {
+  vid.muted = isMuted; // соблюдаем состояние звука
+  vid.playsInline = true;
+  
+  const playPromise = vid.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      console.warn(`[vid-${id}] Автовоспроизведение отклонено, проигрываем muted:`, err);
       vid.muted = true;
-      vid.playsInline = true;
-      vid.load();
-      const p = vid.play();
-      if (p !== undefined) {
-        p.then(() => { vid.pause(); vid.currentTime = 0; })
-         .catch(() => { /* OK */ });
-      }
-    }
-  });
-  console.log("[Video Warmup] Все видео разблокированы по тапу пользователя");
+      vid.play().catch(() => {});
+    });
+  }
 }
 
 document.addEventListener("touchstart", warmUpAllVideos, { once: true });
@@ -2168,51 +2151,24 @@ ALL_TARGET_IDS.forEach(id => {
     videoEl.addEventListener('stalled', () => console.warn(`[vid-${id}] ⏸ STALLED`));
   }
 
-  targetEl.addEventListener("targetFound", () => {
-    sfx.playTargetFound();
-    hint.classList.add("hidden");
-    dock.style.display = "flex";
-    soundBtn.style.display = "inline-flex";
+targetEl.addEventListener("targetFound", () => {
+  sfx.playTargetFound();
+  hint.classList.add("hidden");
+  dock.style.display = "flex";
+  soundBtn.style.display = "inline-flex";
 
-    if (id === SCHOOL_TARGET_ID) {
-      currentHeroId = null;
-      showSchoolUI();
-    } else {
-      currentHeroId = id;
-      applyHeroTheme(HEROES[id]);
-      showChampionUI();
-    }
+  if (id === SCHOOL_TARGET_ID) {
+    currentHeroId = null;
+    showSchoolUI();
+  } else {
+    currentHeroId = id;
+    applyHeroTheme(HEROES[id]);
+    showChampionUI();
+  }
 
-    if (aVideo) aVideo.setAttribute('visible', 'true');
-
-    if (videoEl) {
-      videoEl.muted = true;
-      videoEl.playsInline = true;
-      videoEl.currentTime = 0;
-
-      const attemptPlay = () => {
-        const playPromise = videoEl.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(err => {
-            console.warn(`[vid-${id}] Play blocked (${err.name}), retrying...`);
-            setTimeout(() => {
-              videoEl.play().catch(e2 => {
-                console.error(`[vid-${id}] Retry failed:`, e2.name);
-              });
-            }, 300);
-          });
-        }
-      };
-
-      if (videoEl.readyState >= 2) {
-        attemptPlay();
-      } else {
-        videoEl.load();
-        videoEl.addEventListener('loadeddata', attemptPlay, { once: true });
-        setTimeout(attemptPlay, 600);
-      }
-    }
-  });
+  if (aVideo) aVideo.setAttribute('visible', 'true');
+  playTargetVideo(id);
+});
 
   targetEl.addEventListener("targetLost", () => {
     if (aVideo) {
