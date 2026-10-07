@@ -3202,6 +3202,45 @@ function generateDiplomaCanvas() {
     <button class="action-link-btn secondary" style="max-width: 220px; margin-top: 8px; cursor: pointer;" onclick="exitDuel()">В меню</button>
   </div>
 </div>
+
+
+<!-- ЭКРАН ДИАГНОСТИКИ ОШИБОК -->
+<div id="debug-log" style="position:fixed; top:0; left:0; right:0; background:rgba(0,0,0,0.9); color:#00ffcc; font-family:monospace; font-size:11px; z-index:99999; padding:10px; max-height:40vh; overflow-y:auto; pointer-events:auto; border-bottom:2px solid red;">
+  <b>Лог запуска AR:</b><br>
+</div>
+
+<script>
+(function() {
+  const logBox = document.getElementById('debug-log');
+  function print(msg, color='#00ffcc') {
+    logBox.innerHTML += `<div style="color:${color}; margin-top:2px;">> ${msg}</div>`;
+  }
+
+  // Перехват системных ошибок
+  window.addEventListener('error', (e) => print(`ОШИБКА JS: ${e.message}`, '#ff4d6d'));
+  window.addEventListener('unhandledrejection', (e) => print(`PROMISE FAIL: ${e.reason}`, '#ff4d6d'));
+
+  // Проверка размера и доступности cards.mind
+  print("Проверка файла cards.mind...");
+  fetch('./cards.mind')
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP Статус ${r.status} (${r.statusText})`);
+      const len = r.headers.get('content-length');
+      print(`Файл найден! Отданный размер: ${len ? (len / 1024 / 1024).toFixed(2) + ' МБ' : 'неизвестен'}`);
+      return r.blob();
+    })
+    .then(blob => {
+      print(`Реально скачано в память: ${(blob.size / 1024 / 1024).toFixed(2)} МБ`);
+      if (blob.size < 50000) {
+        print("ВНИМАНИЕ: Файл меньше 50 КБ! Это не AR-база, а заглушка или ошибка 404!", "#ff4d6d");
+      }
+    })
+    .catch(err => print(`НЕ УДАЛОСЬ ЗАГРУЗИТЬ cards.mind: ${err.message}`, '#ff4d6d'));
+})();
+</script>
+
+
+
   
 </body>
 </html>
