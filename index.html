@@ -538,7 +538,7 @@ body {
 
 <!-- MindAR сцена -->
 <a-scene
-  mindar-image="imageTargetSrc: ./cards.mind; autoStart: false; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;"
+  mindar-image="imageTargetSrc: ./cards.mind; autoStart: false; maxTrack: 1; uiLoading: no; uiScanning: no;"
   color-space="sRGB"
   renderer="colorManagement: true; precision: medium;"
   vr-mode-ui="enabled: false"
@@ -2152,6 +2152,7 @@ ALL_TARGET_IDS.forEach(id => {
   }
 
 targetEl.addEventListener("targetFound", () => {
+  console.warn(`!!! ТАРГЕТ ${id} ОБНАРУЖЕН КАМЕРОЙ !!!`);
   sfx.playTargetFound();
   hint.classList.add("hidden");
   dock.style.display = "flex";
