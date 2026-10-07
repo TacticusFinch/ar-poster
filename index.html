@@ -538,7 +538,7 @@ body {
 
 <!-- MindAR сцена -->
 <a-scene
-  mindar-image="imageTargetSrc: ./cards.mind; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;"
+  mindar-image="maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;"
   color-space="sRGB"
   renderer="colorManagement: true; precision: medium;"
   vr-mode-ui="enabled: false"
@@ -2027,7 +2027,7 @@ const HERO_AI_PROMPTS = {
 
 
     
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const sceneEl = document.querySelector('a-scene');
   const barFill = document.getElementById('load-bar-fill');
   const percentText = document.getElementById('load-percent');
@@ -2036,53 +2036,96 @@ document.addEventListener("DOMContentLoaded", () => {
   const title = document.getElementById('loading-title');
   const readySub = document.getElementById('ready-status-sub');
 
-  // Визуальный прогресс-бар, чтобы пользователь видел отклик интерфейса
-  let progress = 10;
-  const progressTimer = setInterval(() => {
-    if (progress < 75) {
-      // Быстрый набор до 75% (скачивание)
-      progress += Math.floor(Math.random() * 8) + 6;
-    } else if (progress < 95) {
-      // Плавное замедление вместо мертвого стопора
-      progress += 1;
-      
-      // Меняем подпись, чтобы объяснить пользователю задержку
-      if (progress === 80) percentText.innerText = "Подключение камеры...";
-      if (progress === 90) percentText.innerText = "Запуск сенсоров...";
+  try {
+    percentText.innerText = "Скачивание сжатой базы...";
+    
+    // 1. Скачиваем сжатый файл с GitHub Pages
+    const response = await fetch('./cards.mind.gz');
+    if (!response.ok) throw new Error(`Ошибка загрузки: ${response.status}`);
+
+    const contentLength = +response.headers.get('Content-Length');
+    const reader = response.body.getReader();
+    let receivedLength = 0;
+    let chunks = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      receivedLength += value.length;
+
+      // Отображаем реальный прогресс скачивания
+      if (contentLength) {
+        const percent = Math.round((receivedLength / contentLength) * 100);
+        const mb = (receivedLength / (1024 * 1024)).toFixed(1);
+        const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
+        barFill.style.width = percent + '%';
+        percentText.innerText = `${percent}% (${mb} из ${totalMb} МБ)`;
+      } else {
+        const mb = (receivedLength / (1024 * 1024)).toFixed(1);
+        percentText.innerText = `Скачано ${mb} МБ...`;
+      }
     }
 
-    barFill.style.width = progress + '%';
-    if (progress < 80) {
-      percentText.innerText = progress + '%';
-    }
-  }, 100);
-
-  // Когда MindAR закончил внутреннюю компиляцию и включил камеру
-  sceneEl.addEventListener("arReady", () => {
-    clearInterval(progressTimer);
+    percentText.innerText = "Распаковка базы (Gzip)...";
     barFill.style.width = '100%';
-    percentText.innerText = '100%';
 
-    setTimeout(() => {
-      loadBox.style.display = "none";
-      readySub.style.display = "block";
-      badge.innerText = "AR СКАНЕР АКТИВЕН";
-      badge.style.borderColor = "var(--accent-color)";
-      badge.style.color = "var(--accent-color)";
-      title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
-    }, 250);
+    // 2. Распаковываем Gzip на лету с помощью браузерного DecompressionStream
+    const compressedBlob = new Blob(chunks);
+    let decompressedStream;
+
+    if ('DecompressionStream' in window) {
+      decompressedStream = compressedBlob.stream().pipeThrough(new DecompressionStream('gzip'));
+    } else {
+      throw new Error("Ваш браузер устарел для потоковой распаковки");
+    }
+
+    const decompressedResponse = new Response(decompressedStream);
+    const mindBlob = await decompressedResponse.blob();
+    const mindBlobUrl = URL.createObjectURL(mindBlob);
+
+    percentText.innerText = "Запуск камеры и нейросети...";
+
+    // 3. Передаем распакованную базу в MindAR
+    sceneEl.setAttribute('mindar-image', {
+      imageTargetSrc: mindBlobUrl,
+      maxTrack: 1,
+      uiLoading: 'no',
+      uiScanning: 'no',
+      warmupTolerance: 1,
+      missTolerance: 4,
+      filterMinCF: 0.001,
+      filterBeta: 0.01
+    });
+
+  } catch (err) {
+    console.error("Критическая ошибка:", err);
+    badge.innerText = "ОШИБКА ЗАГРУЗКИ";
+    badge.style.borderColor = "#ff4d6d";
+    badge.style.color = "#ff4d6d";
+    title.innerText = "СБОЙ ИНИЦИАЛИЗАЦИИ";
+    percentText.innerText = err.message || "Не удалось загрузить карты";
+  }
+
+  // Когда MindAR получил видеопоток и готов к поиску карт
+  sceneEl.addEventListener("arReady", () => {
+    loadBox.style.display = "none";
+    readySub.style.display = "block";
+    badge.innerText = "AR СКАНЕР АКТИВЕН";
+    badge.style.borderColor = "var(--accent-color)";
+    badge.style.color = "var(--accent-color)";
+    title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
   });
 
-  // Обработка возможного отказа доступа к камере
   sceneEl.addEventListener("arError", () => {
-    clearInterval(progressTimer);
     badge.innerText = "ОШИБКА КАМЕРЫ";
     badge.style.borderColor = "#ff4d6d";
     badge.style.color = "#ff4d6d";
     title.innerText = "РАЗРЕШИТЕ ДОСТУП К КАМЕРЕ";
-    percentText.innerText = "Браузер заблокировал видеопоток";
+    percentText.innerText = "Камера заблокирована";
   });
-   updatePassportCounter();
+
+  updatePassportCounter();
 });
 
     let currentHeroId = null;
