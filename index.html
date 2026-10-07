@@ -2098,7 +2098,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       )
     ]);
 
-    setStatus("Готово!", 100);
+setStatus("Готово!", 100);
+
+    // СРАЗУ переключаем интерфейс, так как система УЖЕ готова:
+    setTimeout(() => {
+      loadBox.style.display = "none";
+      readySub.style.display = "block";
+      badge.innerText = "AR СКАНЕР АКТИВЕН";
+      badge.style.borderColor = "var(--accent-color)";
+      badge.style.color = "var(--accent-color)";
+      title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
+    }, 200);
 
   } catch (err) {
     console.error("Критический сбой инициализации:", err);
