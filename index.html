@@ -545,24 +545,24 @@ body {
   device-orientation-permission-ui="enabled: false">
 
   <a-assets timeout="4000">
-    <video id="vid-0" src="./steinitz.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-1" src="./lasker.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-2" src="./capablanca.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-3" src="./carlsen.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-4" src="./enigma.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-5" src="./tal.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-6" src="./stockfish.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-7" src="./botvinnik.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-8" src="./fischer.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-9" src="./caruana.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-10" src="./nakamura.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-11" src="./gukesh.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-12" src="./rubinstein.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-13" src="./petrosyan.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-14" src="./smyslov.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-15" src="./kasparov.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-16" src="./liren.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
-    <video id="vid-17" src="./school.mp4" loop="true" playsinline webkit-playsinline muted preload="none"></video>
+    <video id="vid-0" src="./steinitz.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-1" src="./lasker.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-2" src="./capablanca.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-3" src="./carlsen.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-4" src="./enigma.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-5" src="./tal.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-6" src="./stockfish.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-7" src="./botvinnik.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-8" src="./fischer.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-9" src="./caruana.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-10" src="./nakamura.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-11" src="./gukesh.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-12" src="./rubinstein.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-13" src="./petrosyan.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-14" src="./smyslov.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-15" src="./kasparov.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-16" src="./liren.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
+    <video id="vid-17" src="./school.mp4" loop="true" playsinline webkit-playsinline muted preload="metadata"></video>
 
   </a-assets>
 
@@ -2127,6 +2127,33 @@ document.querySelectorAll('a-scene a-video').forEach(aVid => {
   aVid.setAttribute('visible', 'false');
 });
 
+// === Разогрев видео при первом касании экрана ===
+let videosWarmedUp = false;
+
+function warmUpAllVideos() {
+  if (videosWarmedUp) return;
+  videosWarmedUp = true;
+
+  ALL_TARGET_IDS.forEach(id => {
+    const vid = document.getElementById(`vid-${id}`);
+    if (vid) {
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.load();
+      const p = vid.play();
+      if (p !== undefined) {
+        p.then(() => { vid.pause(); vid.currentTime = 0; })
+         .catch(() => { /* OK */ });
+      }
+    }
+  });
+  console.log("[Video Warmup] Все видео разблокированы по тапу пользователя");
+}
+
+document.addEventListener("touchstart", warmUpAllVideos, { once: true });
+document.addEventListener("click", warmUpAllVideos, { once: true });
+
+// === Слушатели таргетов ===
 ALL_TARGET_IDS.forEach(id => {
   const targetEl = document.getElementById(`target-${id}`);
   const videoEl = document.getElementById(`vid-${id}`);
@@ -2134,45 +2161,67 @@ ALL_TARGET_IDS.forEach(id => {
 
   const aVideo = targetEl.querySelector('a-video');
 
-targetEl.addEventListener("targetFound", () => {
-     sfx.playTargetFound();
-     hint.classList.add("hidden");
-     dock.style.display = "flex";
-     soundBtn.style.display = "inline-flex";
-
-     if (id === SCHOOL_TARGET_ID) {
-       currentHeroId = null;
-       showSchoolUI();
-     } else {
-       currentHeroId = id;
-       applyHeroTheme(HEROES[id]);
-       showChampionUI();
-     }
-
-     if (aVideo) aVideo.setAttribute('visible', 'true');
-
+  // Отладочные логи для диагностики
   if (videoEl) {
-       videoEl.muted = true; // Браузер гарантированно разрешит воспроизведение только без звука
-       const playPromise = videoEl.play();
-       if (playPromise !== undefined) {
-         playPromise.catch(err => {
-           console.warn("Автовоспроизведение заблокировано:", err);
-         });
-       }
-     }
-   });
-   
+    videoEl.addEventListener('error', () => console.error(`[vid-${id}] ERROR:`, videoEl.error));
+    videoEl.addEventListener('playing', () => console.log(`[vid-${id}] ▶ PLAYING`));
+    videoEl.addEventListener('stalled', () => console.warn(`[vid-${id}] ⏸ STALLED`));
+  }
+
+  targetEl.addEventListener("targetFound", () => {
+    sfx.playTargetFound();
+    hint.classList.add("hidden");
+    dock.style.display = "flex";
+    soundBtn.style.display = "inline-flex";
+
+    if (id === SCHOOL_TARGET_ID) {
+      currentHeroId = null;
+      showSchoolUI();
+    } else {
+      currentHeroId = id;
+      applyHeroTheme(HEROES[id]);
+      showChampionUI();
+    }
+
+    if (aVideo) aVideo.setAttribute('visible', 'true');
+
+    if (videoEl) {
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.currentTime = 0;
+
+      const attemptPlay = () => {
+        const playPromise = videoEl.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn(`[vid-${id}] Play blocked (${err.name}), retrying...`);
+            setTimeout(() => {
+              videoEl.play().catch(e2 => {
+                console.error(`[vid-${id}] Retry failed:`, e2.name);
+              });
+            }, 300);
+          });
+        }
+      };
+
+      if (videoEl.readyState >= 2) {
+        attemptPlay();
+      } else {
+        videoEl.load();
+        videoEl.addEventListener('loadeddata', attemptPlay, { once: true });
+        setTimeout(attemptPlay, 600);
+      }
+    }
+  });
 
   targetEl.addEventListener("targetLost", () => {
     if (aVideo) {
-      // Сразу прячем плоскость при потере карты из вида
       aVideo.setAttribute('visible', 'false');
     }
 
     if (videoEl) {
-      videoEl.muted = true;
-      videoEl.volume = 0;
       videoEl.pause();
+      videoEl.currentTime = 0;
     }
   });
 });
@@ -2188,10 +2237,12 @@ soundBtn.addEventListener("click", () => {
   const isEnabled = sfx.toggle();
   isMuted = !isEnabled;
   
-  // Управляем звуком активного чемпиона либо рубашки (id: 12)
   const activeTargetId = currentHeroId !== null ? currentHeroId : SCHOOL_TARGET_ID;
   const vid = document.getElementById(`vid-${activeTargetId}`);
-  if (vid) vid.muted = isMuted;
+  if (vid) {
+    vid.muted = isMuted;
+    vid.volume = 1;
+  }
   
   soundBtn.innerHTML = isEnabled ? "<span>🔊</span> ЗВУК: ВКЛ" : "<span>🔇</span> ЗВУК: ВЫКЛ";
   if (isEnabled) sfx.playMove();
