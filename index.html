@@ -2036,12 +2036,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const title = document.getElementById('loading-title');
   const readySub = document.getElementById('ready-status-sub');
 
+  const setStatus = (stepName, percent = null) => {
+    console.log(`[AR Status]: ${stepName}`);
+    percentText.innerText = stepName;
+    if (percent !== null) barFill.style.width = percent + '%';
+  };
+
   try {
-    percentText.innerText = "Скачивание сжатой базы...";
-    
-    // 1. Скачиваем сжатый файл с GitHub Pages
+    setStatus("Скачивание базы (.gz)...", 10);
     const response = await fetch('./cards.mind.gz');
-    if (!response.ok) throw new Error(`Ошибка загрузки: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: cards.mind.gz не найден`);
 
     const contentLength = +response.headers.get('Content-Length');
     const reader = response.body.getReader();
@@ -2054,66 +2058,59 @@ document.addEventListener("DOMContentLoaded", async () => {
       chunks.push(value);
       receivedLength += value.length;
 
-      // Отображаем реальный прогресс скачивания
       if (contentLength) {
-        const percent = Math.round((receivedLength / contentLength) * 100);
+        const percent = Math.min(85, Math.round((receivedLength / contentLength) * 85));
         const mb = (receivedLength / (1024 * 1024)).toFixed(1);
         const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
         barFill.style.width = percent + '%';
-        percentText.innerText = `${percent}% (${mb} из ${totalMb} МБ)`;
-      } else {
-        const mb = (receivedLength / (1024 * 1024)).toFixed(1);
-        percentText.innerText = `Скачано ${mb} МБ...`;
+        percentText.innerText = `Скачано: ${mb} из ${totalMb} МБ (${percent}%)`;
       }
     }
 
-    percentText.innerText = "Распаковка базы (Gzip)...";
-    barFill.style.width = '100%';
-
-    // 2. Распаковываем Gzip на лету с помощью браузерного DecompressionStream
+    setStatus("Распаковка Gzip...", 90);
     const compressedBlob = new Blob(chunks);
-    let decompressedStream;
-
-    if ('DecompressionStream' in window) {
-      decompressedStream = compressedBlob.stream().pipeThrough(new DecompressionStream('gzip'));
-    } else {
-      throw new Error("Ваш браузер устарел для потоковой распаковки");
-    }
-
-    const decompressedResponse = new Response(decompressedStream);
-    const mindBlob = await decompressedResponse.blob();
+    const decompressedStream = compressedBlob.stream().pipeThrough(new DecompressionStream('gzip'));
+    const mindBlob = await new Response(decompressedStream).blob();
     const mindBlobUrl = URL.createObjectURL(mindBlob);
 
-    percentText.innerText = "Запуск камеры и нейросети...";
-
-    // 3. Передаем распакованную базу в MindAR
-    sceneEl.setAttribute('mindar-image', {
-      imageTargetSrc: mindBlobUrl,
-      maxTrack: 1,
-      uiLoading: 'no',
-      uiScanning: 'no',
-      warmupTolerance: 1,
-      missTolerance: 4,
-      filterMinCF: 0.001,
-      filterBeta: 0.01
-    });
-
-    // 4. ЯВНО ПРИНУДИТЕЛЬНО ЗАПУСКАЕМ СИСТЕМУ
-    const arSystem = sceneEl.systems["mindar-image-system"];
-    if (arSystem) {
-      await arSystem.start(); // Запуск видеопотока и компилятора точек
+    setStatus("Ожидание 3D сцены...", 95);
+    // Ждем, пока сцена A-Frame закончит внутреннюю сборку
+    if (!sceneEl.hasLoaded) {
+      await new Promise(res => sceneEl.addEventListener('loaded', res, { once: true }));
     }
 
+    setStatus("Запуск AR-сенсоров...", 98);
+
+    // Передаем Blob URL в систему
+    sceneEl.setAttribute('mindar-image', `imageTargetSrc: ${mindBlobUrl}; maxTrack: 1; uiLoading: no; uiScanning: no; warmupTolerance: 1; missTolerance: 4; filterMinCF: 0.001; filterBeta: 0.01;`);
+
+    // Запускаем систему с таймаутом безопасности
+    const arSystem = sceneEl.systems["mindar-image-system"];
+    if (!arSystem) {
+      throw new Error("MindAR система не зарегистрирована в A-Frame");
+    }
+
+    // Запуск камеры с контролем зависания (таймаут 15 секунд)
+    await Promise.race([
+      arSystem.start(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Превышено время ожидания камеры (Таймаут)")), 20000)
+      )
+    ]);
+
+    setStatus("Готово!", 100);
+
   } catch (err) {
-    console.error("Критическая ошибка:", err);
-    badge.innerText = "ОШИБКА ЗАГРУЗКИ";
+    console.error("Критический сбой инициализации:", err);
+    badge.innerText = "ОШИБКА";
     badge.style.borderColor = "#ff4d6d";
     badge.style.color = "#ff4d6d";
     title.innerText = "СБОЙ ИНИЦИАЛИЗАЦИИ";
-    percentText.innerText = err.message || "Не удалось загрузить карты";
+    percentText.innerText = err.message || "Неизвестная ошибка";
+    barFill.style.background = "#ff4d6d";
   }
 
-  // Когда MindAR получил видеопоток и готов к поиску карт
+  // Успешный запуск трекера
   sceneEl.addEventListener("arReady", () => {
     loadBox.style.display = "none";
     readySub.style.display = "block";
@@ -2123,12 +2120,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     title.innerText = "НАВЕДИТЕ НА КАРТОЧКУ";
   });
 
-  sceneEl.addEventListener("arError", () => {
+  sceneEl.addEventListener("arError", (ev) => {
+    console.error("Событие arError:", ev);
     badge.innerText = "ОШИБКА КАМЕРЫ";
     badge.style.borderColor = "#ff4d6d";
     badge.style.color = "#ff4d6d";
-    title.innerText = "РАЗРЕШИТЕ ДОСТУП К КАМЕРЕ";
-    percentText.innerText = "Камера заблокирована";
+    title.innerText = "ДОСТУП ЗАПРЕЩЕН";
+    percentText.innerText = "Разрешите браузеру доступ к камере";
   });
 
   updatePassportCounter();
